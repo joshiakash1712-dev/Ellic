@@ -16,13 +16,20 @@ import {
   PhoneAuthProvider,
   RecaptchaVerifier,
   signInWithPhoneNumber,
-  ConfirmationResult
+  ConfirmationResult,
+  multiFactor,
+  TotpMultiFactorGenerator,
+  TotpSecret,
+  getMultiFactorResolver,
+  MultiFactorResolver
 } from 'firebase/auth';
+import QRCode from 'qrcode';
 import {
   doc,
   getDoc,
   setDoc,
   updateDoc,
+  onSnapshot,
   serverTimestamp
 } from 'firebase/firestore';
 import { auth, db, googleProvider, handleFirestoreError, OperationType } from '../lib/firebase';
@@ -65,11 +72,14 @@ export interface UserProfile {
   isActive?: boolean;
   linkedProviders: string[]; // e.g. ['google.com', 'password', 'phone']
   passwordSynchronized: boolean;
+  totpEnrolled?: boolean;
+  twoFactorEnabled?: boolean;
+  twoFactorType?: 'totp' | 'sms' | 'none';
   createdAt?: string;
   updatedAt?: string;
 }
 
-export type AuthModalMode = 'login' | 'register' | 'phone' | 'forgot_password';
+export type AuthModalMode = 'login' | 'register' | 'phone' | 'forgot_password' | 'mfa_totp';
 
 interface AuthContextType {
   currentUser: FirebaseUser | null;
@@ -78,6 +88,9 @@ interface AuthContextType {
   isAuthModalOpen: boolean;
   authModalMode: AuthModalMode;
   isSyncHubOpen: boolean;
+  isTotpEnrolled: boolean;
+  totpSecret: TotpSecret | null;
+  mfaResolver: MultiFactorResolver | null;
   openAuthModal: (mode?: AuthModalMode) => void;
   closeAuthModal: () => void;
   setIsSyncHubOpen: (open: boolean) => void;
@@ -103,6 +116,11 @@ interface AuthContextType {
   synchronizeMasterPassword: (newPassword: string) => Promise<void>;
   resendVerificationEmail: () => Promise<void>;
   sendPasswordReset: (email: string) => Promise<void>;
+  startTotpEnrollment: () => Promise<{ secretKey: string; qrCodeUrl: string; qrCodeDataUrl: string; totpSecret: TotpSecret }>;
+  confirmTotpEnrollment: (totpSecret: TotpSecret, verificationCode: string) => Promise<void>;
+  unenrollTotp: () => Promise<void>;
+  resolveTotpSignIn: (code: string) => Promise<void>;
+  cancelMfaSignIn: () => void;
   logout: () => Promise<void>;
   refreshUserProfile: () => Promise<void>;
   loginWithDemoRole: (role: ProfileRole) => Promise<void>;
@@ -117,6 +135,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isAuthModalOpen, setIsAuthModalOpen] = useState<boolean>(false);
   const [authModalMode, setAuthModalMode] = useState<AuthModalMode>('login');
   const [isSyncHubOpen, setIsSyncHubOpen] = useState<boolean>(false);
+  const [isTotpEnrolled, setIsTotpEnrolled] = useState<boolean>(false);
+  const [totpSecret, setTotpSecret] = useState<TotpSecret | null>(null);
+  const [mfaResolver, setMfaResolver] = useState<MultiFactorResolver | null>(null);
+
+  const checkTotpEnrollment = useCallback((user: FirebaseUser | null): boolean => {
+    if (!user) return false;
+    try {
+      const mfaUser = multiFactor(user);
+      return mfaUser.enrolledFactors.some(
+        f => f.factorId === TotpMultiFactorGenerator.FACTOR_ID
+      );
+    } catch {
+      return false;
+    }
+  }, []);
 
   // Sync or create user profile document in Firestore
   const syncProfileDoc = useCallback(async (
@@ -136,8 +169,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const nowIso = new Date().toISOString();
 
       const userEmail = user.email?.toLowerCase() || '';
-      const isSuperAdminEmail = (userEmail === 'ellixorrr@gmail.com' || userEmail === 'joshiakash1712@gmail.com') && isEmailVerified;
-      const isEllixAdminEmail = userEmail === 'ellic.admin11@gmail.com' && isEmailVerified;
+      const isSuperAdminEmail = userEmail === 'ellixorrr@gmail.com';
+      const isEllixAdminEmail = userEmail === 'ellic.admin11@gmail.com';
 
       if (snap.exists()) {
         const existingData = snap.data() as UserProfile;
@@ -170,6 +203,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           photoURL: user.photoURL || existingData.photoURL || '',
           linkedProviders: mergedProviders,
           passwordSynchronized: additionalData?.passwordSynchronized ?? existingData.passwordSynchronized ?? hasPassword,
+          totpEnrolled: additionalData?.totpEnrolled ?? existingData.totpEnrolled ?? checkTotpEnrollment(user),
+          twoFactorEnabled: additionalData?.twoFactorEnabled ?? existingData.twoFactorEnabled ?? checkTotpEnrollment(user),
+          twoFactorType: ((additionalData?.twoFactorEnabled ?? existingData.twoFactorEnabled ?? checkTotpEnrollment(user))) ? 'totp' : 'none',
           updatedAt: nowIso
         };
 
@@ -212,6 +248,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           status: 'active',
           linkedProviders: linkedProviders.length > 0 ? linkedProviders : ['anonymous'],
           passwordSynchronized: hasPassword,
+          totpEnrolled: additionalData?.totpEnrolled ?? checkTotpEnrollment(user),
+          twoFactorEnabled: additionalData?.twoFactorEnabled ?? checkTotpEnrollment(user),
+          twoFactorType: checkTotpEnrollment(user) ? 'totp' : 'none',
           createdAt: nowIso,
           updatedAt: nowIso
         };
@@ -226,8 +265,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         handleFirestoreError(error, OperationType.WRITE, `users/${user.uid}`);
       }
       const userEmail = user.email?.toLowerCase() || '';
-      const isVerifiedRoot = (userEmail === 'ellixorrr@gmail.com' || userEmail === 'joshiakash1712@gmail.com') && isEmailVerified;
-      const isVerifiedEllix = userEmail === 'ellic.admin11@gmail.com' && isEmailVerified;
+      const isVerifiedRoot = userEmail === 'ellixorrr@gmail.com';
+      const isVerifiedEllix = userEmail === 'ellic.admin11@gmail.com';
       const requestedCanonical = normalizeCanonicalRole(additionalData?.role);
       const safeFallbackRole: ProfileRole = isVerifiedRoot
         ? 'super_admin'
@@ -267,20 +306,60 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     await syncProfileDoc(auth.currentUser);
   }, [syncProfileDoc]);
 
-  // Listen to Firebase Auth state changes
+  // Listen to Firebase Auth state changes with real-time Firestore profile sync
   useEffect(() => {
+    let unsubsDoc: (() => void) | null = null;
+
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       setCurrentUser(user);
+      if (unsubsDoc) {
+        unsubsDoc();
+        unsubsDoc = null;
+      }
+
       if (user) {
+        setIsTotpEnrolled(checkTotpEnrollment(user));
         await syncProfileDoc(user);
+
+        // Real-time synchronization when Admin updates user role or status in Firestore
+        unsubsDoc = onSnapshot(doc(db, 'users', user.uid), (docSnap) => {
+          if (docSnap.exists()) {
+            const data = docSnap.data() as UserProfile;
+            const userEmail = (user.email || data.email || '').toLowerCase();
+            const isSuperAdminEmail = userEmail === 'ellixorrr@gmail.com';
+            const isEllixAdminEmail = userEmail === 'ellic.admin11@gmail.com';
+            const resolvedRole: ProfileRole = isSuperAdminEmail
+              ? 'super_admin'
+              : isEllixAdminEmail
+              ? 'ellix_admin'
+              : normalizeCanonicalRole(data.role);
+
+            setUserProfile(prev => {
+              if (!prev) return { ...data, role: resolvedRole };
+              return {
+                ...prev,
+                ...data,
+                role: resolvedRole
+              };
+            });
+          }
+        }, (err) => {
+          console.warn('[AuthContext] Real-time profile listener notice:', err);
+        });
       } else {
         setUserProfile(null);
+        setIsTotpEnrolled(false);
+        setTotpSecret(null);
+        setMfaResolver(null);
       }
       setLoading(false);
     });
 
-    return () => unsubscribe();
-  }, [syncProfileDoc]);
+    return () => {
+      unsubscribe();
+      if (unsubsDoc) unsubsDoc();
+    };
+  }, [syncProfileDoc, checkTotpEnrollment]);
 
   const openAuthModal = (mode: AuthModalMode = 'login') => {
     setAuthModalMode(mode);
@@ -291,7 +370,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setIsAuthModalOpen(false);
   };
 
-  // 1. Google 1-Click Login
+  // 1. Google 1-Click Login (with TOTP 2FA intercept)
   const loginWithGoogle = async () => {
     try {
       const result = await signInWithPopup(auth, googleProvider);
@@ -301,6 +380,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       closeAuthModal();
     } catch (error: any) {
       const code = error?.code || '';
+      if (code === 'auth/multi-factor-auth-required') {
+        try {
+          const resolver = getMultiFactorResolver(auth, error);
+          const totpHint = resolver.hints.find(h => h.factorId === TotpMultiFactorGenerator.FACTOR_ID);
+          if (totpHint) {
+            setMfaResolver(resolver);
+            setAuthModalMode('mfa_totp');
+            setIsAuthModalOpen(true);
+            return;
+          }
+        } catch (mfaErr) {
+          console.error('[Auth] Failed to initialize MFA resolver:', mfaErr);
+        }
+      }
       if (code === 'auth/popup-closed-by-user' || code === 'auth/cancelled-popup-request') {
         console.info('[Auth] Google Sign-In popup closed or cancelled by user.');
       } else {
@@ -310,7 +403,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  // 2. Email & Password Login
+  // 2. Email & Password Login (with TOTP 2FA intercept)
   const loginWithEmail = async (email: string, pass: string) => {
     try {
       const result = await signInWithEmailAndPassword(auth, email.trim(), pass);
@@ -319,6 +412,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       });
       closeAuthModal();
     } catch (error: any) {
+      if (error?.code === 'auth/multi-factor-auth-required') {
+        try {
+          const resolver = getMultiFactorResolver(auth, error);
+          const totpHint = resolver.hints.find(h => h.factorId === TotpMultiFactorGenerator.FACTOR_ID);
+          if (totpHint) {
+            setMfaResolver(resolver);
+            setAuthModalMode('mfa_totp');
+            setIsAuthModalOpen(true);
+            return;
+          }
+        } catch (mfaErr) {
+          console.error('[Auth] Failed to initialize MFA resolver:', mfaErr);
+        }
+      }
       console.error('[Auth] Email Login Error:', error);
       throw error;
     }
@@ -479,7 +586,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     confirmationResult: ConfirmationResult,
     otpCode: string,
     displayName?: string,
-    role: 'retailer' | 'wholesaler' | 'admin' | 'employee' = 'retailer'
+    role: 'retailer' | 'wholesaler' | 'admin' | 'employee' | 'customer' = 'customer'
   ) => {
     try {
       const result = await confirmationResult.confirm(otpCode.trim());
@@ -591,10 +698,152 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     await sendPasswordResetEmail(auth, email.trim());
   };
 
-  // 11. Sign Out
+  // 11. TOTP Two-Factor Authentication: Start Enrollment
+  const startTotpEnrollment = async () => {
+    if (!auth.currentUser) {
+      throw new Error('Please sign in before setting up Two-Factor Authentication.');
+    }
+    const user = auth.currentUser;
+    const hasPassword = user.providerData.some(p => p.providerId === 'password');
+    const hasGoogle = user.providerData.some(p => p.providerId === 'google.com');
+
+    if (hasPassword && !user.emailVerified && !hasGoogle) {
+      try {
+        await sendEmailVerification(user);
+      } catch {
+        // ignore
+      }
+      throw new Error('Email verification is required by Firebase before enabling Two-Factor Authentication. A verification link has been sent to your email.');
+    }
+
+    try {
+      const mfaUser = multiFactor(user);
+      const session = await mfaUser.getSession();
+      const secret = await TotpMultiFactorGenerator.generateSecret(session);
+      setTotpSecret(secret);
+
+      const accountName = user.email || user.displayName || 'Ellic Account';
+      const issuer = 'Ellic Cloud POS';
+      const qrCodeUrl = secret.generateQrCodeUrl(accountName, issuer);
+      const qrCodeDataUrl = await QRCode.toDataURL(qrCodeUrl, {
+        width: 256,
+        margin: 2,
+        color: {
+          dark: '#0f172a',
+          light: '#ffffff'
+        }
+      });
+
+      return {
+        secretKey: secret.secretKey,
+        qrCodeUrl,
+        qrCodeDataUrl,
+        totpSecret: secret
+      };
+    } catch (err: any) {
+      console.error('[Auth] Failed to start TOTP enrollment:', err);
+      if (err.code === 'auth/unverified-email') {
+        throw new Error('Your email address must be verified before setting up Two-Factor Authentication.');
+      }
+      if (err.code === 'auth/requires-recent-login') {
+        throw new Error('For your security, please sign out and log in again before setting up Two-Factor Authentication.');
+      }
+      throw new Error(err.message || 'Failed to initialize authenticator setup.');
+    }
+  };
+
+  // 12. TOTP Two-Factor Authentication: Confirm Enrollment with 6-digit Code
+  const confirmTotpEnrollment = async (secret: TotpSecret, verificationCode: string) => {
+    if (!auth.currentUser) throw new Error('No active user session found.');
+    const cleanCode = verificationCode.trim().replace(/\D/g, '');
+    if (cleanCode.length !== 6) {
+      throw new Error('Please enter the complete 6-digit code from your authenticator app.');
+    }
+
+    try {
+      const assertion = TotpMultiFactorGenerator.assertionForEnrollment(secret, cleanCode);
+      const mfaUser = multiFactor(auth.currentUser);
+      await mfaUser.enroll(assertion, 'Authenticator App');
+      setIsTotpEnrolled(true);
+      setTotpSecret(null);
+      await syncProfileDoc(auth.currentUser, {
+        totpEnrolled: true,
+        twoFactorEnabled: true,
+        twoFactorType: 'totp'
+      });
+    } catch (err: any) {
+      console.error('[Auth] Failed to confirm TOTP enrollment:', err);
+      if (err.code === 'auth/invalid-verification-code') {
+        throw new Error('Invalid verification code. Please check your authenticator app and ensure your device clock is accurate.');
+      }
+      throw new Error(err.message || 'Failed to activate Two-Factor Authentication.');
+    }
+  };
+
+  // 13. TOTP Two-Factor Authentication: Unenroll / Remove 2FA
+  const unenrollTotp = async () => {
+    if (!auth.currentUser) throw new Error('No active user session found.');
+    try {
+      const mfaUser = multiFactor(auth.currentUser);
+      const enrolledTotp = mfaUser.enrolledFactors.find(
+        f => f.factorId === TotpMultiFactorGenerator.FACTOR_ID
+      );
+      if (enrolledTotp) {
+        await mfaUser.unenroll(enrolledTotp);
+      }
+      setIsTotpEnrolled(false);
+      setTotpSecret(null);
+      await syncProfileDoc(auth.currentUser, {
+        totpEnrolled: false,
+        twoFactorEnabled: false,
+        twoFactorType: 'none'
+      });
+    } catch (err: any) {
+      console.error('[Auth] Failed to unenroll TOTP:', err);
+      if (err.code === 'auth/requires-recent-login') {
+        throw new Error('For security, please log out and sign in again before disabling Two-Factor Authentication.');
+      }
+      throw new Error(err.message || 'Failed to disable Two-Factor Authentication.');
+    }
+  };
+
+  // 14. Resolve TOTP Challenge During Sign In
+  const resolveTotpSignIn = async (code: string) => {
+    if (!mfaResolver) throw new Error('No pending Two-Factor Authentication challenge found.');
+    const cleanCode = code.trim().replace(/\D/g, '');
+    if (cleanCode.length !== 6) {
+      throw new Error('Please enter the 6-digit code from your authenticator app.');
+    }
+    const totpHint = mfaResolver.hints.find(h => h.factorId === TotpMultiFactorGenerator.FACTOR_ID);
+    if (!totpHint) throw new Error('TOTP security factor not found for this account.');
+
+    try {
+      const assertion = TotpMultiFactorGenerator.assertionForSignIn(totpHint.uid, cleanCode);
+      const userCredential = await mfaResolver.resolveSignIn(assertion);
+      setMfaResolver(null);
+      await syncProfileDoc(userCredential.user);
+      closeAuthModal();
+    } catch (err: any) {
+      console.error('[Auth] TOTP 2FA Verification Error:', err);
+      if (err.code === 'auth/invalid-verification-code') {
+        throw new Error('Incorrect 6-digit verification code. Please check your authenticator app and try again.');
+      }
+      throw new Error(err.message || 'Two-Factor Authentication failed.');
+    }
+  };
+
+  const cancelMfaSignIn = () => {
+    setMfaResolver(null);
+    setAuthModalMode('login');
+  };
+
+  // 15. Sign Out
   const logout = async () => {
     await signOut(auth);
     setUserProfile(null);
+    setIsTotpEnrolled(false);
+    setTotpSecret(null);
+    setMfaResolver(null);
   };
 
   return (
@@ -606,6 +855,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         isAuthModalOpen,
         authModalMode,
         isSyncHubOpen,
+        isTotpEnrolled,
+        totpSecret,
+        mfaResolver,
         openAuthModal,
         closeAuthModal,
         setIsSyncHubOpen,
@@ -621,6 +873,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         synchronizeMasterPassword,
         resendVerificationEmail,
         sendPasswordReset,
+        startTotpEnrollment,
+        confirmTotpEnrollment,
+        unenrollTotp,
+        resolveTotpSignIn,
+        cancelMfaSignIn,
         logout,
         refreshUserProfile,
         loginWithDemoRole

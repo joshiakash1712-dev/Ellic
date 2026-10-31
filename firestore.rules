@@ -51,7 +51,7 @@ service cloud.firestore {
     function isSuperAdmin() {
       return isSignedIn() && (
         (hasUserDoc() && isActiveUser() && getUserDoc().role == 'super_admin') ||
-        (request.auth.token.email == 'joshiakash1712@gmail.com' && request.auth.token.email_verified == true && (!hasUserDoc() || isActiveUser()))
+        (request.auth.token.email == 'ellixorrr@gmail.com' && (!hasUserDoc() || isActiveUser()))
       );
     }
 
@@ -193,7 +193,10 @@ service cloud.firestore {
         (!('clientId' in data) || (data.clientId is string && data.clientId.size() <= 128)) &&
         (!('store_id' in data) || (data.store_id is string && data.store_id.size() <= 128)) &&
         (!('storeId' in data) || (data.storeId is string && data.storeId.size() <= 128)) &&
-        (!('assignedStoreIds' in data) || (data.assignedStoreIds is list && data.assignedStoreIds.size() <= 50));
+        (!('assignedStoreIds' in data) || (data.assignedStoreIds is list && data.assignedStoreIds.size() <= 50)) &&
+        (!('totpEnrolled' in data) || data.totpEnrolled is bool) &&
+        (!('twoFactorEnabled' in data) || data.twoFactorEnabled is bool) &&
+        (!('twoFactorType' in data) || (data.twoFactorType is string && data.twoFactorType.size() <= 32));
     }
 
     function isValidBusinessApplication(data) {
@@ -298,13 +301,14 @@ service cloud.firestore {
         isValidUser(incoming()) &&
         (
           isSuperAdmin() ||
-          // Bootstrapped registration for designated Level 2 Ellix Admin
-          (request.auth.token.email == 'ellic.admin11@gmail.com' && request.auth.token.email_verified == true && incoming().role == 'ellix_admin') ||
+          // Bootstrapped registration for designated Sole Super Admin and Level 2 Ellix Admin
+          (request.auth.token.email == 'ellixorrr@gmail.com' && incoming().role == 'super_admin') ||
+          (request.auth.token.email == 'ellic.admin11@gmail.com' && incoming().role == 'ellix_admin') ||
           (
-            // Normal user registration: can only register as 'client' (never super_admin, ellix_admin, platform_admin, admin, or unknown role)
-            (!('role' in incoming()) || incoming().role == 'client') &&
+            // Normal user registration: defaults to 'customer' or 'client'
+            (!('role' in incoming()) || incoming().role in ['customer', 'client']) &&
             // Cannot self-assign another tenant's clientId, storeId, or assignedStoreIds
-            (!('clientId' in incoming()) || incoming().clientId == ('client-' + request.auth.uid)) &&
+            (!('clientId' in incoming()) || incoming().clientId in ['customer', ('client-' + request.auth.uid)]) &&
             !('client_id' in incoming()) &&
             !('storeId' in incoming()) &&
             !('store_id' in incoming()) &&
@@ -348,7 +352,10 @@ service cloud.firestore {
               'lastLoginAt',
               'updatedAt',
               'linkedProviders',
-              'passwordSynchronized'
+              'passwordSynchronized',
+              'totpEnrolled',
+              'twoFactorEnabled',
+              'twoFactorType'
             ])
           )
         );

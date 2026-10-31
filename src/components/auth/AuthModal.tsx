@@ -167,11 +167,11 @@ export const AuthModal: React.FC = () => {
     setLoading(true);
     setErrorMessage(null);
     try {
-      await registerWithEmail(email, password, displayName, 'retailer');
+      await registerWithEmail(email, password, displayName, 'customer');
       recordConsentAudit({
         context: 'registration',
         subjectIdentifier: email.trim(),
-        purposeSummary: 'Merchant account creation and authentication consent (DPDPA 2023)',
+        purposeSummary: 'User account creation and authentication consent (DPDPA 2023)',
       });
       setSuccessMessage('Account registered successfully. A verification link has been sent to your email.');
     } catch (err: any) {
@@ -232,7 +232,7 @@ export const AuthModal: React.FC = () => {
     setLoading(true);
     setErrorMessage(null);
     try {
-      await confirmPhoneOtp(confirmationResult, fullOtp, displayName || undefined, 'retailer');
+      await confirmPhoneOtp(confirmationResult, fullOtp, displayName || undefined, 'customer');
       setSuccessMessage('Phone number verified successfully! Account synchronized.');
     } catch (err: any) {
       const code = err?.code || '';

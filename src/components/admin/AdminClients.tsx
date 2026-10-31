@@ -611,7 +611,7 @@ export const AdminClients: React.FC = () => {
           ) : (
             <div className="space-y-3 pt-1">
               {adminTeam.map((member) => {
-                const isRoot = member.email === 'joshiakash1712@gmail.com' || member.role === 'super_admin';
+                const isRoot = member.email === 'ellixorrr@gmail.com' || member.role === 'super_admin';
                 const isRevoked = member.status === 'revoked';
 
                 return (

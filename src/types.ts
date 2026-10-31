@@ -106,6 +106,9 @@ export interface User {
   isRealAuth?: boolean;
   firebaseUid?: string;
   status?: 'active' | 'pending_approval' | 'suspended' | 'inactive' | 'revoked' | 'disabled';
+  totpEnrolled?: boolean;
+  twoFactorEnabled?: boolean;
+  twoFactorType?: 'totp' | 'sms' | 'none';
 }
 
 export interface Store {

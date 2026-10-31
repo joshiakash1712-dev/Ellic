@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Menu, X, ArrowRight, ShieldCheck, Cloud, LogIn, LayoutDashboard } from 'lucide-react';
+import { Menu, X, ArrowRight, ShieldCheck, Cloud, LogIn, LayoutDashboard, Shield, Users } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { ThemeToggle } from '../ThemeToggle';
 import { LanguageSwitcher } from '../common/LanguageSwitcher';
 import { useAuth } from '../../context/AuthContext';
 import { EllixConnectLogo } from '../branding/EllixConnectLogo';
+import { normalizeCanonicalRole } from '../../types';
 
 interface NavItem {
   name: string;
@@ -241,42 +242,74 @@ export const LandingHeader: React.FC<LandingHeaderProps> = ({
           <div className="hidden md:flex items-center gap-2 lg:gap-2.5 shrink-0">
             {currentUser ? (
               <div className="flex items-center gap-2">
-                <button
-                  id="btn-nav-auth-user"
-                  type="button"
-                  data-cursor="hover"
-                  onClick={onOpenSignIn}
-                  className="website-btn-glow flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800/80 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 text-left transition-all cursor-pointer group"
-                >
-                  {currentUser.photoURL ? (
-                    <img
-                      src={currentUser.photoURL}
-                      alt={currentUser.displayName || 'User'}
-                      className="w-6 h-6 rounded-lg object-cover"
-                    />
-                  ) : (
-                    <div className="w-6 h-6 rounded-lg bg-emerald-600 text-white text-[11px] font-bold flex items-center justify-center">
-                      {(currentUser.displayName || currentUser.email || 'U').slice(0, 1).toUpperCase()}
-                    </div>
-                  )}
-                  <span className="text-xs font-semibold text-slate-800 dark:text-slate-200 max-w-[120px] truncate">
-                    {currentUser.displayName || 'Account'}
-                  </span>
-                  <span className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_6px_rgba(16,185,129,0.8)]" title="Cloud Database Synced" />
-                </button>
+                {(() => {
+                  const userCanonicalRole = normalizeCanonicalRole(userProfile?.role);
+                  const isSuperAdmin = userCanonicalRole === 'super_admin';
+                  const isEllixAdmin = userCanonicalRole === 'ellix_admin';
+                  const isCustomer = userCanonicalRole === 'customer';
+                  const roleLabel = isSuperAdmin
+                    ? 'Super Admin'
+                    : isEllixAdmin
+                    ? 'Admin'
+                    : isCustomer
+                    ? 'Customer'
+                    : userCanonicalRole === 'crew'
+                    ? 'Store Crew'
+                    : 'Store Owner';
+                  const consoleButtonLabel = (isSuperAdmin || isEllixAdmin)
+                    ? 'Admin Console'
+                    : isCustomer
+                    ? 'Customer Portal'
+                    : 'Open Console';
 
-                {onOpenAppPreview && (
-                  <button
-                    id="btn-nav-open-console"
-                    type="button"
-                    data-cursor="hover"
-                    onClick={onOpenAppPreview}
-                    className="website-btn-glow px-4 py-2 text-xs sm:text-sm font-semibold text-white bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 rounded-lg shadow-sm hover:shadow-emerald-500/30 transition-all flex items-center gap-1.5 cursor-pointer"
-                  >
-                    <LayoutDashboard className="w-4 h-4" />
-                    <span>Open Console</span>
-                  </button>
-                )}
+                  return (
+                    <>
+                      <button
+                        id="btn-nav-auth-user"
+                        type="button"
+                        data-cursor="hover"
+                        onClick={onOpenSignIn}
+                        className="website-btn-glow flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800/80 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 text-left transition-all cursor-pointer group"
+                      >
+                        {currentUser.photoURL ? (
+                          <img
+                            src={currentUser.photoURL}
+                            alt={currentUser.displayName || 'User'}
+                            className="w-6 h-6 rounded-lg object-cover"
+                          />
+                        ) : (
+                          <div className={`w-6 h-6 rounded-lg text-white text-[11px] font-bold flex items-center justify-center ${
+                            isSuperAdmin ? 'bg-rose-600' : isEllixAdmin ? 'bg-sky-600' : isCustomer ? 'bg-emerald-600' : 'bg-indigo-600'
+                          }`}>
+                            {(currentUser.displayName || currentUser.email || 'U').slice(0, 1).toUpperCase()}
+                          </div>
+                        )}
+                        <div className="flex flex-col text-left">
+                          <span className="text-xs font-semibold text-slate-800 dark:text-slate-200 max-w-[120px] truncate leading-tight">
+                            {currentUser.displayName || 'Account'}
+                          </span>
+                          <span className="text-[10px] text-slate-500 dark:text-slate-400 font-medium leading-tight">
+                            {roleLabel}
+                          </span>
+                        </div>
+                        <span className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_6px_rgba(16,185,129,0.8)]" title="Cloud Database Synced" />
+                      </button>
+
+                      {onOpenAppPreview && (
+                        <button
+                          id="btn-nav-open-console"
+                          type="button"
+                          data-cursor="hover"
+                          onClick={onOpenAppPreview}
+                          className="website-btn-glow px-4 py-2 text-xs sm:text-sm font-semibold text-white bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 rounded-lg shadow-sm hover:shadow-emerald-500/30 transition-all flex items-center gap-1.5 cursor-pointer"
+                        >
+                          <LayoutDashboard className="w-4 h-4" />
+                          <span>{consoleButtonLabel}</span>
+                        </button>
+                      )}
+                    </>
+                  );
+                })()}
               </div>
             ) : (
               <>
@@ -399,22 +432,42 @@ export const LandingHeader: React.FC<LandingHeaderProps> = ({
                 <ThemeToggle id="btn-theme-toggle-mobile" showLabel />
               </div>
 
-              {currentUser && (
-                <div className="flex items-center gap-2 p-2 rounded-xl bg-slate-100 dark:bg-slate-800/80 border border-emerald-500/30">
-                  <div className="w-7 h-7 rounded-lg bg-emerald-600 text-white font-bold text-xs flex items-center justify-center">
-                    {(currentUser.displayName || currentUser.email || 'U').slice(0, 1).toUpperCase()}
-                  </div>
-                  <div className="min-w-0 flex-1 text-xs">
-                    <div className="font-bold text-slate-900 dark:text-white truncate">
-                      {currentUser.displayName || 'Merchant Partner'}
+              {currentUser && (() => {
+                const userCanonicalRole = normalizeCanonicalRole(userProfile?.role);
+                const isSuperAdmin = userCanonicalRole === 'super_admin';
+                const isEllixAdmin = userCanonicalRole === 'ellix_admin';
+                const isCustomer = userCanonicalRole === 'customer';
+                const roleLabel = isSuperAdmin
+                  ? 'Super Admin'
+                  : isEllixAdmin
+                  ? 'Admin'
+                  : isCustomer
+                  ? 'Customer'
+                  : userCanonicalRole === 'crew'
+                  ? 'Store Crew'
+                  : 'Store Owner';
+
+                return (
+                  <div className="flex items-center gap-2.5 p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700">
+                    <div className={`w-8 h-8 rounded-lg text-white font-bold text-xs flex items-center justify-center shrink-0 ${
+                      isSuperAdmin ? 'bg-rose-600' : isEllixAdmin ? 'bg-sky-600' : isCustomer ? 'bg-emerald-600' : 'bg-indigo-600'
+                    }`}>
+                      {(currentUser.displayName || currentUser.email || 'U').slice(0, 1).toUpperCase()}
                     </div>
-                    <div className="text-[11px] text-emerald-600 dark:text-emerald-400 truncate flex items-center gap-1">
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                      <span>Cloud Database Connected</span>
+                    <div className="min-w-0 flex-1 text-xs">
+                      <div className="font-bold text-slate-900 dark:text-white truncate">
+                        {currentUser.displayName || 'Account'}
+                      </div>
+                      <div className="text-[11px] text-slate-500 dark:text-slate-400 truncate flex items-center gap-1.5">
+                        <span className="font-semibold text-emerald-600 dark:text-emerald-400">{roleLabel}</span>
+                        <span>·</span>
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                        <span>Cloud Synced</span>
+                      </div>
                     </div>
                   </div>
-                </div>
-              )}
+                );
+              })()}
 
               {onOpenAppPreview && (
                 <button
@@ -426,7 +479,14 @@ export const LandingHeader: React.FC<LandingHeaderProps> = ({
                   className="w-full py-2.5 text-center text-sm font-semibold text-white bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 rounded-xl shadow-sm transition-colors flex items-center justify-center gap-2 cursor-pointer"
                 >
                   <LayoutDashboard className="w-4 h-4" />
-                  <span>Open Merchant Console</span>
+                  <span>
+                    {(() => {
+                      const userCanonicalRole = normalizeCanonicalRole(userProfile?.role);
+                      if (userCanonicalRole === 'super_admin' || userCanonicalRole === 'ellix_admin') return 'Open Admin Console';
+                      if (userCanonicalRole === 'customer') return 'Open Customer Portal';
+                      return 'Open Merchant Console';
+                    })()}
+                  </span>
                 </button>
               )}
 

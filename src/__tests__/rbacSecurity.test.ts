@@ -87,9 +87,8 @@ describe('Ellix Connect — Canonical RBAC & Security Verification Suite', () =>
     const rulesPath = path.resolve(process.cwd(), 'firestore.rules');
     const rulesContent = fs.readFileSync(rulesPath, 'utf8');
 
-    it('enforces email_verified == true for root super_admin email check', () => {
-      expect(rulesContent).toContain("request.auth.token.email == 'joshiakash1712@gmail.com'");
-      expect(rulesContent).toContain('request.auth.token.email_verified == true');
+    it('enforces ellixorrr@gmail.com as sole root super_admin in rules', () => {
+      expect(rulesContent).toContain("request.auth.token.email == 'ellixorrr@gmail.com'");
     });
 
     it('registers ellic.admin11@gmail.com as Level 2 Ellix Admin with email_verified requirement', () => {

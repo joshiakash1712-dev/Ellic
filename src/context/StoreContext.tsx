@@ -596,7 +596,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode; isDemoMode?: b
 
   // Authoritative activeRole: for any authenticated user, activeRole is strictly bound to their canonical profile role
   const activeRole: UserRole = (!isDemoMode && authUser)
-    ? (userProfile ? mapProfileRoleToUserRole(userProfile.role, userProfile) : 'client')
+    ? (userProfile ? mapProfileRoleToUserRole(userProfile.role, userProfile) : 'customer')
     : activeRoleState;
 
   const canonicalRole = normalizeCanonicalRole(activeRole);

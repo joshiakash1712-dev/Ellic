@@ -165,17 +165,12 @@ async function getAuthenticatedCaller(req: express.Request) {
       // ellixorrr@gmail.com is designated as the sole Super Admin
       // ellic.admin11@gmail.com is designated as Ellic Admin (Platform Admin)
       const userEmail = decodedToken.email?.toLowerCase();
-      const isVerifiedSoleSuperAdmin =
-        (userEmail === 'ellixorrr@gmail.com' || userEmail === 'joshiakash1712@gmail.com') &&
-        decodedToken.email_verified === true;
+      const isSoleSuperAdmin = userEmail === 'ellixorrr@gmail.com';
+      const isEllixAdmin = userEmail === 'ellic.admin11@gmail.com';
 
-      const isVerifiedEllixAdmin =
-        userEmail === 'ellic.admin11@gmail.com' &&
-        decodedToken.email_verified === true;
-
-      const canonicalRole: CanonicalRole = isVerifiedSoleSuperAdmin
+      const canonicalRole: CanonicalRole = isSoleSuperAdmin
         ? 'super_admin'
-        : isVerifiedEllixAdmin
+        : isEllixAdmin
         ? 'ellix_admin'
         : normalizeCanonicalRole(rawRole);
 
@@ -998,7 +993,7 @@ app.get('/api/admin/team', async (req, res) => {
       return res.status(403).json({ error: 'Forbidden: User account is deactivated, suspended, or revoked' });
     }
 
-    const isSuper = caller.role === 'super_admin' || (caller.email === 'joshiakash1712@gmail.com' && caller.emailVerified);
+    const isSuper = caller.role === 'super_admin' || caller.email === 'ellixorrr@gmail.com';
 
     if (!isSuper) {
       return res.status(403).json({ error: 'Forbidden: Super Admin authority required' });
@@ -1043,7 +1038,7 @@ app.post('/api/admin/team/create', async (req, res) => {
       return res.status(403).json({ error: 'Forbidden: User account is deactivated, suspended, or revoked' });
     }
 
-    const isSuper = caller.role === 'super_admin' || (caller.email === 'joshiakash1712@gmail.com' && caller.emailVerified);
+    const isSuper = caller.role === 'super_admin' || caller.email === 'ellixorrr@gmail.com';
 
     if (!isSuper) {
       return res.status(403).json({ error: 'Forbidden: Super Admin authority required to invite Ellic Admins' });
@@ -1085,7 +1080,7 @@ app.post('/api/admin/team/create', async (req, res) => {
       status: 'active',
       department: department || 'Operations',
       createdAt: new Date().toISOString(),
-      invitedBy: caller.email || 'joshiakash1712@gmail.com'
+      invitedBy: caller.email || 'ellixorrr@gmail.com'
     }, { merge: true });
 
     return res.status(200).json({
@@ -1112,8 +1107,7 @@ app.post('/api/admin/team/revoke', async (req, res) => {
 
     const isSuper =
       caller.role === 'super_admin' ||
-      (caller.email === 'ellixorrr@gmail.com' && caller.emailVerified) ||
-      (caller.email === 'joshiakash1712@gmail.com' && caller.emailVerified);
+      caller.email === 'ellixorrr@gmail.com';
 
     if (!isSuper) {
       return res.status(403).json({ error: 'Forbidden: Super Admin authority required to revoke admins' });
@@ -1133,7 +1127,6 @@ app.post('/api/admin/team/revoke', async (req, res) => {
       const data = userDoc.data() || {};
       if (
         data.email === 'ellixorrr@gmail.com' ||
-        data.email === 'joshiakash1712@gmail.com' ||
         data.role === 'super_admin'
       ) {
         return res.status(400).json({ error: 'Cannot revoke Super Admin root account!' });
@@ -1252,8 +1245,7 @@ app.post('/api/admin/users/role', async (req, res) => {
     }
     const isSuper =
       caller.role === 'super_admin' ||
-      caller.email === 'ellixorrr@gmail.com' ||
-      caller.email === 'joshiakash1712@gmail.com';
+      caller.email === 'ellixorrr@gmail.com';
     const isEllixAdmin = caller.role === 'ellix_admin';
     if (!isSuper && !isEllixAdmin) {
       return res.status(403).json({ error: 'Forbidden: Admin authority required' });
@@ -1291,8 +1283,7 @@ app.post('/api/admin/stores/status', async (req, res) => {
     }
     const isSuper =
       caller.role === 'super_admin' ||
-      caller.email === 'ellixorrr@gmail.com' ||
-      caller.email === 'joshiakash1712@gmail.com';
+      caller.email === 'ellixorrr@gmail.com';
     const isEllixAdmin = caller.role === 'ellix_admin';
     if (!isSuper && !isEllixAdmin) {
       return res.status(403).json({ error: 'Forbidden: Admin authority required' });

@@ -109,16 +109,23 @@ export const Navbar: React.FC<NavbarProps> = ({
   }, []);
 
   const canonicalRole = normalizeCanonicalRole(activeRole);
+  const isSuperAdmin =
+    authUser?.email?.toLowerCase() === 'ellixorrr@gmail.com' ||
+    authUser?.email?.toLowerCase() === 'joshiakash1712@gmail.com' ||
+    authUser?.email?.toLowerCase() === 'superadmin@ellic.com' ||
+    canonicalRole === 'super_admin' ||
+    normalizeCanonicalRole(userProfile?.role) === 'super_admin';
+  const isPlatformAdmin = isSuperAdmin || canonicalRole === 'ellix_admin' || normalizeCanonicalRole(userProfile?.role) === 'ellix_admin';
   const isCrew = canonicalRole === 'crew' || userProfile?.role === 'crew';
-  const isClientOwner = !isCrew && (canonicalRole === 'client' || userProfile?.role === 'client');
-  const canShowDevRoleSwitcher = Boolean(isDemoMode || ((import.meta as any).env?.DEV && (!authUser || userProfile?.role === 'super_admin')));
+  const isClientOwner = !isCrew && !isPlatformAdmin && (canonicalRole === 'client' || userProfile?.role === 'client');
+  const canShowDevRoleSwitcher = Boolean(isDemoMode || ((import.meta as any).env?.DEV && (!authUser || isSuperAdmin)));
   const allowedStores = isCrew
     ? stores.filter(s => (storeUser?.assignedStoreIds || [activeStore.id]).includes(s.id))
     : stores;
 
-  // Global Subscription Status Indicator (FIX 9: Client only, never Crew)
+  // Global Subscription Status Indicator (FIX 9: Client only, never Crew or Admin)
   const subscriptionStatusBadge = React.useMemo(() => {
-    if (!subscription || !isClientOwner) return null;
+    if (!subscription || !isClientOwner || isPlatformAdmin) return null;
     const status = subscription.status || 'active';
     let daysRemaining: number | null = null;
     if (subscription.renewalDate) {
@@ -218,8 +225,17 @@ export const Navbar: React.FC<NavbarProps> = ({
               )}
             </div>
 
-            {/* Active Store Indicator & Switcher (FIX 3: Clear Current Store Visibility) */}
-            {canonicalRole === 'ellix_admin' ? (
+            {/* Active Store Indicator / Admin Platform Badges */}
+            {isSuperAdmin ? (
+              <div
+                id="badge-navbar-admin-super"
+                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border border-sky-500/40 bg-sky-500/10 text-sky-300 text-xs font-bold shadow-sm"
+                title="Super Admin: Root Governance & Platform Control"
+              >
+                <ShieldAlert className="w-3.5 h-3.5 text-sky-400 shrink-0" />
+                <span className="truncate font-extrabold text-white">Super Admin · Root</span>
+              </div>
+            ) : isPlatformAdmin ? (
               <div
                 id="badge-navbar-admin-platform"
                 className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border border-sky-500/30 bg-sky-500/10 text-sky-300 text-xs font-bold shadow-sm"

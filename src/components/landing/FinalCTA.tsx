@@ -7,7 +7,7 @@ interface FinalCTAProps {
 
 export const FinalCTA: React.FC<FinalCTAProps> = ({ onOpenGetStarted }) => {
   return (
-    <section className="py-12 sm:py-20 md:py-32 bg-white dark:bg-slate-950 transition-colors duration-200">
+    <section id="pricing" className="py-12 sm:py-20 md:py-32 bg-white dark:bg-slate-950 transition-colors duration-200 scroll-mt-20">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
         {/* Container with High-Contrast Slate Canvas */}

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useStore } from '../../context/StoreContext';
+import { useAuth } from '../../context/AuthContext';
 import {
   Lock,
   KeyRound,
@@ -22,6 +23,7 @@ import {
 
 export const AdminSecurity: React.FC = () => {
   const { addAuditLog } = useStore();
+  const { currentUser, isTotpEnrolled, setIsSyncHubOpen } = useAuth();
 
   // API Keys state
   const [apiKeys, setApiKeys] = useState(() => [
@@ -220,6 +222,45 @@ export const AdminSecurity: React.FC = () => {
               <option value={120}>2 Hours</option>
             </select>
           </div>
+        </div>
+
+        {/* TOTP Two-Factor Authentication Status for Super Admin / Client Roles */}
+        <div className="p-4 rounded-xl bg-[#0A0E1A] border border-slate-800 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs">
+          <div className="flex items-center gap-3">
+            <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
+              isTotpEnrolled
+                ? 'bg-sky-500/20 text-sky-400 border border-sky-500/30'
+                : 'bg-amber-500/10 text-amber-400 border border-amber-500/30'
+            }`}>
+              <ShieldCheck className="w-4 h-4" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="font-bold text-white">TOTP Two-Factor Authentication (Firebase Auth)</span>
+                {isTotpEnrolled ? (
+                  <span className="text-[10px] font-bold text-sky-400 bg-sky-500/10 px-2 py-0.5 rounded-lg border border-sky-500/20">
+                    Active on Your Session
+                  </span>
+                ) : (
+                  <span className="text-[10px] font-bold text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-lg border border-amber-500/20">
+                    Recommended for Super Admin & Client
+                  </span>
+                )}
+              </div>
+              <p className="text-[11px] text-slate-400 mt-0.5">
+                {isTotpEnrolled
+                  ? 'Your account is secured with time-based one-time codes on login.'
+                  : 'Protect root governance and tenant administrative privileges with Google Authenticator or 1Password.'}
+              </p>
+            </div>
+          </div>
+
+          <button
+            onClick={() => setIsSyncHubOpen(true)}
+            className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-sky-300 font-semibold text-xs border border-slate-700 transition-colors shrink-0 flex items-center gap-1.5"
+          >
+            <span>{isTotpEnrolled ? 'Manage 2FA' : 'Configure 2FA'}</span>
+          </button>
         </div>
 
         <div className="flex items-center justify-between pt-2">

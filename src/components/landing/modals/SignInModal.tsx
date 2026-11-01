@@ -38,6 +38,7 @@ export const SignInModal: React.FC<SignInModalProps> = ({
     loginWithGoogle,
     loginWithEmail,
     openAuthModal,
+    mfaResolver,
     logout
   } = useAuth();
 
@@ -47,6 +48,12 @@ export const SignInModal: React.FC<SignInModalProps> = ({
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (mfaResolver) {
+      onClose();
+    }
+  }, [mfaResolver, onClose]);
 
   useEffect(() => {
     if (isOpen) {

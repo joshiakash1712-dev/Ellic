@@ -559,6 +559,7 @@ export const EllixLandingPage: React.FC<EllixLandingPageProps> = ({ onLaunchApp,
       <LandingHeader
         onOpenSignIn={handleOpenSignIn}
         onOpenGetStarted={handleOpenGetStarted}
+        onOpenContact={() => setIsContactOpen(true)}
         onOpenAppPreview={onLaunchDemo}
         onOpenGuide={() => handleOpenGuide()}
         guideProgressStep={guideProgressState.currentStep}

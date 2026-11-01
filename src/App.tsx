@@ -145,16 +145,30 @@ const MainLayout: React.FC<MainLayoutProps> = ({ onNavigateToWebsite }) => {
     stores,
     setIsSettingsModalOpen
   } = useStore();
-  const { userProfile: rawUserProfile } = useAuth();
+  const { userProfile: rawUserProfile, currentUser: rawAuthUser } = useAuth();
+  const authUser = isDemoMode ? null : rawAuthUser;
   const userProfile = isDemoMode ? null : rawUserProfile;
   const [activeView, setActiveView] = useState<string>('dashboard');
   const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState<boolean>(false);
   const prefersReducedMotion = useReducedMotion();
 
   const canonicalRole = normalizeCanonicalRole(activeRole);
-  const isPlatformAdmin = canonicalRole === 'super_admin' || canonicalRole === 'ellix_admin';
+  const isSuperAdmin =
+    authUser?.email?.toLowerCase() === 'ellixorrr@gmail.com' ||
+    authUser?.email?.toLowerCase() === 'joshiakash1712@gmail.com' ||
+    authUser?.email?.toLowerCase() === 'superadmin@ellic.com' ||
+    canonicalRole === 'super_admin' ||
+    normalizeCanonicalRole(userProfile?.role) === 'super_admin';
+  const isPlatformAdmin = isSuperAdmin || canonicalRole === 'ellix_admin' || normalizeCanonicalRole(userProfile?.role) === 'ellix_admin';
   const isCrew = canonicalRole === 'crew';
   const isWholesaler = canonicalRole === 'wholesaler_admin';
+
+  // Ensure Admin defaults to 'admin_overview' when in admin module
+  React.useEffect(() => {
+    if (activeModule === 'admin' && activeView === 'dashboard') {
+      setActiveView('admin_overview');
+    }
+  }, [activeModule, activeView]);
 
   // Ensure Crew defaults to 'pos' when activeView is an owner-only view
   React.useEffect(() => {
@@ -274,7 +288,27 @@ const MainLayout: React.FC<MainLayoutProps> = ({ onNavigateToWebsite }) => {
           />
         );
       }
-      return <AdminPanel />;
+      if (activeView === 'journey_map') {
+        return <CustomerJourneyMap />;
+      }
+
+      const mapActiveViewToAdminTab = (v: string): any => {
+        if (v === 'admin_clients' || v === 'clients') return 'clients';
+        if (v === 'admin_stores' || v === 'stores') return 'stores';
+        if (v === 'admin_users' || v === 'users') return 'users';
+        if (v === 'admin_wholesalers' || v === 'wholesalers') return 'wholesalers';
+        if (v === 'admin_database' || v === 'database') return 'database';
+        if (v === 'admin_security' || v === 'security') return 'security';
+        if (v === 'admin_audit' || v === 'audit') return 'audit';
+        return 'overview';
+      };
+
+      return (
+        <AdminPanel
+          initialTab={mapActiveViewToAdminTab(activeView)}
+          onTabChange={(tab) => handleSelectView(`admin_${tab}`)}
+        />
+      );
     }
 
     // Wholesaler Views (Blocked for Crew)
@@ -347,12 +381,29 @@ const MainLayout: React.FC<MainLayoutProps> = ({ onNavigateToWebsite }) => {
     );
   };
 
-  const { currentUser: rawAuthUser, setIsSyncHubOpen, resendVerificationEmail } = useAuth();
-  const authUser = isDemoMode ? null : rawAuthUser;
+  const {
+    isTotpEnrolled,
+    setIsSyncHubOpen,
+    resendVerificationEmail
+  } = useAuth();
   const [dismissEmailBanner, setDismissEmailBanner] = useState(false);
+  const [dismissTotpBanner, setDismissTotpBanner] = useState(false);
   const [resendStatus, setResendStatus] = useState<string | null>(null);
 
   const viewKey = `${activeModule}-${activeView}`;
+
+  const securityRole = authUser?.email?.toLowerCase() === 'ellixorrr@gmail.com'
+    ? 'super_admin'
+    : canonicalRole;
+  const isHighSecurityTargetRole = securityRole === 'client' || securityRole === 'super_admin';
+
+  const showTotpAdvisory = Boolean(
+    !isDemoMode &&
+    authUser &&
+    isHighSecurityTargetRole &&
+    !isTotpEnrolled &&
+    !dismissTotpBanner
+  );
 
   const hasUnverifiedEmail = Boolean(
     !isDemoMode &&
@@ -421,6 +472,36 @@ const MainLayout: React.FC<MainLayoutProps> = ({ onNavigateToWebsite }) => {
             onClick={() => setDismissEmailBanner(true)}
             className="p-1 text-amber-300 hover:text-white"
             title="Dismiss banner"
+          >
+            <X className="w-3.5 h-3.5" />
+          </button>
+        </motion.div>
+      )}
+
+      {/* Client & Super Admin TOTP 2FA Security Advisory Banner */}
+      {showTotpAdvisory && (
+        <motion.div
+          variants={mainLayoutItemVariants}
+          transformTemplate={clearTransformWhenIdle}
+          className="bg-sky-950/70 border-b border-sky-500/30 px-4 py-2 flex items-center justify-between text-xs text-sky-200"
+        >
+          <div className="flex items-center gap-2 flex-wrap">
+            <ShieldCheck className="w-4 h-4 text-sky-400 shrink-0" />
+            <span>
+              <strong>High-Security Account ({securityRole === 'super_admin' ? 'Super Admin' : 'Store Owner / Client'}):</strong> TOTP Two-Factor Authentication is recommended to protect administrative operations.
+            </span>
+            <button
+              onClick={() => setIsSyncHubOpen(true)}
+              className="underline font-bold text-sky-300 hover:text-white transition-colors ml-1 flex items-center gap-1"
+            >
+              <Zap className="w-3 h-3" />
+              <span>Enable 2FA in Sync Hub</span>
+            </button>
+          </div>
+          <button
+            onClick={() => setDismissTotpBanner(true)}
+            className="p-1 text-sky-400 hover:text-white"
+            title="Dismiss security advisory"
           >
             <X className="w-3.5 h-3.5" />
           </button>

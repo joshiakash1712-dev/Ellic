@@ -80,6 +80,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
     currentUser: storeUser,
     products,
     suppliers,
+    employees,
+    businessApplications,
     theme,
     toggleTheme,
     setIsSettingsModalOpen
@@ -99,7 +101,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
   const canonicalRole = normalizeCanonicalRole(activeRole);
   const isCrew = canonicalRole === 'crew';
-  const isPlatformAdmin = canonicalRole === 'super_admin' || canonicalRole === 'ellix_admin';
+  const isSuperAdmin =
+    authUser?.email?.toLowerCase() === 'ellixorrr@gmail.com' ||
+    authUser?.email?.toLowerCase() === 'joshiakash1712@gmail.com' ||
+    authUser?.email?.toLowerCase() === 'superadmin@ellic.com' ||
+    canonicalRole === 'super_admin' ||
+    normalizeCanonicalRole(userProfile?.role) === 'super_admin';
+  const isPlatformAdmin = isSuperAdmin || canonicalRole === 'ellix_admin' || normalizeCanonicalRole(userProfile?.role) === 'ellix_admin';
   const isWholesaler = canonicalRole === 'wholesaler_admin';
 
   const allowedStores = isCrew
@@ -130,8 +138,31 @@ export const Sidebar: React.FC<SidebarProps> = ({
     { id: 'wholesaler_retailers', label: 'Connected Retailers', shortLabel: 'Retailers', icon: <Building2 className="w-5 h-5" /> }
   ];
 
+  const pendingAppsCount = businessApplications?.filter(a => a.status === 'pending').length || 0;
+
   const adminItems: NavItem[] = [
-    { id: 'admin_dashboard', label: 'Platform Console', shortLabel: 'Platform', icon: <Sliders className="w-5 h-5" /> },
+    { id: 'admin_overview', label: 'Platform Console', shortLabel: 'Console', icon: <Sliders className="w-5 h-5" /> },
+    {
+      id: 'admin_clients',
+      label: 'Clients & Subscriptions',
+      shortLabel: 'Clients',
+      icon: <Building2 className="w-5 h-5" />,
+      badge: pendingAppsCount > 0 ? `${pendingAppsCount} Pending` : undefined
+    },
+    { id: 'admin_stores', label: 'Stores & Franchises', shortLabel: 'Stores', icon: <StoreIcon className="w-5 h-5" />, count: stores.length },
+    {
+      id: 'admin_users',
+      label: isSuperAdmin ? 'Crew & RBAC Governance' : 'Client & User Access',
+      shortLabel: 'Users & RBAC',
+      icon: <Users className="w-5 h-5" />,
+      count: employees.length
+    },
+    { id: 'admin_wholesalers', label: 'Wholesale B2B Hub', shortLabel: 'Wholesale', icon: <Truck className="w-5 h-5" /> },
+    ...(isSuperAdmin ? [
+      { id: 'admin_database', label: 'Database & Sync', shortLabel: 'Database', icon: <Database className="w-5 h-5" /> },
+      { id: 'admin_security', label: 'Security & 2FA Governance', shortLabel: 'Security', icon: <Lock className="w-5 h-5" /> }
+    ] : []),
+    { id: 'admin_audit', label: 'Compliance Audit Trail', shortLabel: 'Audit', icon: <Activity className="w-5 h-5" /> },
     { id: 'journey_map', label: 'Customer Journey Map', shortLabel: 'Journey', icon: <Compass className="w-5 h-5" />, badge: 'UX' }
   ];
 
@@ -162,19 +193,36 @@ export const Sidebar: React.FC<SidebarProps> = ({
         {/* Subtle brand gradient backdrop BEHIND the glass sidebar */}
         <div className="absolute inset-0 -z-10 bg-gradient-to-b from-blue-600/10 via-sky-500/5 to-transparent pointer-events-none" />
         <div className="space-y-4">
-          {/* Active Store Profile Pill (FIX 3: Clear Current Store Visibility) */}
-          <div className="flex items-center gap-3 p-2.5 rounded-xl bg-[#161D2C] border border-slate-800 shadow-sm">
-            <div className="w-10 h-10 rounded-lg bg-gradient-to-tr from-blue-600 to-sky-500 text-white flex items-center justify-center font-bold text-sm shadow-md shrink-0">
-              {activeStore.name?.slice(0, 2).toUpperCase() || 'EM'}
-            </div>
-            <div className="min-w-0 flex-1">
-              <div className="text-xs font-bold text-white truncate">{activeStore.name || 'Main Store'}</div>
-              <div className="text-[10px] text-sky-400 font-semibold truncate flex items-center gap-1 mt-0.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-sky-400 shrink-0" />
-                <span>{isCrew ? 'Assigned Store' : 'Active Store'} · {activeStore.city || 'India'}</span>
+          {/* Active Store / Executive Admin Profile Pill */}
+          {activeModule === 'admin' ? (
+            <div className="flex items-center gap-3 p-2.5 rounded-xl bg-gradient-to-r from-blue-950/60 to-[#161D2C] border border-sky-500/30 shadow-sm">
+              <div className="w-10 h-10 rounded-lg bg-gradient-to-tr from-sky-500 to-blue-600 text-white flex items-center justify-center font-black text-sm shadow-md shrink-0">
+                <ShieldAlert className="w-5 h-5 text-white" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="text-xs font-bold text-white truncate">
+                  {isSuperAdmin ? 'Superadmin Control Hub' : 'Platform Operations'}
+                </div>
+                <div className="text-[10px] text-sky-400 font-semibold truncate flex items-center gap-1 mt-0.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-sky-400 animate-pulse shrink-0" />
+                  <span>Root Governance · {stores.length} Outlets</span>
+                </div>
               </div>
             </div>
-          </div>
+          ) : (
+            <div className="flex items-center gap-3 p-2.5 rounded-xl bg-[#161D2C] border border-slate-800 shadow-sm">
+              <div className="w-10 h-10 rounded-lg bg-gradient-to-tr from-blue-600 to-sky-500 text-white flex items-center justify-center font-bold text-sm shadow-md shrink-0">
+                {activeStore.name?.slice(0, 2).toUpperCase() || 'EM'}
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="text-xs font-bold text-white truncate">{activeStore.name || 'Main Store'}</div>
+                <div className="text-[10px] text-sky-400 font-semibold truncate flex items-center gap-1 mt-0.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-sky-400 shrink-0" />
+                  <span>{isCrew ? 'Assigned Store' : 'Active Store'} · {activeStore.city || 'India'}</span>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Primary Workspace Switcher (Desktop Sidebar - FIX 2) */}
           {modulesList.length > 1 && (
@@ -205,7 +253,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
             </div>
 
             {items.map(item => {
-              const isActive = activeView === item.id;
+              const isActive =
+                activeView === item.id ||
+                (item.id === 'admin_overview' && (activeView === 'admin_dashboard' || activeView === 'overview' || activeView === 'admin_overview')) ||
+                (item.id === `admin_${activeView}`);
               return (
                 <button
                   key={item.id}
@@ -427,57 +478,76 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 </div>
 
                 {/* Active Store & Role Summary Card */}
-                <div className="p-3 rounded-xl bg-[#161D2C] border border-slate-800 shadow-md space-y-2">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2 min-w-0">
-                      <div className="w-8 h-8 rounded-lg bg-blue-500/20 border border-blue-500/30 flex items-center justify-center text-sky-400 font-extrabold text-xs shrink-0">
-                        {activeStore.name?.slice(0, 2).toUpperCase() || 'EM'}
+                {activeModule === 'admin' ? (
+                  <div className="p-3.5 rounded-xl bg-gradient-to-r from-blue-950/60 to-[#161D2C] border border-sky-500/30 shadow-md space-y-2">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-9 h-9 rounded-lg bg-gradient-to-tr from-sky-500 to-blue-600 text-white flex items-center justify-center font-black text-xs shrink-0">
+                        <ShieldAlert className="w-5 h-5" />
                       </div>
-                      <div className="min-w-0">
-                        <div className="text-xs font-bold text-white truncate">{activeStore.name}</div>
-                        <div className="text-[10px] text-slate-400 truncate">{activeStore.city} • {activeRole.replace('_', ' ')}</div>
+                      <div className="min-w-0 flex-1">
+                        <div className="text-xs font-bold text-white truncate">
+                          {isSuperAdmin ? 'Superadmin Control Hub' : 'Platform Operations'}
+                        </div>
+                        <div className="text-[10px] text-sky-400 font-semibold truncate flex items-center gap-1 mt-0.5">
+                          <span className="w-1.5 h-1.5 rounded-full bg-sky-400 animate-pulse shrink-0" />
+                          <span>Root Governance · {stores.length} Outlets</span>
+                        </div>
                       </div>
                     </div>
                   </div>
-
-                  {/* Switch Store Button if Retailer */}
-                  {activeModule === 'retailer' && (
-                    <div>
-                      <button
-                        onClick={() => setShowStorePickerInDrawer(!showStorePickerInDrawer)}
-                        className="w-full min-h-[48px] mt-1 py-2.5 px-3 rounded-lg bg-[#121826] hover:bg-slate-800 text-slate-300 text-[11px] font-semibold flex items-center justify-between border border-slate-700/60"
-                      >
-                        <span className="flex items-center gap-1.5">
-                          <Building2 className="w-3.5 h-3.5 text-sky-400" />
-                          <span>Switch Active Store</span>
-                        </span>
-                        <ChevronRight className={`w-4 h-4 transition-transform ${showStorePickerInDrawer ? 'rotate-90' : ''}`} />
-                      </button>
-
-                      {showStorePickerInDrawer && (
-                        <div className="mt-2 space-y-1.5 pt-1 border-t border-slate-700/40">
-                          {allowedStores.map(st => (
-                            <button
-                              key={st.id}
-                              onClick={() => {
-                                setActiveStore(st);
-                                setShowStorePickerInDrawer(false);
-                              }}
-                              className={`w-full min-h-[48px] text-left px-3 py-2.5 rounded-lg text-[11px] flex items-center justify-between transition-colors ${
-                                activeStore.id === st.id
-                                  ? 'bg-blue-500/20 text-sky-300 font-bold border border-blue-500/30'
-                                  : 'text-slate-300 hover:bg-slate-700/40'
-                              }`}
-                            >
-                              <span className="truncate">{st.name}</span>
-                              {activeStore.id === st.id && <CheckCircle2 className="w-4 h-4 text-sky-400 shrink-0" />}
-                            </button>
-                          ))}
+                ) : (
+                  <div className="p-3 rounded-xl bg-[#161D2C] border border-slate-800 shadow-md space-y-2">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <div className="w-8 h-8 rounded-lg bg-blue-500/20 border border-blue-500/30 flex items-center justify-center text-sky-400 font-extrabold text-xs shrink-0">
+                          {activeStore.name?.slice(0, 2).toUpperCase() || 'EM'}
                         </div>
-                      )}
+                        <div className="min-w-0">
+                          <div className="text-xs font-bold text-white truncate">{activeStore.name}</div>
+                          <div className="text-[10px] text-slate-400 truncate">{activeStore.city} • {activeRole.replace('_', ' ')}</div>
+                        </div>
+                      </div>
                     </div>
-                  )}
-                </div>
+
+                    {/* Switch Store Button if Retailer */}
+                    {activeModule === 'retailer' && (
+                      <div>
+                        <button
+                          onClick={() => setShowStorePickerInDrawer(!showStorePickerInDrawer)}
+                          className="w-full min-h-[48px] mt-1 py-2.5 px-3 rounded-lg bg-[#121826] hover:bg-slate-800 text-slate-300 text-[11px] font-semibold flex items-center justify-between border border-slate-700/60"
+                        >
+                          <span className="flex items-center gap-1.5">
+                            <Building2 className="w-3.5 h-3.5 text-sky-400" />
+                            <span>Switch Active Store</span>
+                          </span>
+                          <ChevronRight className={`w-4 h-4 transition-transform ${showStorePickerInDrawer ? 'rotate-90' : ''}`} />
+                        </button>
+
+                        {showStorePickerInDrawer && (
+                          <div className="mt-2 space-y-1.5 pt-1 border-t border-slate-700/40">
+                            {allowedStores.map(st => (
+                              <button
+                                key={st.id}
+                                onClick={() => {
+                                  setActiveStore(st);
+                                  setShowStorePickerInDrawer(false);
+                                }}
+                                className={`w-full min-h-[48px] text-left px-3 py-2.5 rounded-lg text-[11px] flex items-center justify-between transition-colors ${
+                                  activeStore.id === st.id
+                                    ? 'bg-blue-500/20 text-sky-300 font-bold border border-blue-500/30'
+                                    : 'text-slate-300 hover:bg-slate-700/40'
+                                }`}
+                              >
+                                <span className="truncate">{st.name}</span>
+                                {activeStore.id === st.id && <CheckCircle2 className="w-4 h-4 text-sky-400 shrink-0" />}
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
 
                 {/* Module Switcher Tabs (Android Segmented Button) */}
                 {!isCrew && modulesList.length > 1 && (
@@ -516,7 +586,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   </div>
 
                   {items.map(item => {
-                    const isActive = activeView === item.id;
+                    const isActive =
+                      activeView === item.id ||
+                      (item.id === 'admin_overview' && (activeView === 'admin_dashboard' || activeView === 'overview' || activeView === 'admin_overview')) ||
+                      (item.id === `admin_${activeView}`);
                     return (
                       <button
                         key={item.id}

@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { ConfirmationResult } from 'firebase/auth';
+import { ConfirmationResult, TotpSecret } from 'firebase/auth';
 import { useAuth } from '../../context/AuthContext';
+import { normalizeCanonicalRole } from '../../types';
 import {
   LEGAL_CONFIG,
   getConsentAuditHistory,
@@ -24,7 +25,10 @@ import {
   Zap,
   Check,
   HelpCircle,
-  Download
+  Download,
+  QrCode,
+  Copy,
+  ShieldAlert
 } from 'lucide-react';
 
 export const AccountSyncHubModal: React.FC = () => {
@@ -33,6 +37,10 @@ export const AccountSyncHubModal: React.FC = () => {
     userProfile,
     isSyncHubOpen,
     setIsSyncHubOpen,
+    isTotpEnrolled,
+    startTotpEnrollment,
+    confirmTotpEnrollment,
+    unenrollTotp,
     linkGoogleAccount,
     linkEmailAndPassword,
     setUpPhoneRecaptcha,
@@ -43,8 +51,19 @@ export const AccountSyncHubModal: React.FC = () => {
     logout
   } = useAuth();
 
-  // Dialog sub-modes for linking
-  const [activeLinkingTarget, setActiveLinkingTarget] = useState<'none' | 'email' | 'phone' | 'password'>('none');
+  // Dialog sub-modes for linking & MFA
+  const [activeLinkingTarget, setActiveLinkingTarget] = useState<'none' | 'email' | 'phone' | 'password' | 'totp'>('none');
+
+  // TOTP 2FA enrollment states
+  const [totpSetupData, setTotpSetupData] = useState<{
+    secretKey: string;
+    qrCodeUrl: string;
+    qrCodeDataUrl: string;
+    totpSecret: TotpSecret;
+  } | null>(null);
+  const [totpEnrollDigits, setTotpEnrollDigits] = useState(['', '', '', '', '', '']);
+  const [copiedSecret, setCopiedSecret] = useState(false);
+  const totpEnrollInputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
   // Email linking states
   const [linkEmail, setLinkEmail] = useState('');
@@ -75,10 +94,19 @@ export const AccountSyncHubModal: React.FC = () => {
       setActiveLinkingTarget('none');
       setErrorMessage(null);
       setSuccessMessage(null);
+      setTotpSetupData(null);
+      setTotpEnrollDigits(['', '', '', '', '', '']);
+      setCopiedSecret(false);
     }
   }, [isSyncHubOpen]);
 
   if (!isSyncHubOpen || !currentUser) return null;
+
+  // Determine user role security requirements
+  const canonicalRole = currentUser.email?.toLowerCase() === 'ellixorrr@gmail.com'
+    ? 'super_admin'
+    : normalizeCanonicalRole(userProfile?.role);
+  const isHighSecurityTargetRole = canonicalRole === 'client' || canonicalRole === 'super_admin';
 
   // Determine linked providers from Firebase user.providerData and userProfile
   const linkedProviderIds = currentUser.providerData.map(p => p.providerId);
@@ -239,6 +267,73 @@ export const AccountSyncHubModal: React.FC = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  // 6. Start TOTP Two-Factor Authentication Setup
+  const handleStartTotpEnrollment = async () => {
+    setLoading(true);
+    setErrorMessage(null);
+    setSuccessMessage(null);
+    try {
+      const res = await startTotpEnrollment();
+      setTotpSetupData(res);
+      setTotpEnrollDigits(['', '', '', '', '', '']);
+      setActiveLinkingTarget('totp');
+    } catch (err: any) {
+      setErrorMessage(err?.message || 'Failed to initialize TOTP two-factor enrollment.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 7. Verify & Confirm TOTP Enrollment
+  const handleConfirmTotpEnrollment = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const code = totpEnrollDigits.join('').trim();
+    if (code.length !== 6 || !totpSetupData) {
+      setErrorMessage('Please enter the complete 6-digit code from your authenticator app.');
+      return;
+    }
+    setLoading(true);
+    setErrorMessage(null);
+    try {
+      await confirmTotpEnrollment(totpSetupData.totpSecret, code);
+      setSuccessMessage('TOTP Two-Factor Authentication has been successfully activated on your account!');
+      setActiveLinkingTarget('none');
+      setTotpSetupData(null);
+      setTotpEnrollDigits(['', '', '', '', '', '']);
+    } catch (err: any) {
+      setErrorMessage(err?.message || 'Invalid 6-digit code. Please check your authenticator and try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 8. Unenroll TOTP 2FA
+  const handleUnenrollTotp = async () => {
+    if (!window.confirm('Are you sure you want to disable TOTP Two-Factor Authentication? Account security will be reduced.')) {
+      return;
+    }
+    setLoading(true);
+    setErrorMessage(null);
+    try {
+      await unenrollTotp();
+      setSuccessMessage('TOTP Two-Factor Authentication has been disabled for your account.');
+      setActiveLinkingTarget('none');
+      setTotpSetupData(null);
+    } catch (err: any) {
+      setErrorMessage(err?.message || 'Failed to disable TOTP Two-Factor Authentication.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 9. Copy secret key to clipboard
+  const handleCopySecretKey = () => {
+    if (!totpSetupData?.secretKey) return;
+    navigator.clipboard.writeText(totpSetupData.secretKey);
+    setCopiedSecret(true);
+    setTimeout(() => setCopiedSecret(false), 2500);
   };
 
   return (
@@ -534,6 +629,70 @@ export const AccountSyncHubModal: React.FC = () => {
             </div>
           </div>
 
+          {/* Section 1.5: Two-Factor Authentication (TOTP Authenticator) Card */}
+          <div className="p-4 rounded-xl bg-slate-950/80 border border-slate-800 space-y-3">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="flex items-start gap-3">
+                <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${
+                  isTotpEnrolled
+                    ? 'bg-sky-500/20 text-sky-400 border border-sky-500/30'
+                    : isHighSecurityTargetRole
+                      ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
+                      : 'bg-slate-800 text-slate-400 border border-slate-700'
+                }`}>
+                  <ShieldCheck className="w-5 h-5" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h4 className="text-xs font-bold text-white">
+                      Two-Factor Authentication (TOTP Authenticator)
+                    </h4>
+                    {isHighSecurityTargetRole && (
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-500/10 text-sky-400 border border-sky-500/30">
+                        {canonicalRole === 'super_admin' ? 'Super Admin Priority' : 'Client / Store Owner Priority'}
+                      </span>
+                    )}
+                    {isTotpEnrolled ? (
+                      <span className="px-2 py-0.5 rounded text-[10px] font-extrabold bg-sky-500/20 text-sky-300 border border-sky-500/30 flex items-center gap-1">
+                        <Check className="w-3 h-3" />
+                        Active & Enforced
+                      </span>
+                    ) : (
+                      <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-slate-800 text-slate-400 border border-slate-700">
+                        Not Enrolled
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-[11px] text-slate-400 mt-1">
+                    Requires a 6-digit verification code from Google Authenticator, Microsoft Authenticator, or 1Password when signing in.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
+                {isTotpEnrolled ? (
+                  <button
+                    onClick={handleUnenrollTotp}
+                    disabled={loading}
+                    className="px-3 py-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 border border-rose-500/30 text-xs font-semibold transition-colors disabled:opacity-50 flex items-center gap-1.5"
+                  >
+                    {loading ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Lock className="w-3.5 h-3.5" />}
+                    <span>Disable 2FA</span>
+                  </button>
+                ) : (
+                  <button
+                    onClick={handleStartTotpEnrollment}
+                    disabled={loading}
+                    className="px-3.5 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition-all shadow-md shadow-blue-600/20 flex items-center gap-1.5 disabled:opacity-50"
+                  >
+                    {loading ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <ShieldCheck className="w-3.5 h-3.5" />}
+                    <span>Set Up Authenticator App</span>
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+
           {/* Section 2: Inline Dialogs for Linking */}
           
           {/* LINK EMAIL & PASSWORD SUB-FORM */}
@@ -692,6 +851,150 @@ export const AccountSyncHubModal: React.FC = () => {
                   </button>
                 </form>
               )}
+            </div>
+          )}
+
+          {/* TOTP 2FA ENROLLMENT WIZARD SUB-FORM */}
+          {activeLinkingTarget === 'totp' && totpSetupData && (
+            <div className="p-5 rounded-xl bg-slate-950 border border-sky-500/40 space-y-4">
+              <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+                <div className="flex items-center gap-2">
+                  <div className="p-1.5 rounded-lg bg-sky-500/10 text-sky-400">
+                    <QrCode className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h4 className="text-xs font-bold text-white">
+                      Set Up TOTP Two-Factor Authenticator
+                    </h4>
+                    <p className="text-[11px] text-slate-400">
+                      Scan the QR code or enter the key in your authenticator app
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => {
+                    setActiveLinkingTarget('none');
+                    setTotpSetupData(null);
+                  }}
+                  className="text-slate-400 hover:text-white text-xs font-semibold"
+                >
+                  Cancel
+                </button>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-center">
+                {/* QR Code Container */}
+                <div className="flex flex-col items-center justify-center p-4 rounded-xl bg-slate-900/90 border border-slate-800 text-center">
+                  <div className="p-2 bg-white rounded-xl shadow-lg mb-2">
+                    <img
+                      src={totpSetupData.qrCodeDataUrl}
+                      alt="TOTP Enrollment QR Code"
+                      className="w-36 h-36 object-contain"
+                    />
+                  </div>
+                  <span className="text-[10px] text-slate-400 font-medium">
+                    Scan with Google Authenticator, Microsoft Authenticator, or 1Password
+                  </span>
+                </div>
+
+                {/* Secret Key & Instructions */}
+                <div className="space-y-3">
+                  <div>
+                    <label className="block text-[11px] font-semibold text-slate-300 mb-1">
+                      Can't scan? Enter this secret key manually:
+                    </label>
+                    <div className="flex items-center gap-1.5 p-2 rounded-lg bg-slate-900 border border-slate-800 font-mono text-xs text-sky-300 select-all break-all">
+                      <span className="flex-1 tracking-wider">{totpSetupData.secretKey}</span>
+                      <button
+                        type="button"
+                        onClick={handleCopySecretKey}
+                        className="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 text-[11px] font-sans font-semibold shrink-0 flex items-center gap-1 transition-colors"
+                        title="Copy Secret Key"
+                      >
+                        {copiedSecret ? (
+                          <>
+                            <Check className="w-3 h-3 text-sky-400" />
+                            <span className="text-sky-300">Copied</span>
+                          </>
+                        ) : (
+                          <>
+                            <Copy className="w-3 h-3" />
+                            <span>Copy</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="text-[11px] text-slate-400 bg-slate-900/50 p-2.5 rounded-lg border border-slate-800/80 space-y-1">
+                    <div className="font-semibold text-slate-300">Account identifier:</div>
+                    <div className="text-slate-400 truncate">{currentUser.email || currentUser.displayName || 'Ellic Account'}</div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Step 2: Verification Code Input */}
+              <form onSubmit={handleConfirmTotpEnrollment} className="pt-2 border-t border-slate-800 space-y-3">
+                <div className="text-center sm:text-left">
+                  <label className="block text-[11px] font-semibold text-slate-300 mb-1">
+                    Enter the 6-digit verification code from your authenticator:
+                  </label>
+                  <p className="text-[11px] text-slate-400">
+                    This confirms your authenticator is synchronized and functioning properly.
+                  </p>
+                </div>
+
+                <div className="flex justify-center gap-2 py-1">
+                  {totpEnrollDigits.map((digit, idx) => (
+                    <input
+                      key={idx}
+                      ref={(el) => (totpEnrollInputRefs.current[idx] = el)}
+                      type="text"
+                      inputMode="numeric"
+                      pattern="[0-9]*"
+                      maxLength={1}
+                      value={digit}
+                      onChange={(e) => {
+                        const val = e.target.value.replace(/\D/g, '').slice(-1);
+                        const next = [...totpEnrollDigits];
+                        next[idx] = val;
+                        setTotpEnrollDigits(next);
+                        if (val && idx < 5) {
+                          totpEnrollInputRefs.current[idx + 1]?.focus();
+                        }
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Backspace' && !totpEnrollDigits[idx] && idx > 0) {
+                          totpEnrollInputRefs.current[idx - 1]?.focus();
+                        }
+                      }}
+                      aria-label={`Verification code digit ${idx + 1} of 6`}
+                      className="w-10 h-11 text-center font-bold text-lg bg-slate-900 border border-slate-700 rounded-lg text-white focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500"
+                    />
+                  ))}
+                </div>
+
+                <div className="flex items-center justify-end gap-2 pt-1">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setActiveLinkingTarget('none');
+                      setTotpSetupData(null);
+                    }}
+                    className="px-3.5 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-white transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={loading || totpEnrollDigits.join('').length !== 6}
+                    className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition-all shadow-md shadow-blue-600/20 flex items-center gap-1.5 disabled:opacity-50"
+                  >
+                    {loading ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <ShieldCheck className="w-3.5 h-3.5" />}
+                    <span>Verify & Activate 2FA</span>
+                  </button>
+                </div>
+              </form>
             </div>
           )}
 

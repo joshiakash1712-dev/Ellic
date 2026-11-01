@@ -169,8 +169,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const nowIso = new Date().toISOString();
 
       const userEmail = user.email?.toLowerCase() || '';
-      const isSuperAdminEmail = userEmail === 'ellixorrr@gmail.com';
-      const isEllixAdminEmail = userEmail === 'ellic.admin11@gmail.com';
+      const isSuperAdminEmail =
+        userEmail === 'ellixorrr@gmail.com' ||
+        userEmail === 'joshiakash1712@gmail.com' ||
+        userEmail === 'superadmin@ellic.com';
+      const isEllixAdminEmail = userEmail === 'ellic.admin11@gmail.com' || userEmail === 'admin@ellic.com';
 
       if (snap.exists()) {
         const existingData = snap.data() as UserProfile;

@@ -34,7 +34,10 @@ export const AuthModal: React.FC = () => {
     setUpPhoneRecaptcha,
     sendPhoneOtp,
     confirmPhoneOtp,
-    sendPasswordReset
+    sendPasswordReset,
+    mfaResolver,
+    resolveTotpSignIn,
+    cancelMfaSignIn
   } = useAuth();
 
   // Mode state
@@ -53,6 +56,10 @@ export const AuthModal: React.FC = () => {
   const [confirmationResult, setConfirmationResult] = useState<ConfirmationResult | null>(null);
   const [otpSent, setOtpSent] = useState(false);
   const [resendTimer, setResendTimer] = useState(0);
+
+  // TOTP 2FA states
+  const [totpDigits, setTotpDigits] = useState(['', '', '', '', '', '']);
+  const totpInputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
   // UI helpers
   const [showPassword, setShowPassword] = useState(false);
@@ -285,6 +292,50 @@ export const AuthModal: React.FC = () => {
     }
   };
 
+  // TOTP 2FA Verification Handler
+  const handleTotpDigitChange = (index: number, val: string) => {
+    const clean = val.replace(/\D/g, '');
+    const newDigits = [...totpDigits];
+    newDigits[index] = clean.slice(-1);
+    setTotpDigits(newDigits);
+
+    if (clean && index < 5) {
+      totpInputRefs.current[index + 1]?.focus();
+    }
+  };
+
+  const handleTotpKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Backspace' && !totpDigits[index] && index > 0) {
+      totpInputRefs.current[index - 1]?.focus();
+    }
+  };
+
+  const handleVerifyTotpSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const fullCode = totpDigits.join('');
+    if (fullCode.length !== 6) {
+      setErrorMessage('Please enter the full 6-digit code from your authenticator app.');
+      return;
+    }
+    setLoading(true);
+    setErrorMessage(null);
+    try {
+      await resolveTotpSignIn(fullCode);
+      setSuccessMessage('Two-Factor Authentication verified successfully!');
+    } catch (err: any) {
+      setErrorMessage(err?.message || 'Two-Factor verification failed. Please check the code.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCancelTotp = () => {
+    cancelMfaSignIn();
+    setMode('login');
+    setTotpDigits(['', '', '', '', '', '']);
+    setErrorMessage(null);
+  };
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/80 animate-fadeIn">
       {/* Container Card */}
@@ -318,56 +369,73 @@ export const AuthModal: React.FC = () => {
             </div>
           </div>
 
-          {/* Mode Switcher Tabs */}
-          <div className="mt-4 flex items-center p-1 bg-slate-950/70 rounded-xl border border-slate-800/80">
-            <button
-              onClick={() => {
-                setMode('login');
-                setErrorMessage(null);
-                setSuccessMessage(null);
-              }}
-              className={`flex-1 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center justify-center gap-1.5 ${
-                mode === 'login'
-                  ? 'bg-blue-600 text-white shadow-sm'
-                  : 'text-slate-400 hover:text-white hover:bg-slate-800/40'
-              }`}
-            >
-              <Mail className="w-3.5 h-3.5" />
-              <span>Email Sign In</span>
-            </button>
+          {/* Mode Switcher Tabs or 2FA Header */}
+          {mode === 'mfa_totp' ? (
+            <div className="mt-4 p-3 rounded-xl bg-gradient-to-r from-sky-500/10 via-blue-500/10 to-indigo-500/10 border border-sky-500/30 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="p-1.5 rounded-lg bg-sky-500/20 text-sky-400">
+                  <ShieldCheck className="w-4 h-4" />
+                </div>
+                <div>
+                  <span className="text-xs font-bold text-white block">Two-Factor Authentication</span>
+                  <span className="text-[11px] text-slate-400">TOTP Security Enforcement</span>
+                </div>
+              </div>
+              <span className="px-2 py-0.5 rounded text-[10px] font-extrabold bg-sky-500/20 text-sky-300 border border-sky-500/40 uppercase">
+                Challenge
+              </span>
+            </div>
+          ) : (
+            <div className="mt-4 flex items-center p-1 bg-slate-950/70 rounded-xl border border-slate-800/80">
+              <button
+                onClick={() => {
+                  setMode('login');
+                  setErrorMessage(null);
+                  setSuccessMessage(null);
+                }}
+                className={`flex-1 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center justify-center gap-1.5 ${
+                  mode === 'login'
+                    ? 'bg-blue-600 text-white shadow-sm'
+                    : 'text-slate-400 hover:text-white hover:bg-slate-800/40'
+                }`}
+              >
+                <Mail className="w-3.5 h-3.5" />
+                <span>Email Sign In</span>
+              </button>
 
-            <button
-              onClick={() => {
-                setMode('phone');
-                setErrorMessage(null);
-                setSuccessMessage(null);
-              }}
-              className={`flex-1 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center justify-center gap-1.5 ${
-                mode === 'phone'
-                  ? 'bg-blue-600 text-white shadow-sm'
-                  : 'text-slate-400 hover:text-white hover:bg-slate-800/40'
-              }`}
-            >
-              <Phone className="w-3.5 h-3.5" />
-              <span>Phone OTP</span>
-            </button>
+              <button
+                onClick={() => {
+                  setMode('phone');
+                  setErrorMessage(null);
+                  setSuccessMessage(null);
+                }}
+                className={`flex-1 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center justify-center gap-1.5 ${
+                  mode === 'phone'
+                    ? 'bg-blue-600 text-white shadow-sm'
+                    : 'text-slate-400 hover:text-white hover:bg-slate-800/40'
+                }`}
+              >
+                <Phone className="w-3.5 h-3.5" />
+                <span>Phone OTP</span>
+              </button>
 
-            <button
-              onClick={() => {
-                setMode('register');
-                setErrorMessage(null);
-                setSuccessMessage(null);
-              }}
-              className={`flex-1 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center justify-center gap-1.5 ${
-                mode === 'register'
-                  ? 'bg-blue-600 text-white shadow-sm'
-                  : 'text-slate-400 hover:text-white hover:bg-slate-800/40'
-              }`}
-            >
-              <User className="w-3.5 h-3.5" />
-              <span>Create Account</span>
-            </button>
-          </div>
+              <button
+                onClick={() => {
+                  setMode('register');
+                  setErrorMessage(null);
+                  setSuccessMessage(null);
+                }}
+                className={`flex-1 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center justify-center gap-1.5 ${
+                  mode === 'register'
+                    ? 'bg-blue-600 text-white shadow-sm'
+                    : 'text-slate-400 hover:text-white hover:bg-slate-800/40'
+                }`}
+              >
+                <User className="w-3.5 h-3.5" />
+                <span>Create Account</span>
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Modal Scrollable Body */}
@@ -389,7 +457,7 @@ export const AuthModal: React.FC = () => {
           )}
 
           {/* 1-Click Google Sign In (Universal Top Option) */}
-          {mode !== 'forgot_password' && (
+          {mode !== 'forgot_password' && mode !== 'mfa_totp' && (
             <div>
               <button
                 id="btn-google-auth-login"
@@ -879,6 +947,73 @@ export const AuthModal: React.FC = () => {
                 className="w-full text-center text-xs text-slate-400 hover:text-white"
               >
                 Back to Sign In
+              </button>
+            </form>
+          )}
+
+          {/* TAB 5: TOTP TWO-FACTOR AUTHENTICATION CHALLENGE */}
+          {mode === 'mfa_totp' && (
+            <form onSubmit={handleVerifyTotpSubmit} className="space-y-4">
+              <div className="text-center space-y-1.5 py-1">
+                <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-sky-500/20 to-blue-600/30 border border-sky-500/40 flex items-center justify-center mx-auto text-sky-400 shadow-lg shadow-sky-500/10">
+                  <Lock className="w-6 h-6 text-sky-400" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-white flex items-center justify-center gap-1.5">
+                    <span>Two-Factor Authentication</span>
+                    <span className="px-2 py-0.5 rounded-full bg-sky-500/15 text-sky-300 text-[10px] font-extrabold border border-sky-500/30">
+                      TOTP
+                    </span>
+                  </h3>
+                  <p className="text-xs text-slate-400 max-w-xs mx-auto mt-1 leading-relaxed">
+                    Account protected with Two-Factor Authentication. Enter the 6-digit code from your authenticator app (Google Authenticator, Microsoft Authenticator, Authy, etc.).
+                  </p>
+                </div>
+              </div>
+
+              {/* 6 Digit TOTP Inputs */}
+              <div className="flex justify-center gap-2 py-2">
+                {totpDigits.map((digit, idx) => (
+                  <input
+                    key={idx}
+                    id={`input-totp-digit-${idx}`}
+                    ref={(el) => (totpInputRefs.current[idx] = el)}
+                    type="text"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
+                    autoComplete={idx === 0 ? 'one-time-code' : undefined}
+                    maxLength={1}
+                    value={digit}
+                    onChange={(e) => handleTotpDigitChange(idx, e.target.value)}
+                    onKeyDown={(e) => handleTotpKeyDown(idx, e)}
+                    aria-label={`Authenticator code digit ${idx + 1} of 6`}
+                    className="w-11 h-12 text-center text-xl font-mono font-bold bg-slate-950 border border-sky-500/40 rounded-xl text-white focus:outline-none focus:border-sky-400 focus:ring-2 focus:ring-sky-500/20 transition-all shadow-inner"
+                  />
+                ))}
+              </div>
+
+              <button
+                id="btn-verify-totp-submit"
+                type="submit"
+                disabled={loading || totpDigits.join('').length !== 6}
+                className="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-sky-600 to-blue-600 hover:from-sky-500 hover:to-blue-500 text-white font-bold text-xs flex items-center justify-center gap-2 transition-all shadow-lg shadow-blue-600/20 active:scale-[0.99] disabled:opacity-50"
+              >
+                {loading ? (
+                  <RefreshCw className="w-4 h-4 animate-spin" />
+                ) : (
+                  <>
+                    <span>Verify & Complete Sign In</span>
+                    <ShieldCheck className="w-4 h-4" />
+                  </>
+                )}
+              </button>
+
+              <button
+                type="button"
+                onClick={handleCancelTotp}
+                className="w-full text-center text-xs text-slate-400 hover:text-white transition-colors"
+              >
+                Cancel and return to Sign In
               </button>
             </form>
           )}

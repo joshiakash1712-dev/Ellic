@@ -90,22 +90,23 @@ html.dark {
 
 html.light,
 html.theme-light {
-  --background: #FFFFFF;
+  --background: #F1F5F9;
   --foreground: #0F172A;
-  --muted: #F1F5F9;
-  --muted-foreground: #64748B;
-  --ellix-bg-level-0: #F8FAFC;
+  --muted: #E2E8F0;
+  --muted-foreground: #475569;
+  --ellix-bg-level-0: #F1F5F9;
 
   --ellix-surface-level-1: #FFFFFF;
   --ellix-surface-level-2: #F1F5F9;
-  --ellix-border-subtle: rgba(15, 23, 42, 0.08);
-  --ellix-border-default: rgba(15, 23, 42, 0.14);
+  --ellix-surface-inner: #E2E8F0;
+  --ellix-border-subtle: #CBD5E1;
+  --ellix-border-default: #94A3B8;
   --ellix-text-primary: #0F172A;
   --ellix-text-secondary: #334155;
-  --ellix-text-muted: #64748B;
-  --ellix-shadow-sm: 0 1px 3px rgba(15, 23, 42, 0.06), 0 1px 2px rgba(15, 23, 42, 0.04);
-  --ellix-shadow-md: 0 4px 12px rgba(15, 23, 42, 0.07), 0 1px 3px rgba(15, 23, 42, 0.05);
-  --ellix-shadow-lg: 0 10px 25px rgba(15, 23, 42, 0.1), 0 4px 10px rgba(15, 23, 42, 0.05);
+  --ellix-text-muted: #475569;
+  --ellix-shadow-sm: 0 1px 3px rgba(15, 23, 42, 0.08), 0 1px 2px rgba(15, 23, 42, 0.04);
+  --ellix-shadow-md: 0 4px 12px rgba(15, 23, 42, 0.09), 0 1px 3px rgba(15, 23, 42, 0.05);
+  --ellix-shadow-lg: 0 10px 25px rgba(15, 23, 42, 0.12), 0 4px 10px rgba(15, 23, 42, 0.06);
 }
 
 /* Official Ellix Connect Logo Wordmark Adaptation */
@@ -133,6 +134,11 @@ html.theme-light .ellix-logo-wordmark {
   box-shadow: var(--ellix-shadow-md);
 }
 
+.ellix-surface-inner {
+  background-color: var(--ellix-surface-inner, #F1F5F9);
+  border: 1px solid var(--ellix-border-subtle);
+}
+
 .glass-panel {
   background-color: #0E1726;
   background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.03) 0%, rgba(255, 255, 255, 0.01) 100%);
@@ -158,6 +164,14 @@ html.theme-light .glass-panel {
   border: 1px solid #CBD5E1;
   box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06), 0 4px 12px rgba(15, 23, 42, 0.04);
   color: #0F172A;
+}
+
+html.light .glass-panel .glass-panel,
+html.theme-light .glass-panel .glass-panel {
+  background-color: #F1F5F9;
+  background-image: none;
+  border: 1px solid #CBD5E1;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
 }
 
 /* Interactive hover enhancement for clickable cards & buttons */
@@ -259,15 +273,43 @@ html.theme-light .glass-panel-interactive:hover {
   color: #0F172A;
 }
 
-/* Level 2 Elevated Popovers, Dropdowns, Modals & Secondary Surfaces */
+/* Level 2 Elevated Popovers, Dropdowns, Modals & Secondary Nested Surfaces */
 :where(html.light, html.theme-light) :where(.ellix-app-shell, #notification-modal-overlay, #settings-modal-overlay, #account-sync-hub-overlay) :where(
   .bg-\[\#161D2C\],
   .bg-\[\#161D2C\]\/95,
   .bg-\[\#161D2C\]\/90,
   .bg-\[\#161D2C\]\/80
 ):not(#theme-card-dark *) {
-  background-color: #FFFFFF !important;
+  background-color: #F1F5F9 !important;
   color: #0F172A;
+}
+
+/* Nested Child Components on Light Theme Surfaces (Provides Clear Separation & Visual Depth) */
+:where(html.light, html.theme-light) :where(
+  .glass-panel .glass-panel,
+  .ellix-surface-1 .ellix-surface-1,
+  .ellix-surface-1 .ellix-surface-2,
+  .ellix-surface-1 .ellix-surface-inner,
+  .ellix-surface-2 .ellix-surface-inner,
+  .nested-child,
+  .nested-container,
+  .nested-card,
+  [data-nested-container="true"],
+  [data-surface="inner"],
+  .ellix-app-shell :where(.bg-\[\#121826\], .bg-slate-900, .bg-white) :where(
+    .bg-\[\#161D2C\],
+    .bg-\[\#161D2C\]\/95,
+    .bg-\[\#161D2C\]\/90,
+    .bg-\[\#161D2C\]\/80,
+    .inner-container,
+    .nested-container,
+    .nested-card,
+    [data-nested-container="true"],
+    [data-surface="inner"]
+  ),
+  .ellix-app-shell :where(.bg-\[\#121826\], .bg-slate-900, .bg-white) :where(.bg-\[\#121826\], .bg-slate-900, .bg-white):not(:first-child)
+):not(#theme-card-dark):not(#theme-card-dark *) {
+  background-color: #F1F5F9 !important;
 }
 
 :where(html.light, html.theme-light) :where(.ellix-app-shell, #notification-modal-overlay, #settings-modal-overlay, #account-sync-hub-overlay) :where(
@@ -385,22 +427,122 @@ html.theme-light .glass-panel-interactive:hover {
   .border-slate-700\/80,
   .border-slate-700\/70,
   .border-slate-700\/60,
-  .border-slate-700\/50
+  .border-slate-700\/50,
+  .border-slate-300,
+  .border-slate-200,
+  .border-slate-100,
+  .border-white\/10,
+  .border-white\/20
 ):not(#theme-card-dark):not(#theme-card-dark *) {
   border-color: #CBD5E1 !important;
 }
 
-:where(html.light, html.theme-light) :where(.ellix-app-shell, #notification-modal-overlay, #settings-modal-overlay, #account-sync-hub-overlay) :where(
+:where(html.light, html.theme-light) :where(.website-root, .ellix-app-shell, #notification-modal-overlay, #settings-modal-overlay, #account-sync-hub-overlay) :where(
   .divide-slate-800 > :not([hidden]) ~ :not([hidden]),
   .divide-slate-800\/80 > :not([hidden]) ~ :not([hidden]),
   .divide-slate-800\/60 > :not([hidden]) ~ :not([hidden]),
-  .divide-slate-700 > :not([hidden]) ~ :not([hidden])
+  .divide-slate-700 > :not([hidden]) ~ :not([hidden]),
+  .divide-slate-200 > :not([hidden]) ~ :not([hidden])
 ) {
-  border-color: #E2E8F0 !important;
+  border-color: #94A3B8 !important;
 }
 
-/* Clean Daylight Elevation Shadows (Prevents heavy dark-mode muddy shadows in Light Theme) */
-:where(html.light, html.theme-light) :where(.ellix-app-shell, #notification-modal-overlay, #settings-modal-overlay, #account-sync-hub-overlay, #save-status-toast) :where(
+/* ============================================================== */
+/* HIGH-CONTRAST CARD & CONTAINER BOUNDARIES IN LIGHT THEME        */
+/* Adds visible outlines so users clearly see where boxes start/end */
+/* ============================================================== */
+
+/* All public website cards & interactive containers get solid visible boundaries */
+:where(html.light, html.theme-light) .website-root :where(
+  .website-card-hover,
+  .glass-panel,
+  .rounded-2xl.border,
+  .rounded-2xl.border-2,
+  .rounded-xl.border,
+  .rounded-xl.border-2,
+  .rounded-3xl.border,
+  .rounded-3xl.border-2,
+  #problem .rounded-2xl,
+  #workflow .rounded-2xl,
+  #features .rounded-2xl,
+  #how-it-works .rounded-2xl,
+  #who-its-for .rounded-2xl,
+  #product .rounded-2xl,
+  #pricing .rounded-2xl
+):not(#theme-card-dark):not(#theme-card-dark *) {
+  border-color: #94A3B8 !important;
+  box-shadow: 0 4px 16px -2px rgba(15, 23, 42, 0.09), 0 2px 6px -1px rgba(15, 23, 42, 0.06) !important;
+}
+
+/* Interactive Card Hover in Light Mode */
+:where(html.light, html.theme-light) .website-root .website-card-hover:hover {
+  border-color: #2563EB !important;
+  box-shadow: 0 10px 24px -4px rgba(37, 99, 235, 0.18), 0 4px 10px rgba(15, 23, 42, 0.08) !important;
+}
+
+/* Sub-containers & item rows inside cards get distinct contrast and clear outline */
+:where(html.light, html.theme-light) .website-root :where(
+  .bg-slate-50,
+  .bg-slate-100,
+  .bg-slate-100\/80,
+  .bg-slate-100\/75,
+  .bg-slate-100\/70
+):not(#theme-card-dark *):not(.website-card-hover):not(.rounded-2xl.border-2) {
+  background-color: #F1F5F9 !important;
+  border-color: #94A3B8 !important;
+}
+
+/* Hero macOS Mockup Window Frame in Light Mode */
+:where(html.light, html.theme-light) .website-root #hero .rounded-2xl.shadow-2xl {
+  border-color: #64748B !important;
+  box-shadow: 0 20px 48px -10px rgba(15, 23, 42, 0.18), 0 6px 16px -2px rgba(15, 23, 42, 0.08) !important;
+}
+
+:where(html.light, html.theme-light) .website-root #hero .rounded-2xl.shadow-2xl > div:first-child {
+  background-color: #E2E8F0 !important;
+  border-bottom: 2px solid #94A3B8 !important;
+}
+
+/* Hero Mockup Stat Cards in Light Mode */
+:where(html.light, html.theme-light) .website-root #hero .grid.grid-cols-1.sm\:grid-cols-3 > div {
+  background-color: #FFFFFF !important;
+  border: 2px solid #94A3B8 !important;
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.06) !important;
+}
+
+/* Hero Mockup Live Counter Terminal */
+:where(html.light, html.theme-light) .website-root #hero .lg\:col-span-12.bg-white {
+  background-color: #FFFFFF !important;
+  border: 2px solid #94A3B8 !important;
+  box-shadow: 0 3px 10px rgba(15, 23, 42, 0.06) !important;
+}
+
+/* Problem Section: 4 Cards High-Contrast Definition in Light Mode */
+:where(html.light, html.theme-light) .website-root #problem .grid > div {
+  background-color: #FFFFFF !important;
+  border: 2px solid #94A3B8 !important;
+  box-shadow: 0 4px 16px -2px rgba(15, 23, 42, 0.10), 0 2px 6px -1px rgba(15, 23, 42, 0.06) !important;
+}
+
+:where(html.light, html.theme-light) .website-root #problem .grid > div:hover {
+  border-color: #2563EB !important;
+  box-shadow: 0 8px 24px -4px rgba(37, 99, 235, 0.18) !important;
+}
+
+/* Problem Section: Solution Box inside each card */
+:where(html.light, html.theme-light) .website-root #problem .bg-sky-50 {
+  background-color: #EFF6FF !important;
+  border: 2px solid #0284C7 !important;
+  box-shadow: 0 1px 4px rgba(2, 132, 199, 0.12) !important;
+}
+
+/* Problem Section: Connector divider line */
+:where(html.light, html.theme-light) .website-root #problem .h-0\.5 {
+  background-color: #94A3B8 !important;
+}
+
+/* Clean Daylight Elevation Shadows */
+:where(html.light, html.theme-light) :where(.website-root, .ellix-app-shell, #notification-modal-overlay, #settings-modal-overlay, #account-sync-hub-overlay, #save-status-toast) :where(
   .shadow-lg,
   .shadow-xl,
   .shadow-2xl
@@ -410,41 +552,47 @@ html.theme-light .glass-panel-interactive:hover {
 
 /* High-Contrast Daylight Typography Mapping
    Step 1: Convert all light/white text classes on surfaces to deep ink (#0F172A / #334155 / #475569) */
-:where(html.light, html.theme-light) :where(.ellix-app-shell, #notification-modal-overlay, #settings-modal-overlay, #account-sync-hub-overlay, #save-status-toast) :where(
+:where(html.light, html.theme-light) :where(.website-root, .ellix-app-shell, #notification-modal-overlay, #settings-modal-overlay, #account-sync-hub-overlay, #save-status-toast) :where(
   .text-white,
   .text-slate-50,
   .text-slate-100
-):not(#theme-card-dark):not(#theme-card-dark *) {
+):not(#theme-card-dark):not(#theme-card-dark *):not(.bg-blue-600 *):not(.bg-blue-700 *):not(.bg-blue-500 *):not(.bg-slate-900 *):not(.bg-slate-950 *):not(.bg-black *):not(.website-btn-glow *):not(.website-btn-glow):not(.bg-rose-600 *):not(.bg-emerald-600 *):not(.bg-amber-600 *) {
   color: #0F172A !important;
 }
 
-:where(html.light, html.theme-light) :where(.ellix-app-shell, #notification-modal-overlay, #settings-modal-overlay, #account-sync-hub-overlay, #save-status-toast) :where(
+:where(html.light, html.theme-light) :where(.website-root, .ellix-app-shell, #notification-modal-overlay, #settings-modal-overlay, #account-sync-hub-overlay, #save-status-toast) :where(
   .text-slate-200,
   .text-slate-300
-):not(#theme-card-dark):not(#theme-card-dark *) {
+):not(#theme-card-dark):not(#theme-card-dark *):not(.bg-blue-600 *):not(.bg-slate-900 *):not(.bg-slate-950 *) {
   color: #334155 !important;
 }
 
-:where(html.light, html.theme-light) :where(.ellix-app-shell, #notification-modal-overlay, #settings-modal-overlay, #account-sync-hub-overlay, #save-status-toast) :where(
+:where(html.light, html.theme-light) :where(.website-root, .ellix-app-shell, #notification-modal-overlay, #settings-modal-overlay, #account-sync-hub-overlay, #save-status-toast) :where(
   .text-slate-400,
   .text-slate-500
 ):not(#theme-card-dark):not(#theme-card-dark *) {
   color: #475569 !important;
 }
 
-/* Semantic Status & Accent Text Contrast in Daylight Mode (WCAG AA) */
-:where(html.light, html.theme-light) :where(.ellix-app-shell, #notification-modal-overlay, #settings-modal-overlay, #account-sync-hub-overlay, #save-status-toast) :where(
+:where(html.light, html.theme-light) :where(.website-root, .ellix-app-shell, #notification-modal-overlay, #settings-modal-overlay, #account-sync-hub-overlay, #save-status-toast) :where(
+  .text-slate-600
+):not(#theme-card-dark):not(#theme-card-dark *) {
+  color: #1E293B !important;
+}
+
+/* Semantic Status & Accent Text Contrast in Daylight Mode (WCAG AA - Eliminates Neon Eye Ache) */
+:where(html.light, html.theme-light) :where(.website-root, .ellix-app-shell, #notification-modal-overlay, #settings-modal-overlay, #account-sync-hub-overlay, #save-status-toast) :where(
   .text-sky-200,
   .text-sky-300,
   .text-sky-300\/90,
   .text-sky-400,
   .text-sky-400\/80,
   .text-sky-500
-):not(#theme-card-dark *) {
+):not(#theme-card-dark *):not(.bg-blue-600 *):not(.bg-slate-900 *):not(.bg-slate-950 *) {
   color: #0284C7 !important;
 }
 
-:where(html.light, html.theme-light) :where(.ellix-app-shell, #notification-modal-overlay, #settings-modal-overlay, #account-sync-hub-overlay, #save-status-toast) :where(
+:where(html.light, html.theme-light) :where(.website-root, .ellix-app-shell, #notification-modal-overlay, #settings-modal-overlay, #account-sync-hub-overlay, #save-status-toast) :where(
   .text-amber-200,
   .text-amber-200\/80,
   .text-amber-300,
@@ -452,46 +600,58 @@ html.theme-light .glass-panel-interactive:hover {
   .text-amber-300\/90,
   .text-amber-400,
   .text-amber-400\/80,
-  .text-amber-400\/90
-):not(#theme-card-dark *) {
+  .text-amber-400\/90,
+  .text-amber-500
+):not(#theme-card-dark *):not(.bg-slate-900 *):not(.bg-slate-950 *) {
   color: #B45309 !important;
 }
 
-:where(html.light, html.theme-light) :where(.ellix-app-shell, #notification-modal-overlay, #settings-modal-overlay, #account-sync-hub-overlay) :where(
+:where(html.light, html.theme-light) :where(.website-root, .ellix-app-shell, #notification-modal-overlay, #settings-modal-overlay, #account-sync-hub-overlay) :where(
   .text-rose-200,
   .text-rose-200\/90,
   .text-rose-300,
   .text-rose-300\/80,
   .text-rose-300\/90,
   .text-rose-400,
+  .text-rose-500,
   .text-red-300,
-  .text-red-400
-):not(#theme-card-dark *) {
+  .text-red-400,
+  .text-red-500
+):not(#theme-card-dark *):not(.bg-slate-900 *):not(.bg-slate-950 *) {
   color: #BE123C !important;
 }
 
-:where(html.light, html.theme-light) :where(.ellix-app-shell, #notification-modal-overlay, #settings-modal-overlay, #account-sync-hub-overlay) :where(
+:where(html.light, html.theme-light) :where(.website-root, .ellix-app-shell, #notification-modal-overlay, #settings-modal-overlay, #account-sync-hub-overlay) :where(
   .text-cyan-300,
-  .text-cyan-400
-):not(#theme-card-dark *) {
+  .text-cyan-400,
+  .text-cyan-500
+):not(#theme-card-dark *):not(.bg-slate-900 *):not(.bg-slate-950 *) {
   color: #0E7490 !important;
 }
 
-:where(html.light, html.theme-light) :where(.ellix-app-shell, #notification-modal-overlay, #settings-modal-overlay, #account-sync-hub-overlay) :where(
+:where(html.light, html.theme-light) :where(.website-root, .ellix-app-shell, #notification-modal-overlay, #settings-modal-overlay, #account-sync-hub-overlay) :where(
+  .text-emerald-300,
+  .text-emerald-400,
+  .text-emerald-500
+):not(#theme-card-dark *):not(.bg-slate-900 *):not(.bg-slate-950 *) {
+  color: #047857 !important;
+}
+
+:where(html.light, html.theme-light) :where(.website-root, .ellix-app-shell, #notification-modal-overlay, #settings-modal-overlay, #account-sync-hub-overlay) :where(
   .text-indigo-300,
   .text-indigo-400
 ):not(#theme-card-dark *) {
   color: #4338CA !important;
 }
 
-:where(html.light, html.theme-light) :where(.ellix-app-shell, #notification-modal-overlay, #settings-modal-overlay, #account-sync-hub-overlay) :where(
+:where(html.light, html.theme-light) :where(.website-root, .ellix-app-shell, #notification-modal-overlay, #settings-modal-overlay, #account-sync-hub-overlay) :where(
   .text-blue-300,
   .text-blue-400
 ):not(#theme-card-dark *) {
   color: #1D4ED8 !important;
 }
 
-:where(html.light, html.theme-light) :where(.ellix-app-shell, #notification-modal-overlay, #settings-modal-overlay, #account-sync-hub-overlay) :where(
+:where(html.light, html.theme-light) :where(.website-root, .ellix-app-shell, #notification-modal-overlay, #settings-modal-overlay, #account-sync-hub-overlay) :where(
   .text-purple-300,
   .text-purple-400
 ):not(#theme-card-dark *) {
@@ -499,7 +659,7 @@ html.theme-light .glass-panel-interactive:hover {
 }
 
 /* Step 2: Explicitly preserve crisp white (#FFFFFF) text on solid saturated brand/action buttons & badges */
-:where(html.light, html.theme-light) :where(.ellix-app-shell, #notification-modal-overlay, #settings-modal-overlay, #account-sync-hub-overlay) :where(
+:where(html.light, html.theme-light) :where(.website-root, .ellix-app-shell, #notification-modal-overlay, #settings-modal-overlay, #account-sync-hub-overlay) :where(
   .bg-blue-600,
   .bg-sky-500,
   .bg-blue-700,
@@ -522,6 +682,10 @@ html.theme-light .glass-panel-interactive:hover {
   .bg-sky-900,
   .bg-cyan-600,
   .bg-purple-600,
+  .bg-slate-900,
+  .bg-slate-950,
+  .bg-black,
+  .website-btn-glow,
   .from-blue-600,
   .from-blue-500,
   .from-amber-600,
@@ -531,7 +695,7 @@ html.theme-light .glass-panel-interactive:hover {
   .from-rose-600,
   .from-rose-500
 ):where(.text-white, .text-slate-100),
-:where(html.light, html.theme-light) :where(.ellix-app-shell, #notification-modal-overlay, #settings-modal-overlay, #account-sync-hub-overlay) :where(
+:where(html.light, html.theme-light) :where(.website-root, .ellix-app-shell, #notification-modal-overlay, #settings-modal-overlay, #account-sync-hub-overlay) :where(
   .bg-blue-600,
   .bg-sky-500,
   .bg-blue-700,
@@ -554,6 +718,10 @@ html.theme-light .glass-panel-interactive:hover {
   .bg-sky-900,
   .bg-cyan-600,
   .bg-purple-600,
+  .bg-slate-900,
+  .bg-slate-950,
+  .bg-black,
+  .website-btn-glow,
   .from-blue-600,
   .from-blue-500,
   .from-amber-600,
@@ -563,12 +731,12 @@ html.theme-light .glass-panel-interactive:hover {
   .from-rose-600,
   .from-rose-500
 ) :where(.text-white, .text-slate-100, .text-slate-200),
-:where(html.light, html.theme-light) :where(.ellix-app-shell, #notification-modal-overlay, #settings-modal-overlay, #account-sync-hub-overlay) .text-white[style*="background"] {
+:where(html.light, html.theme-light) :where(.website-root, .ellix-app-shell, #notification-modal-overlay, #settings-modal-overlay, #account-sync-hub-overlay) .text-white[style*="background"] {
   color: #FFFFFF !important;
 }
 
 /* Preserve white text on solid saturated hover states */
-:where(html.light, html.theme-light) :where(.ellix-app-shell, #notification-modal-overlay, #settings-modal-overlay, #account-sync-hub-overlay) :where(
+:where(html.light, html.theme-light) :where(.website-root, .ellix-app-shell, #notification-modal-overlay, #settings-modal-overlay, #account-sync-hub-overlay) :where(
   .hover\:bg-blue-600:hover,
   .hover\:bg-sky-500:hover,
   .hover\:bg-rose-600:hover,

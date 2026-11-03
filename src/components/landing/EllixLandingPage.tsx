@@ -479,7 +479,7 @@ export const EllixLandingPage: React.FC<EllixLandingPageProps> = ({ onLaunchApp,
 
   if (activeLegalPageSlug) {
     return (
-      <div className="website-root min-h-screen bg-[#fafafa] dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col font-['Plus_Jakarta_Sans',sans-serif] selection:bg-blue-500 selection:text-white antialiased overflow-x-hidden w-full max-w-full">
+      <div className="website-root min-h-screen bg-[#f1f5f9] dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col font-['Plus_Jakarta_Sans',sans-serif] selection:bg-blue-500 selection:text-white antialiased overflow-x-hidden w-full max-w-full">
         <WebsiteCursor />
         <Suspense fallback={<div className="min-h-screen" />}>
           <LegalComplianceHub
@@ -535,7 +535,7 @@ export const EllixLandingPage: React.FC<EllixLandingPageProps> = ({ onLaunchApp,
   return (
     <div
       ref={rootRef}
-      className="website-root min-h-screen bg-[#fafafa] dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col font-['Plus_Jakarta_Sans',sans-serif] selection:bg-blue-500 selection:text-white antialiased overflow-x-hidden w-full max-w-full transition-colors duration-200"
+      className="website-root min-h-screen bg-[#f1f5f9] dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col font-['Plus_Jakarta_Sans',sans-serif] selection:bg-blue-500 selection:text-white antialiased overflow-x-hidden w-full max-w-full transition-colors duration-200"
     >
       {/* Accessible Skip to Content Link for Keyboard Users */}
       <a

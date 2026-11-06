@@ -1208,5 +1208,251 @@ html.light {
   }
 }
 
+/* ============================================================== */
+/* HIGH-LEGIBILITY PRINT STYLES FOR INVOICES, RECEIPTS & REPORTS  */
+/* ============================================================== */
+@media print {
+  /* 1. Page Geometry & Color Optimization */
+  @page {
+    margin: 10mm 12mm;
+    size: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    background-color: transparent !important;
+    background-image: none !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+    filter: none !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    color: #000000 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  html,
+  body,
+  #root,
+  main,
+  .website-root,
+  .ellix-app-shell {
+    background: #FFFFFF !important;
+    background-color: #FFFFFF !important;
+    color: #000000 !important;
+    width: 100% !important;
+    min-width: 100% !important;
+    max-width: 100% !important;
+    height: auto !important;
+    min-height: auto !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: visible !important;
+    position: static !important;
+  }
+
+  /* 2. Hide Navigation, UI Chrome, Action Toolbars & Interactive Controls */
+  nav,
+  header,
+  footer,
+  aside,
+  .website-cursor,
+  .fixed.top-0,
+  .sticky.top-0,
+  .cookie-banner,
+  .toast,
+  #save-status-toast,
+  .first-time-guide-banner,
+  button,
+  .btn,
+  input[type="button"],
+  input[type="submit"],
+  select,
+  .cursor-pointer,
+  [data-cursor],
+  [data-magnetic],
+  .ellix-ambient-drift,
+  .ellix-signal-trace,
+  .scroll-chart-reveal-trigger,
+  .recharts-tooltip-wrapper,
+  .recharts-default-tooltip {
+    display: none !important;
+  }
+
+  /* 3. Modal Container Unwrapping for Print (Invoices, Receipts, Barcodes) */
+  /* When printing from a modal, eliminate modal backdrops and stretch content to print page */
+  .fixed.inset-0,
+  [role="dialog"],
+  .modal-backdrop,
+  #notification-modal-overlay,
+  #settings-modal-overlay,
+  #account-sync-hub-overlay {
+    position: static !important;
+    inset: auto !important;
+    background: transparent !important;
+    background-color: transparent !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    overflow: visible !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    height: auto !important;
+    max-height: none !important;
+    display: block !important;
+  }
+
+  /* Modal Card Wrapper: Strip glassmorphism, dark panels & shadows */
+  .glass-panel,
+  .rounded-2xl,
+  .rounded-xl,
+  .rounded-3xl {
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    border: none !important;
+    background: transparent !important;
+    background-color: transparent !important;
+    max-width: 100% !important;
+    width: 100% !important;
+    max-height: none !important;
+    overflow: visible !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  /* Hide modal action headers and toolbars (Share buttons, Close, Template selector) */
+  .glass-panel > div:first-child:has(button),
+  .glass-panel > div:last-child:has(button),
+  .modal-header,
+  .modal-footer {
+    display: none !important;
+  }
+
+  /* 4. Invoice & Report Document Presentation */
+  .invoice-container,
+  [data-invoice-template],
+  .bg-white.text-slate-900.font-sans,
+  .max-w-4xl {
+    max-width: 100% !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+    border: none !important;
+    background: transparent !important;
+    background-color: #FFFFFF !important;
+    color: #000000 !important;
+  }
+
+  /* Keep crisp hairline borders on invoice tables, boxes, and summary sections */
+  table,
+  th,
+  td,
+  .border,
+  .border-2,
+  .border-t,
+  .border-b,
+  .border-r,
+  .border-l,
+  .border-t-2,
+  .border-b-2 {
+    border-color: #000000 !important;
+  }
+
+  table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+    page-break-inside: auto;
+  }
+
+  thead {
+    display: table-header-group !important;
+  }
+
+  tr {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  th {
+    background-color: #F1F5F9 !important;
+    color: #000000 !important;
+    font-weight: 700 !important;
+    border-bottom: 1.5px solid #000000 !important;
+  }
+
+  td {
+    color: #000000 !important;
+    border-bottom: 1px solid #CBD5E1 !important;
+  }
+
+  /* 5. Page Break Avoidance & Legibility Controls */
+  .break-inside-avoid,
+  .invoice-summary,
+  .invoice-totals,
+  .invoice-footer,
+  .tax-breakup,
+  .bank-details,
+  .signature-block,
+  .report-card,
+  .website-card-hover {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  /* Links & Typography */
+  a {
+    text-decoration: none !important;
+    color: #000000 !important;
+  }
+
+  a[href]::after {
+    content: none !important;
+  }
+
+  /* Font legibility & tabular numbers */
+  body, p, span, div, td, th {
+    font-size: 10pt !important;
+    line-height: 1.35 !important;
+  }
+
+  h1 { font-size: 18pt !important; font-weight: 800 !important; }
+  h2 { font-size: 15pt !important; font-weight: 800 !important; }
+  h3 { font-size: 13pt !important; font-weight: 700 !important; }
+  h4 { font-size: 11pt !important; font-weight: 700 !important; }
+
+  /* Ensure thermal receipts (58mm / 80mm) fit narrow rolls if configured */
+  [data-paper-size="58mm"],
+  .thermal-58mm {
+    width: 58mm !important;
+    max-width: 58mm !important;
+    font-size: 8pt !important;
+  }
+
+  [data-paper-size="80mm"],
+  .thermal-80mm {
+    width: 80mm !important;
+    max-width: 80mm !important;
+    font-size: 9pt !important;
+  }
+
+  /* QR codes and barcode images must stay visible and sharp */
+  img,
+  svg,
+  canvas {
+    max-width: 100% !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  /* Charts in Reports: clean high-contrast presentation */
+  .recharts-responsive-container,
+  .recharts-wrapper {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+}
+
 
 

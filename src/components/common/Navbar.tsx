@@ -198,7 +198,14 @@ export const Navbar: React.FC<NavbarProps> = ({
               <Menu className="w-5 h-5 text-slate-200" />
             </button>
 
-            <div className="flex items-center gap-2">
+            {/* Brand Logo Navigation */}
+            {onNavigateToWebsite ? (
+              <button
+                type="button"
+                onClick={onNavigateToWebsite}
+                className="flex items-center gap-2 cursor-pointer hover:opacity-90 transition-opacity"
+                title="Return to Website"
+              >
               {/* Full logo on sm and larger screens */}
               <div className="hidden sm:flex items-center">
                 <EllixConnectLogo size="sm" alt="Ellic" />
@@ -210,6 +217,20 @@ export const Navbar: React.FC<NavbarProps> = ({
                   Ellic
                 </span>
               </div>
+            </button>
+            ) : (
+              <div className="flex items-center gap-2">
+                <div className="hidden sm:flex items-center">
+                  <EllixConnectLogo size="sm" alt="Ellic" />
+                </div>
+                <div className="sm:hidden flex items-center gap-1.5">
+                  <EllixConnectLogo variant="symbol" size={26} alt="Ellic" />
+                  <span className="text-sm font-bold tracking-tight text-white flex items-center">
+                    Ellic
+                  </span>
+                </div>
+              </div>
+            )}
 
               {/* Subtle Offline Badge */}
               {!isOnline && (
@@ -354,7 +375,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               )}
             </button>
 
-            {/* Exit Demo Button (in Demo Mode) or Sign In Button (Unauthenticated real app state) */}
+            {/* Exit Demo Button (in Demo Mode) or Return to Website / Sign In Button */}
             {isDemoMode ? (
               onNavigateToWebsite && (
                 <button
@@ -368,17 +389,30 @@ export const Navbar: React.FC<NavbarProps> = ({
                 </button>
               )
             ) : (
-              !authUser && (
-                <button
-                  id="btn-nav-sign-in"
-                  onClick={() => openAuthModal('login')}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition-all shadow-md shadow-blue-600/20 shrink-0"
-                  title="Sign In with Google, Phone OTP or Email"
-                >
-                  <LogIn className="w-3.5 h-3.5" />
-                  <span className="hidden sm:inline">Sign In</span>
-                </button>
-              )
+              <>
+                {onNavigateToWebsite && authUser && (
+                  <button
+                    id="btn-nav-return-website"
+                    onClick={onNavigateToWebsite}
+                    className="hidden sm:flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-slate-800/80 border border-slate-700/60 hover:bg-slate-700 text-slate-300 hover:text-white text-xs font-medium transition-all shrink-0"
+                    title="Return to Website"
+                  >
+                    <Globe className="w-3.5 h-3.5 text-sky-400" />
+                    <span>Website</span>
+                  </button>
+                )}
+                {!authUser && (
+                  <button
+                    id="btn-nav-sign-in"
+                    onClick={() => openAuthModal('login')}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition-all shadow-md shadow-blue-600/20 shrink-0"
+                    title="Sign In with Google, Phone OTP or Email"
+                  >
+                    <LogIn className="w-3.5 h-3.5" />
+                    <span className="hidden sm:inline">Sign In</span>
+                  </button>
+                )}
+              </>
             )}
 
             {/* Role Switcher & Profile Dropdown */}
@@ -556,6 +590,19 @@ export const Navbar: React.FC<NavbarProps> = ({
                       </span>
                     </button>
 
+                    {onNavigateToWebsite && (
+                      <button
+                        onClick={() => {
+                          setShowRoleDropdown(false);
+                          onNavigateToWebsite();
+                        }}
+                        className="w-full text-left px-3 py-2 rounded-lg text-xs font-semibold text-slate-300 hover:text-white hover:bg-slate-700/50 flex items-center gap-2 transition-colors cursor-pointer"
+                      >
+                        <Globe className="w-3.5 h-3.5 text-emerald-400" />
+                        <span>Return to Website</span>
+                      </button>
+                    )}
+
                     {authUser && (
                       <button
                         id="btn-menu-signout"
@@ -577,8 +624,6 @@ export const Navbar: React.FC<NavbarProps> = ({
           </div>
 
         </div>
-
-      </div>
 
       {/* Real-time Notification Center Modal */}
       <NotificationCenter

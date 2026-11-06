@@ -689,6 +689,27 @@ export const LandingHeader: React.FC<LandingHeaderProps> = ({
                         </div>
                       </button>
                     )}
+
+                    {/* Frequently Asked Questions */}
+                    <a
+                      href="#faq"
+                      id="dropdown-item-faq"
+                      role="menuitem"
+                      onClick={(e) => scrollToSection(e, '#faq')}
+                      className="w-full text-left group flex items-start gap-3 p-2.5 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-colors cursor-pointer"
+                    >
+                      <div className="w-8 h-8 rounded-lg bg-sky-500/10 text-sky-600 dark:text-sky-400 flex items-center justify-center shrink-0 mt-0.5 group-hover:scale-105 transition-transform">
+                        <HelpCircle className="w-4 h-4" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="text-xs font-semibold text-slate-900 dark:text-white">
+                          Frequently Asked Questions
+                        </div>
+                        <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 line-clamp-1">
+                          Hardware, thermal printers, offline mode &amp; GST filing.
+                        </p>
+                      </div>
+                    </a>
                   </div>
                 </motion.div>
               )}
@@ -1001,6 +1022,13 @@ export const LandingHeader: React.FC<LandingHeaderProps> = ({
                         Interactive 12-Step Tour
                       </button>
                     )}
+                    <a
+                      href="#faq"
+                      onClick={(e) => scrollToSection(e, '#faq')}
+                      className="block px-3 py-2 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
+                    >
+                      Frequently Asked Questions (FAQ)
+                    </a>
                   </div>
                 )}
               </div>

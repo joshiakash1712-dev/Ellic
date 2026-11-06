@@ -11,6 +11,7 @@ import { HowItWorks } from './HowItWorks';
 import { WhoItsFor } from './WhoItsFor';
 import { ProductPreview } from './ProductPreview';
 import { FinalCTA } from './FinalCTA';
+import { FAQSection } from './FAQSection';
 import { LandingFooter } from './LandingFooter';
 import { BackToTop } from './BackToTop';
 import { WebsiteCursor } from './WebsiteCursor';
@@ -596,8 +597,14 @@ export const EllixLandingPage: React.FC<EllixLandingPageProps> = ({ onLaunchApp,
         {/* 7. Product Preview */}
         <ProductPreview />
 
-        {/* 8. Final CTA */}
-        <FinalCTA onOpenGetStarted={handleOpenGetStarted} />
+        {/* 8. Pricing & Plans + Final CTA */}
+        <FinalCTA
+          onOpenGetStarted={handleOpenGetStarted}
+          onLaunchDemo={onLaunchDemo}
+        />
+
+        {/* 9. Frequently Asked Questions */}
+        <FAQSection onOpenContact={() => setIsContactOpen(true)} />
 
       </main>
 

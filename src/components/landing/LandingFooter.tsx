@@ -94,6 +94,16 @@ export const LandingFooter: React.FC<LandingFooterProps> = ({
                 </a>
               </li>
               <li>
+                <a href="#pricing" className="hover:text-slate-950 dark:hover:text-white transition-colors">
+                  Pricing Plans
+                </a>
+              </li>
+              <li>
+                <a href="#faq" className="hover:text-slate-950 dark:hover:text-white transition-colors">
+                  Frequently Asked Questions
+                </a>
+              </li>
+              <li>
                 <a
                   href="#guide"
                   onClick={(e) => {

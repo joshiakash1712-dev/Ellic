@@ -184,12 +184,71 @@ export const Sidebar: React.FC<SidebarProps> = ({
     ...((isDemoMode || isPlatformAdmin) ? [{ id: 'admin' as ActiveModule, label: 'Admin', icon: <ShieldAlert className="w-3.5 h-3.5" /> }] : [])
   ];
 
+  // Close mobile drawer on Escape key
+  React.useEffect(() => {
+    if (!isMobileDrawerOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onCloseMobileDrawer();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isMobileDrawerOpen, onCloseMobileDrawer]);
+
+  // Arrow key navigation between sidebar items & leap to main workstage
+  const handleNavKeyDown = (
+    e: React.KeyboardEvent<HTMLButtonElement>,
+    index: number,
+    itemList: NavItem[]
+  ) => {
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      const nextIndex = (index + 1) % itemList.length;
+      const nextEl = document.getElementById(`nav-desktop-${itemList[nextIndex].id}`);
+      nextEl?.focus();
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      const prevIndex = (index - 1 + itemList.length) % itemList.length;
+      const prevEl = document.getElementById(`nav-desktop-${itemList[prevIndex].id}`);
+      prevEl?.focus();
+    } else if (e.key === 'Home') {
+      e.preventDefault();
+      const firstEl = document.getElementById(`nav-desktop-${itemList[0].id}`);
+      firstEl?.focus();
+    } else if (e.key === 'End') {
+      e.preventDefault();
+      const lastEl = document.getElementById(`nav-desktop-${itemList[itemList.length - 1].id}`);
+      lastEl?.focus();
+    } else if (e.key === 'ArrowRight') {
+      // Leap into main workstage
+      e.preventDefault();
+      const workstage = document.getElementById('main-workstage');
+      if (workstage) {
+        const primary = workstage.querySelector<HTMLElement>(
+          'input[type="text"]:not([disabled]), input[type="search"]:not([disabled]), button:not([disabled])'
+        );
+        if (primary) {
+          primary.focus();
+        } else {
+          workstage.focus();
+        }
+      }
+    }
+  };
+
   return (
     <>
       {/* ------------------------------------------------------------- */}
       {/* 1. DESKTOP SIDEBAR (md:flex)                                  */}
       {/* ------------------------------------------------------------- */}
-      <aside className="hidden md:flex w-[280px] glass-panel border-r border-slate-800 text-slate-300 p-4 shrink-0 flex-col justify-between min-h-[calc(100vh-4rem)] relative overflow-hidden">
+      <aside
+        id="sidebar-nav"
+        tabIndex={-1}
+        role="navigation"
+        aria-label="Sidebar Navigation"
+        className="hidden md:flex w-[280px] glass-panel border-r border-slate-800 text-slate-300 p-4 shrink-0 flex-col justify-between min-h-[calc(100vh-4rem)] relative overflow-hidden outline-none"
+      >
         {/* Subtle brand gradient backdrop BEHIND the glass sidebar */}
         <div className="absolute inset-0 -z-10 bg-gradient-to-b from-blue-600/10 via-sky-500/5 to-transparent pointer-events-none" />
         <div className="space-y-4">
@@ -247,12 +306,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
             </div>
           )}
 
-          <div className="space-y-1">
+          <nav aria-label={`${activeModule} navigation links`} className="space-y-1">
             <div className="px-3 py-1.5 text-[10px] uppercase font-bold tracking-wider text-slate-400">
               {activeModule.toUpperCase()} NAVIGATION
             </div>
 
-            {items.map(item => {
+            {items.map((item, index) => {
               const isActive =
                 activeView === item.id ||
                 (item.id === 'admin_overview' && (activeView === 'admin_dashboard' || activeView === 'overview' || activeView === 'admin_overview')) ||
@@ -262,7 +321,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   key={item.id}
                   id={`nav-desktop-${item.id}`}
                   onClick={() => onSelectView(item.id)}
-                  className={`w-full min-h-[48px] flex items-center justify-between px-3.5 py-3 rounded-lg text-xs font-semibold transition-all ${
+                  onKeyDown={(e) => handleNavKeyDown(e, index, items)}
+                  aria-current={isActive ? 'page' : undefined}
+                  aria-selected={isActive}
+                  className={`w-full min-h-[48px] flex items-center justify-between px-3.5 py-3 rounded-lg text-xs font-semibold transition-all focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none ${
                     isActive
                       ? 'bg-gradient-to-r from-blue-600 to-sky-600 text-white shadow-md shadow-blue-500/20 font-bold'
                       : 'text-slate-300 hover:bg-slate-800/80 hover:text-white'
@@ -288,7 +350,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 </button>
               );
             })}
-          </div>
+          </nav>
         </div>
 
         <div>
@@ -421,7 +483,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
       {/* ------------------------------------------------------------- */}
       <AnimatePresence>
         {isMobileDrawerOpen && (
-          <div className="fixed inset-0 z-50 md:hidden flex">
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-label="Mobile Navigation Menu"
+            className="fixed inset-0 z-50 md:hidden flex"
+          >
             
             {/* Scrim / Backdrop */}
             <motion.div

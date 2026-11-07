@@ -807,9 +807,22 @@ button:focus-visible,
 a:focus-visible,
 input:focus-visible,
 select:focus-visible,
-textarea:focus-visible {
-  outline: 2px solid rgba(37, 99, 235, 0.65);
+textarea:focus-visible,
+[tabindex]:focus-visible {
+  outline: 2px solid #2563EB;
   outline-offset: 2px;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.35);
+}
+
+.dark button:focus-visible,
+.dark a:focus-visible,
+.dark input:focus-visible,
+.dark select:focus-visible,
+.dark textarea:focus-visible,
+.dark [tabindex]:focus-visible {
+  outline: 2px solid #38BDF8;
+  outline-offset: 2px;
+  box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.35);
 }
 
 button:disabled,
@@ -1454,5 +1467,18 @@ html.light {
   }
 }
 
-
-
+/* Mercury / Neural Liquid Physics Parallax Animation */
+@keyframes float {
+  0% {
+    transform: translate(0, 0) scale(1);
+  }
+  33% {
+    transform: translate(6vw, 8vh) scale(1.15);
+  }
+  66% {
+    transform: translate(-4vw, 5vh) scale(0.9);
+  }
+  100% {
+    transform: translate(4vw, -6vh) scale(1.08);
+  }
+}

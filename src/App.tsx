@@ -10,6 +10,9 @@ import { auth } from './lib/firebase';
 import { Navbar } from './components/common/Navbar';
 import { Sidebar } from './components/common/Sidebar';
 import { BottomNavigation } from './components/common/BottomNavigation';
+import { SkipLinks } from './components/common/SkipLinks';
+import { KeyboardShortcutsModal } from './components/common/KeyboardShortcutsModal';
+import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 import { AuthModal } from './components/auth/AuthModal';
 import { SaveStatusToast } from './components/common/SaveStatusToast';
 import { ShieldCheck, Mail, AlertCircle, X, Zap, Users } from 'lucide-react';
@@ -150,6 +153,8 @@ const MainLayout: React.FC<MainLayoutProps> = ({ onNavigateToWebsite }) => {
   const userProfile = isDemoMode ? null : rawUserProfile;
   const [activeView, setActiveView] = useState<string>('dashboard');
   const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState<boolean>(false);
+  const [isShortcutsModalOpen, setIsShortcutsModalOpen] = useState<boolean>(false);
+  const [liveAnnouncement, setLiveAnnouncement] = useState<string>('');
   const prefersReducedMotion = useReducedMotion();
 
   const canonicalRole = normalizeCanonicalRole(activeRole);
@@ -178,12 +183,36 @@ const MainLayout: React.FC<MainLayoutProps> = ({ onNavigateToWebsite }) => {
   }, [isCrew, activeView]);
 
   const handleSelectView = React.useCallback((viewId: string) => {
-    if (isCrew && !['pos', 'inventory', 'my_sales', 'journey_map'].includes(viewId)) {
-      setActiveView('pos');
-      return;
-    }
-    setActiveView(viewId);
+    const target = (isCrew && !['pos', 'inventory', 'my_sales', 'journey_map'].includes(viewId))
+      ? 'pos'
+      : viewId;
+    setActiveView(target);
+
+    const viewNames: Record<string, string> = {
+      dashboard: 'Retailer Dashboard',
+      pos: 'POS Billing Counter',
+      inventory: 'Inventory & Stock Manager',
+      crm: 'Customer CRM & Digital Khata',
+      suppliers: 'Store Suppliers',
+      reports: 'Reports & GST Analytics',
+      templates: 'Invoice Templates',
+      employees: 'Store Crew & Roles',
+      journey_map: 'Customer Journey Map',
+      wholesaler: 'Wholesaler Portal',
+      admin_overview: 'Admin Control Hub',
+    };
+    setLiveAnnouncement(`Navigated to ${viewNames[target] || target}`);
   }, [isCrew]);
+
+  // Comprehensive application-wide keyboard navigation & shortcuts
+  useKeyboardShortcuts({
+    onSelectView: handleSelectView,
+    onToggleShortcutsModal: () => setIsShortcutsModalOpen((prev) => !prev),
+    onCloseModals: () => {
+      setIsShortcutsModalOpen(false);
+      setIsMobileDrawerOpen(false);
+    },
+  });
 
   const renderActiveView = () => {
     if (!isDemoMode && canonicalRole === 'unauthorized') {
@@ -422,6 +451,14 @@ const MainLayout: React.FC<MainLayoutProps> = ({ onNavigateToWebsite }) => {
       className="ellix-app-shell min-h-screen bg-[#070B14] text-slate-100 flex flex-col font-sans selection:bg-blue-600 selection:text-white w-full max-w-full overflow-x-hidden transition-colors duration-200"
     >
       
+      {/* Accessible Skip Navigation Links for Keyboard Focus */}
+      <SkipLinks onOpenShortcuts={() => setIsShortcutsModalOpen(true)} />
+
+      {/* Screen Reader Live Announcement Landmark */}
+      <div className="sr-only" aria-live="polite" aria-atomic="true">
+        {liveAnnouncement}
+      </div>
+
       {/* Top Main Navigation */}
       <motion.div
         variants={mainLayoutItemVariants}
@@ -431,6 +468,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ onNavigateToWebsite }) => {
         <Navbar
           onOpenMobileDrawer={() => setIsMobileDrawerOpen(true)}
           onNavigateToWebsite={onNavigateToWebsite}
+          onOpenShortcuts={() => setIsShortcutsModalOpen(true)}
         />
       </motion.div>
 
@@ -527,9 +565,13 @@ const MainLayout: React.FC<MainLayoutProps> = ({ onNavigateToWebsite }) => {
 
         {/* Main Workstage Content View with Motion Transitions & Safe Area Padding for Bottom Bar */}
         <motion.main
+          id="main-workstage"
+          tabIndex={-1}
+          role="main"
+          aria-label="Main Workstage"
           variants={mainLayoutItemVariants}
           transformTemplate={clearTransformWhenIdle}
-          className="flex-1 min-w-0 p-3 sm:p-4 md:p-6 pb-24 md:pb-6 w-full max-w-7xl mx-auto overflow-x-hidden"
+          className="flex-1 min-w-0 p-3 sm:p-4 md:p-6 pb-24 md:pb-6 w-full max-w-7xl mx-auto overflow-x-hidden outline-none"
         >
           <AnimatePresence mode="wait" initial={false}>
             <motion.div
@@ -562,6 +604,12 @@ const MainLayout: React.FC<MainLayoutProps> = ({ onNavigateToWebsite }) => {
         onSelectView={handleSelectView}
         onOpenMenu={() => setIsMobileDrawerOpen(true)}
         isMenuOpen={isMobileDrawerOpen}
+      />
+
+      {/* Application-wide Keyboard Shortcuts Guide Modal */}
+      <KeyboardShortcutsModal
+        isOpen={isShortcutsModalOpen}
+        onClose={() => setIsShortcutsModalOpen(false)}
       />
 
     </motion.div>

@@ -23,19 +23,22 @@ import {
   Mail,
   KeyRound,
   WifiOff,
-  Globe
+  Globe,
+  Keyboard
 } from 'lucide-react';
 
 interface NavbarProps {
   onOpenMobileDrawer?: () => void;
   onOpenNotifications?: () => void;
   onNavigateToWebsite?: () => void;
+  onOpenShortcuts?: () => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
   onOpenMobileDrawer,
   onOpenNotifications,
-  onNavigateToWebsite
+  onNavigateToWebsite,
+  onOpenShortcuts
 }) => {
   const {
     isDemoMode,
@@ -82,10 +85,20 @@ export const Navbar: React.FC<NavbarProps> = ({
         setShowRoleDropdown(false);
       }
     };
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setShowStoreDropdown(false);
+        setShowRoleDropdown(false);
+      }
+    };
     if (showStoreDropdown || showRoleDropdown) {
       document.addEventListener('mousedown', handleClickOutside);
+      document.addEventListener('keydown', handleKeyDown);
     }
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
   }, [showStoreDropdown, showRoleDropdown]);
 
   // Connectivity detection using navigator.onLine API
@@ -179,7 +192,13 @@ export const Navbar: React.FC<NavbarProps> = ({
   ];
 
   return (
-    <header className="sticky top-0 z-40 glass-panel border-b border-slate-800 text-slate-100 shadow-xl w-full max-w-full relative">
+    <header
+      id="app-header"
+      tabIndex={-1}
+      role="banner"
+      aria-label="Application Header"
+      className="sticky top-0 z-40 glass-panel border-b border-slate-800 text-slate-100 shadow-xl w-full max-w-full relative outline-none"
+    >
       {/* Subtle brand gradient backdrop BEHIND the glass navbar to give frosted refraction depth */}
       <div className="absolute inset-0 -z-10 bg-gradient-to-r from-blue-600/10 via-sky-500/5 to-blue-600/10 pointer-events-none" />
       <div className="w-full max-w-7xl mx-auto px-2.5 sm:px-4 lg:px-6">
@@ -374,6 +393,19 @@ export const Navbar: React.FC<NavbarProps> = ({
                 </span>
               )}
             </button>
+
+            {/* Keyboard Shortcuts Trigger Button */}
+            {onOpenShortcuts && (
+              <button
+                id="btn-nav-shortcuts"
+                onClick={onOpenShortcuts}
+                className="hidden sm:flex items-center gap-1 p-2 rounded-lg bg-slate-800/80 border border-slate-700/60 hover:bg-slate-700 text-slate-300 hover:text-white transition-all shrink-0 focus-visible:ring-2 focus-visible:ring-blue-500"
+                title="Keyboard Shortcuts Guide (Alt+/ or Shift+?)"
+                aria-label="Open keyboard shortcuts guide"
+              >
+                <Keyboard className="w-4 h-4 text-sky-400" />
+              </button>
+            )}
 
             {/* Exit Demo Button (in Demo Mode) or Return to Website / Sign In Button */}
             {isDemoMode ? (

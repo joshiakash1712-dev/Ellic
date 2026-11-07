@@ -178,7 +178,7 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({
                 onSelectView(tab.id);
               }
             }}
-            className="flex-1 h-full min-w-[48px] min-h-[48px] p-1.5 flex flex-col items-center justify-center transition-all active:scale-95 group focus:outline-none touch-manipulation"
+            className="flex-1 h-full min-w-[48px] min-h-[48px] p-1.5 flex flex-col items-center justify-center transition-all active:scale-95 group focus-visible:ring-2 focus-visible:ring-blue-500 rounded-xl focus:outline-none touch-manipulation"
             aria-current={isActive ? 'page' : undefined}
             title={tab.label}
           >

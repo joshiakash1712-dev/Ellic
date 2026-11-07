@@ -754,74 +754,85 @@ export const GetStartedModal: React.FC<GetStartedModalProps> = ({
                 </div>
               </div>
 
-              {/* Conditional 1: If Retail, Wholesaler, or Wholesaler & Retailer -> Shop Type Dropdown */}
-              {businessNeed && businessNeed !== 'exploring' && (
-                <div className="space-y-1 pt-1">
-                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                    Select Your Shop Type / Category *
-                  </label>
-                  <select
-                    required
-                    value={shopType}
-                    onChange={(e) => setShopType(e.target.value)}
-                    className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 text-slate-900 dark:text-white font-medium"
-                  >
-                    <option value="" disabled>
-                      Select your shop type / category...
-                    </option>
-                    {SHOP_TYPES.map((type) => (
-                      <option key={type} value={type}>
-                        {type}
+              {/* Fixed Layout Conditional Area: Swaps info according to selected type without changing layout */}
+              <div className="min-h-[105px] flex flex-col justify-center transition-all duration-200">
+                {/* Conditional 1: If Retail, Wholesaler, or Wholesaler & Retailer -> Shop Type Dropdown */}
+                {businessNeed && businessNeed !== 'exploring' && (
+                  <div className="space-y-1 animate-fadeIn">
+                    <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                      Select Your Shop Type / Category *
+                    </label>
+                    <select
+                      required
+                      value={shopType}
+                      onChange={(e) => setShopType(e.target.value)}
+                      className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 text-slate-900 dark:text-white font-medium"
+                    >
+                      <option value="" disabled>
+                        Select your shop type / category...
                       </option>
-                    ))}
-                  </select>
-                  <p className="text-[10px] text-slate-500 dark:text-slate-400">
-                    We tailor default GST tax rates, units, and inventory barcodes to your category.
-                  </p>
-                </div>
-              )}
-
-              {/* Conditional 2: If Just Exploring -> Ask for whom */}
-              {businessNeed === 'exploring' && (
-                <div className="space-y-2 pt-1">
-                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
-                    Who are you exploring Ellic for? *
-                  </label>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                    <label
-                      onClick={() => setExploringTarget('self')}
-                      className={`p-3 rounded-xl border text-left cursor-pointer transition-all ${
-                        exploringTarget === 'self'
-                          ? 'border-emerald-500 bg-emerald-50/70 dark:bg-emerald-950/40 ring-1 ring-emerald-500'
-                          : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800'
-                      }`}
-                    >
-                      <div className="text-xs font-bold text-slate-900 dark:text-white">
-                        For Myself
-                      </div>
-                      <div className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">
-                        Learning features or planning a future store.
-                      </div>
-                    </label>
-
-                    <label
-                      onClick={() => setExploringTarget('clients')}
-                      className={`p-3 rounded-xl border text-left cursor-pointer transition-all ${
-                        exploringTarget === 'clients'
-                          ? 'border-emerald-500 bg-emerald-50/70 dark:bg-emerald-950/40 ring-1 ring-emerald-500'
-                          : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800'
-                      }`}
-                    >
-                      <div className="text-xs font-bold text-slate-900 dark:text-white">
-                        For Other Shop Owners
-                      </div>
-                      <div className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">
-                        Consultant, CA / accountant, or retail partner.
-                      </div>
-                    </label>
+                      {SHOP_TYPES.map((type) => (
+                        <option key={type} value={type}>
+                          {type}
+                        </option>
+                      ))}
+                    </select>
+                    <p className="text-[10px] text-slate-500 dark:text-slate-400">
+                      We tailor default GST tax rates, units, and inventory barcodes to your category.
+                    </p>
                   </div>
-                </div>
-              )}
+                )}
+
+                {/* Conditional 2: If Just Exploring -> Ask for whom */}
+                {businessNeed === 'exploring' && (
+                  <div className="space-y-2 animate-fadeIn">
+                    <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+                      Who are you exploring Ellic for? *
+                    </label>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      <label
+                        onClick={() => setExploringTarget('self')}
+                        className={`p-2.5 rounded-xl border text-left cursor-pointer transition-all ${
+                          exploringTarget === 'self'
+                            ? 'border-emerald-500 bg-emerald-50/70 dark:bg-emerald-950/40 ring-1 ring-emerald-500'
+                            : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-slate-300'
+                        }`}
+                      >
+                        <div className="text-xs font-bold text-slate-900 dark:text-white">
+                          For Myself
+                        </div>
+                        <div className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">
+                          Learning features or planning a future store.
+                        </div>
+                      </label>
+
+                      <label
+                        onClick={() => setExploringTarget('clients')}
+                        className={`p-2.5 rounded-xl border text-left cursor-pointer transition-all ${
+                          exploringTarget === 'clients'
+                            ? 'border-emerald-500 bg-emerald-50/70 dark:bg-emerald-950/40 ring-1 ring-emerald-500'
+                            : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-slate-300'
+                        }`}
+                      >
+                        <div className="text-xs font-bold text-slate-900 dark:text-white">
+                          For Other Shop Owners
+                        </div>
+                        <div className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">
+                          Consultant, CA / accountant, or retail partner.
+                        </div>
+                      </label>
+                    </div>
+                  </div>
+                )}
+
+                {/* Placeholder when no business need is selected yet */}
+                {!businessNeed && (
+                  <div className="p-3.5 rounded-xl border border-dashed border-slate-200 dark:border-slate-800 text-center text-xs text-slate-400 dark:text-slate-500 flex items-center justify-center gap-2">
+                    <Sparkles className="w-3.5 h-3.5 text-slate-400" />
+                    <span>Select a business need above to configure category or exploring options</span>
+                  </div>
+                )}
+              </div>
 
               {/* Navigation */}
               <div className="flex items-center gap-3 pt-2">

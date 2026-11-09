@@ -201,8 +201,8 @@ export const Navbar: React.FC<NavbarProps> = ({
     >
       {/* Subtle brand gradient backdrop BEHIND the glass navbar to give frosted refraction depth */}
       <div className="absolute inset-0 -z-10 bg-gradient-to-r from-blue-600/10 via-sky-500/5 to-blue-600/10 pointer-events-none" />
-      <div className="w-full max-w-7xl mx-auto px-2.5 sm:px-4 lg:px-6">
-        <div className="flex items-center justify-between h-16 gap-2 sm:gap-3">
+      <div className="w-full px-3 sm:px-5 lg:px-6">
+        <div className="flex items-center justify-between h-14 sm:h-[58px] gap-2 sm:gap-3">
           
           {/* Brand Logo & Store Picker */}
           <div className="flex items-center gap-1.5 sm:gap-3 shrink-0 min-w-0">

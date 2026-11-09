@@ -1,4 +1,4 @@
-import React, { useState, Suspense, lazy } from 'react';
+import React, { useState, useRef, Suspense, lazy } from 'react';
 import { EllixLandingPage } from './components/landing/EllixLandingPage';
 import { LEGAL_PAGE_ROUTES, getLegalSlugFromLocation } from './config/legal.config';
 import { ThemeProvider } from './context/ThemeContext';
@@ -443,14 +443,35 @@ const MainLayout: React.FC<MainLayoutProps> = ({ onNavigateToWebsite }) => {
     !dismissEmailBanner
   );
 
+  // Enforce zero browser window scrollbar while inside the application shell
+  React.useEffect(() => {
+    document.documentElement.classList.add('app-fixed-shell');
+    document.body.classList.add('app-fixed-shell');
+    return () => {
+      document.documentElement.classList.remove('app-fixed-shell');
+      document.body.classList.remove('app-fixed-shell');
+    };
+  }, []);
+
+  // Ref and state for main-workstage scroll progress tracking
+  const workstageRef = useRef<HTMLElement | null>(null);
+  const [scrollProgress, setScrollProgress] = useState(0);
+
+  const handleWorkstageScroll = React.useCallback((e: React.UIEvent<HTMLElement>) => {
+    const el = e.currentTarget;
+    const totalScroll = el.scrollHeight - el.clientHeight;
+    if (totalScroll > 0) {
+      const progress = (el.scrollTop / totalScroll) * 100;
+      setScrollProgress(Math.min(100, Math.max(0, progress)));
+    } else {
+      setScrollProgress(0);
+    }
+  }, []);
+
   return (
-    <motion.div
-      variants={mainLayoutContainerVariants}
-      initial={prefersReducedMotion ? false : 'initial'}
-      animate="animate"
-      className="ellix-app-shell min-h-screen bg-[#070B14] text-slate-100 flex flex-col font-sans selection:bg-blue-600 selection:text-white w-full max-w-full overflow-x-hidden transition-colors duration-200"
+    <div
+      className="ellix-app-shell w-full h-[100dvh] max-h-[100dvh] bg-[#070B14] text-slate-100 flex flex-row overflow-hidden font-sans selection:bg-blue-600 selection:text-white transition-colors duration-200"
     >
-      
       {/* Accessible Skip Navigation Links for Keyboard Focus */}
       <SkipLinks onOpenShortcuts={() => setIsShortcutsModalOpen(true)} />
 
@@ -459,144 +480,146 @@ const MainLayout: React.FC<MainLayoutProps> = ({ onNavigateToWebsite }) => {
         {liveAnnouncement}
       </div>
 
-      {/* Top Main Navigation */}
-      <motion.div
-        variants={mainLayoutItemVariants}
-        transformTemplate={clearTransformWhenIdle}
-        className="sticky top-0 z-40 w-full"
-      >
-        <Navbar
-          onOpenMobileDrawer={() => setIsMobileDrawerOpen(true)}
-          onNavigateToWebsite={onNavigateToWebsite}
-          onOpenShortcuts={() => setIsShortcutsModalOpen(true)}
-        />
-      </motion.div>
+      {/* 1. Fixed Sidebar: flex-shrink: 0, height: 100dvh, overflow: hidden */}
+      <Sidebar
+        activeView={activeView}
+        onSelectView={handleSelectView}
+        isMobileDrawerOpen={isMobileDrawerOpen}
+        onCloseMobileDrawer={() => setIsMobileDrawerOpen(false)}
+        onOpenMobileDrawer={() => setIsMobileDrawerOpen(true)}
+        onNavigateToWebsite={onNavigateToWebsite}
+      />
 
-      {/* Unverified Email Security Banner */}
-      {hasUnverifiedEmail && (
-        <motion.div
-          variants={mainLayoutItemVariants}
-          transformTemplate={clearTransformWhenIdle}
-          className="bg-amber-500/15 border-b border-amber-500/30 px-4 py-2 flex items-center justify-between text-xs text-amber-200"
-        >
-          <div className="flex items-center gap-2 flex-wrap">
-            <AlertCircle className="w-4 h-4 text-amber-400 shrink-0" />
-            <span>
-              <strong>Verify Email:</strong> Please verify <strong>{authUser?.email}</strong> for full permissions and account recovery.
-            </span>
-            <button
-              onClick={async () => {
-                try {
-                  await resendVerificationEmail();
-                  setResendStatus('Verification link sent!');
-                } catch {
-                  setResendStatus('Failed to send link.');
-                }
-              }}
-              className="underline font-bold hover:text-white transition-colors ml-1"
-            >
-              {resendStatus || 'Resend verification link'}
-            </button>
-            <span className="text-amber-400/60">•</span>
-            <button
-              onClick={() => setIsSyncHubOpen(true)}
-              className="text-amber-300 font-semibold hover:underline flex items-center gap-1"
-            >
-              <Zap className="w-3 h-3" />
-              <span>Manage Account</span>
-            </button>
-          </div>
-          <button
-            onClick={() => setDismissEmailBanner(true)}
-            className="p-1 text-amber-300 hover:text-white"
-            title="Dismiss banner"
-          >
-            <X className="w-3.5 h-3.5" />
-          </button>
-        </motion.div>
-      )}
-
-      {/* Client & Super Admin TOTP 2FA Security Advisory Banner */}
-      {showTotpAdvisory && (
-        <motion.div
-          variants={mainLayoutItemVariants}
-          transformTemplate={clearTransformWhenIdle}
-          className="bg-sky-950/70 border-b border-sky-500/30 px-4 py-2 flex items-center justify-between text-xs text-sky-200"
-        >
-          <div className="flex items-center gap-2 flex-wrap">
-            <ShieldCheck className="w-4 h-4 text-sky-400 shrink-0" />
-            <span>
-              <strong>High-Security Account ({securityRole === 'super_admin' ? 'Super Admin' : 'Store Owner / Client'}):</strong> TOTP Two-Factor Authentication is recommended to protect administrative operations.
-            </span>
-            <button
-              onClick={() => setIsSyncHubOpen(true)}
-              className="underline font-bold text-sky-300 hover:text-white transition-colors ml-1 flex items-center gap-1"
-            >
-              <Zap className="w-3 h-3" />
-              <span>Enable 2FA in Sync Hub</span>
-            </button>
-          </div>
-          <button
-            onClick={() => setDismissTotpBanner(true)}
-            className="p-1 text-sky-400 hover:text-white"
-            title="Dismiss security advisory"
-          >
-            <X className="w-3.5 h-3.5" />
-          </button>
-        </motion.div>
-      )}
-
-      {/* Body Layout */}
-      <motion.div
-        variants={mainLayoutItemVariants}
-        transformTemplate={clearTransformWhenIdle}
-        className="flex-1 flex flex-col md:flex-row w-full max-w-full min-w-0 overflow-x-hidden"
-      >
+      {/* 2. Main Application Wrapper: flex: 1, min-width: 0, min-height: 0, height: 100dvh */}
+      <div className="flex-1 min-w-0 min-h-0 h-[100dvh] max-h-[100dvh] flex flex-col overflow-hidden relative">
         
-        {/* Module Sub-navigation Sidebar, Collapsible Drawer & Bottom Nav */}
-        <Sidebar
-          activeView={activeView}
-          onSelectView={handleSelectView}
-          isMobileDrawerOpen={isMobileDrawerOpen}
-          onCloseMobileDrawer={() => setIsMobileDrawerOpen(false)}
-          onOpenMobileDrawer={() => setIsMobileDrawerOpen(true)}
-          onNavigateToWebsite={onNavigateToWebsite}
-        />
+        {/* Top Main Navigation (Header pinned at top of workspace) */}
+        <div className="shrink-0 z-30 w-full">
+          <Navbar
+            onOpenMobileDrawer={() => setIsMobileDrawerOpen(true)}
+            onNavigateToWebsite={onNavigateToWebsite}
+            onOpenShortcuts={() => setIsShortcutsModalOpen(true)}
+          />
 
-        {/* Main Workstage Content View with Motion Transitions & Safe Area Padding for Bottom Bar */}
+          {/* Subtle Horizontal Scroll-Progress Indicator Bar */}
+          <div
+            className="h-[2px] w-full bg-slate-800/40 overflow-hidden relative z-40 pointer-events-none"
+            role="progressbar"
+            aria-valuenow={Math.round(scrollProgress)}
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-label="Page scroll progress"
+          >
+            <div
+              className="h-full bg-gradient-to-r from-blue-600 via-sky-400 to-cyan-300 transition-all duration-100 ease-out shadow-[0_0_8px_rgba(56,189,248,0.6)]"
+              style={{ width: `${scrollProgress}%` }}
+            />
+          </div>
+        </div>
+
+        {/* Unverified Email Security Banner */}
+        {hasUnverifiedEmail && (
+          <div className="shrink-0 bg-amber-500/15 border-b border-amber-500/30 px-4 py-2 flex items-center justify-between text-xs text-amber-200">
+            <div className="flex items-center gap-2 flex-wrap">
+              <AlertCircle className="w-4 h-4 text-amber-400 shrink-0" />
+              <span>
+                <strong>Verify Email:</strong> Please verify <strong>{authUser?.email}</strong> for full permissions and account recovery.
+              </span>
+              <button
+                onClick={async () => {
+                  try {
+                    await resendVerificationEmail();
+                    setResendStatus('Verification link sent!');
+                  } catch {
+                    setResendStatus('Failed to send link.');
+                  }
+                }}
+                className="underline font-bold hover:text-white transition-colors ml-1"
+              >
+                {resendStatus || 'Resend verification link'}
+              </button>
+              <span className="text-amber-400/60">•</span>
+              <button
+                onClick={() => setIsSyncHubOpen(true)}
+                className="text-amber-300 font-semibold hover:underline flex items-center gap-1"
+              >
+                <Zap className="w-3 h-3" />
+                <span>Manage Account</span>
+              </button>
+            </div>
+            <button
+              onClick={() => setDismissEmailBanner(true)}
+              className="p-1 text-amber-300 hover:text-white"
+              title="Dismiss banner"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        )}
+
+        {/* Client & Super Admin TOTP 2FA Security Advisory Banner */}
+        {showTotpAdvisory && (
+          <div className="shrink-0 bg-sky-950/70 border-b border-sky-500/30 px-4 py-2 flex items-center justify-between text-xs text-sky-200">
+            <div className="flex items-center gap-2 flex-wrap">
+              <ShieldCheck className="w-4 h-4 text-sky-400 shrink-0" />
+              <span>
+                <strong>High-Security Account ({securityRole === 'super_admin' ? 'Super Admin' : 'Store Owner / Client'}):</strong> TOTP Two-Factor Authentication is recommended to protect administrative operations.
+              </span>
+              <button
+                onClick={() => setIsSyncHubOpen(true)}
+                className="underline font-bold text-sky-300 hover:text-white transition-colors ml-1 flex items-center gap-1"
+              >
+                <Zap className="w-3 h-3" />
+                <span>Enable 2FA in Sync Hub</span>
+              </button>
+            </div>
+            <button
+              onClick={() => setDismissTotpBanner(true)}
+              className="p-1 text-sky-400 hover:text-white"
+              title="Dismiss security advisory"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        )}
+
+        {/* 3. Main Content Scroll Container: flex: 1, min-height: 0, overflow-y: auto, overflow-x: hidden */}
         <motion.main
           id="main-workstage"
+          ref={workstageRef}
+          onScroll={handleWorkstageScroll}
           tabIndex={-1}
           role="main"
           aria-label="Main Workstage"
           variants={mainLayoutItemVariants}
           transformTemplate={clearTransformWhenIdle}
-          className="flex-1 min-w-0 p-3 sm:p-4 md:p-6 pb-24 md:pb-6 w-full max-w-7xl mx-auto overflow-x-hidden outline-none"
+          className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden p-3 sm:p-5 lg:p-6 pb-20 md:pb-6 outline-none"
         >
-          <AnimatePresence mode="wait" initial={false}>
-            <motion.div
-              id={`view-stage-${viewKey}`}
-              key={viewKey}
-              variants={pageMotionVariants}
-              initial="initial"
-              animate="animate"
-              exit="exit"
-              className="w-full max-w-full h-full will-change-transform min-w-0 overflow-x-hidden"
-            >
-              <Suspense
-                fallback={
-                  <div className="w-full min-h-[320px] flex items-center justify-center">
-                    <div className="w-6 h-6 rounded-full border-2 border-blue-500/30 border-t-sky-400 animate-spin" />
-                  </div>
-                }
+          <div className="w-full max-w-[1720px] mx-auto min-w-0 flex flex-col">
+            <AnimatePresence mode="wait" initial={false}>
+              <motion.div
+                id={`view-stage-${viewKey}`}
+                key={viewKey}
+                variants={pageMotionVariants}
+                initial="initial"
+                animate="animate"
+                exit="exit"
+                className="w-full min-w-0 overflow-x-hidden"
               >
-                {renderActiveView()}
-              </Suspense>
-            </motion.div>
-          </AnimatePresence>
+                <Suspense
+                  fallback={
+                    <div className="w-full min-h-[320px] flex items-center justify-center">
+                      <div className="w-6 h-6 rounded-full border-2 border-blue-500/30 border-t-sky-400 animate-spin" />
+                    </div>
+                  }
+                >
+                  {renderActiveView()}
+                </Suspense>
+              </motion.div>
+            </AnimatePresence>
+          </div>
         </motion.main>
-
-      </motion.div>
+      </div>
 
       {/* Persistent Native Android-style Bottom Navigation for Mobile Critical Actions */}
       <BottomNavigation
@@ -612,7 +635,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ onNavigateToWebsite }) => {
         onClose={() => setIsShortcutsModalOpen(false)}
       />
 
-    </motion.div>
+    </div>
   );
 };
 

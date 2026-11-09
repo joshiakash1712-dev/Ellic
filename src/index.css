@@ -865,6 +865,41 @@ html, body {
   flex-direction: column;
 }
 
+/* Fixed Application Shell Independent Scrolling */
+html.app-fixed-shell,
+html.app-fixed-shell body,
+html.app-fixed-shell #root {
+  height: 100dvh !important;
+  max-height: 100dvh !important;
+  overflow: hidden !important;
+}
+
+.ellix-app-shell {
+  width: 100%;
+  height: 100dvh;
+  max-height: 100dvh;
+  overflow: hidden;
+}
+
+/* Subtle modern scrollbar for main workstage */
+#main-workstage::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+#main-workstage::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+#main-workstage::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.2);
+  border-radius: 9999px;
+}
+
+#main-workstage::-webkit-scrollbar-thumb:hover {
+  background: rgba(56, 189, 248, 0.45);
+}
+
 /* Base transitions for smooth theme switching */
 html {
   transition: background-color 0.25s ease, color 0.25s ease;

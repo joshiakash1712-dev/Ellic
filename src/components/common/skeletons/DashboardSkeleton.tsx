@@ -9,7 +9,7 @@ export const DashboardSkeleton: React.FC = () => {
   return (
     <div
       id="dashboard-skeleton-view"
-      className="space-y-5 w-full max-w-full min-w-0 overflow-x-hidden pb-10"
+      className="space-y-5 w-full min-w-0 pb-10"
       aria-busy="true"
       aria-label="Loading Dashboard Data"
     >

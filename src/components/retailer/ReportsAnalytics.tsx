@@ -691,7 +691,7 @@ export const ReportsAnalytics: React.FC<ReportsAnalyticsProps> = ({ onNavigateTo
       </div>
 
       {/* High-Level Executive KPI Strip */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 tabular-nums">
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(210px,1fr))] gap-3.5 sm:gap-4 tabular-nums">
         
         {/* Total Billed Sales */}
         <div className="p-4 rounded-xl glass-panel glass-panel-interactive shadow-lg space-y-1 relative overflow-hidden group transition-all">

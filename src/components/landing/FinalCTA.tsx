@@ -163,7 +163,7 @@ export const FinalCTA: React.FC<FinalCTAProps> = ({ onOpenGetStarted, onLaunchDe
         </div>
 
         {/* ================= PRICING CARDS GRID ================= */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 sm:gap-6 items-stretch">
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5 sm:gap-6 items-stretch">
           {plans.map((plan) => {
             const priceVal = billingCycle === 'annual' ? plan.price.annual : plan.price.monthly;
             const isZero = priceVal === 0;

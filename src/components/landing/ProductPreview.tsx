@@ -116,7 +116,7 @@ export const ProductPreview: React.FC = () => {
         </div>
 
         {/* Mobile / Tablet Horizontal Module Tabs */}
-        <div className="flex lg:hidden overflow-x-auto gap-2 pb-2 mb-3 scrollbar-none">
+        <div className="flex xl:hidden overflow-x-auto gap-2 pb-2 mb-3 scrollbar-none">
           {tabs.map((tab, idx) => (
             <button
               key={tab.id}
@@ -135,10 +135,10 @@ export const ProductPreview: React.FC = () => {
         </div>
 
         {/* Side-by-Side: Interactive Work Wheel on Left, Live Scrolling UI Simulator on Right */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 lg:gap-7 items-stretch">
+        <div className="grid grid-cols-1 xl:grid-cols-12 gap-5 xl:gap-7 items-stretch">
           
-          {/* Left: Vector Work Wheel Dial Component (Hidden on mobile for clean preview, visible on desktop) */}
-          <div className="hidden lg:flex lg:col-span-6 xl:col-span-6 flex-col">
+          {/* Left: Vector Work Wheel Dial Component (Hidden on mobile/tablet for clean preview, visible on desktop) */}
+          <div className="hidden xl:flex xl:col-span-6 flex-col">
             <WorkWheelStage
               items={tabs.map((t) => ({
                 id: t.id,
@@ -156,7 +156,7 @@ export const ProductPreview: React.FC = () => {
           </div>
 
           {/* Right: Live Interactive UI Simulator Window (Target Card with Work Wheel scrolling applied) */}
-          <div className="lg:col-span-6 xl:col-span-6 flex flex-col">
+          <div className="col-span-1 xl:col-span-6 flex flex-col">
             <div
               ref={cardRef}
               {...scrollProps}

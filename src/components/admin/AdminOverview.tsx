@@ -123,7 +123,7 @@ export const AdminOverview: React.FC<AdminOverviewProps> = ({
     <div className="space-y-6">
       
       {/* 1. SYSTEM HEALTH & TELEMETRY MONITOR */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 tabular-nums">
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(260px,1fr))] gap-4 tabular-nums">
         
         {/* Cloud Sync & Node Telemetry */}
         <div className="p-5 rounded-xl bg-[#121826] border border-slate-800 shadow-lg space-y-3">

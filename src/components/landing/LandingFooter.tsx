@@ -54,7 +54,7 @@ export const LandingFooter: React.FC<LandingFooterProps> = ({
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-14 md:py-16">
         
         {/* Main Footer Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-6 gap-8 sm:gap-6 lg:gap-10">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-8 sm:gap-6 lg:gap-8 xl:gap-10">
           
           {/* Col 1 & 2: Brand & Tagline */}
           <div className="sm:col-span-2 space-y-3 sm:space-y-4">

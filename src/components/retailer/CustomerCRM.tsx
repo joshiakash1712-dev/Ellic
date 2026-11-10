@@ -226,8 +226,8 @@ export const CustomerCRM: React.FC = () => {
         </div>
 
         {/* Skeleton content */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-          <div className="lg:col-span-5 space-y-3">
+        <div className="grid grid-cols-1 xl:grid-cols-12 gap-5 sm:gap-6 items-start">
+          <div className="xl:col-span-5 space-y-3">
             <Skeleton className="h-11 w-full rounded-xl" />
             <div className="space-y-2">
               {[1, 2, 3, 4, 5].map(i => (
@@ -235,7 +235,7 @@ export const CustomerCRM: React.FC = () => {
               ))}
             </div>
           </div>
-          <div className="lg:col-span-7">
+          <div className="xl:col-span-7">
             <Skeleton className="h-96 w-full rounded-xl" />
           </div>
         </div>
@@ -358,10 +358,10 @@ export const CustomerCRM: React.FC = () => {
       )}
 
       {/* Main Grid: Directory + Details Ledger */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+      <div className="grid grid-cols-1 xl:grid-cols-12 gap-5 sm:gap-6">
         
         {/* Left Column: Customer Directory with Checkboxes */}
-        <div className="lg:col-span-5 p-4 rounded-xl bg-[#121826] border border-slate-800 shadow-lg space-y-3">
+        <div className="xl:col-span-5 p-4 rounded-xl bg-[#121826] border border-slate-800 shadow-lg space-y-3">
           
           <div className="flex items-center justify-between gap-2">
             <div className="relative flex-1">
@@ -474,7 +474,7 @@ export const CustomerCRM: React.FC = () => {
         </div>
 
         {/* Right Column: Active Customer Profile & Template Customizer */}
-        <div className="lg:col-span-7 p-5 rounded-xl bg-[#121826] border border-slate-800 shadow-lg space-y-5 tabular-nums">
+        <div className="xl:col-span-7 p-5 rounded-xl bg-[#121826] border border-slate-800 shadow-lg space-y-5 tabular-nums">
           {selectedCust ? (
             <>
               {/* Profile Top Summary */}

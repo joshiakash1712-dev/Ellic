@@ -923,7 +923,7 @@ Thank you for shopping with ${inv.storeName}!`;
           </div>
 
           {/* Product Grid */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+          <div className="grid grid-cols-[repeat(auto-fill,minmax(130px,1fr))] gap-2.5 sm:gap-3">
             {filteredProducts.map(prod => {
               const inCartItem = cart.find(i => i.product.id === prod.id);
               const isLowStock = prod.stock <= prod.minThreshold;

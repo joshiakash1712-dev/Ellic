@@ -349,76 +349,79 @@ export const RetailerDashboard: React.FC<RetailerDashboardProps> = ({
       {/* ========================================================================= */}
       {/* SECTION 1: DASHBOARD HERO / STORE STATUS & QUICK ACTIONS                  */}
       {/* ========================================================================= */}
-      <div className="p-4 sm:p-5 lg:p-6 rounded-2xl glass-panel shadow-xl flex flex-col justify-between gap-4 sm:gap-5 relative overflow-hidden border border-slate-800">
+      <div className="p-4 sm:p-5 lg:p-6 rounded-2xl glass-panel shadow-xl flex flex-col justify-between gap-4 sm:gap-5 relative overflow-hidden border border-slate-800 w-full min-w-0">
         {/* Subtle brand gradient backdrop BEHIND the glass hero */}
         <div className="absolute inset-0 -z-10 bg-gradient-to-br from-blue-600/15 via-slate-900/70 to-sky-500/15 pointer-events-none" />
 
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 sm:gap-5 z-10">
-          <div className="space-y-1.5 sm:space-y-2">
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-sky-500/15 border border-sky-500/30 text-xs font-bold text-sky-300 shadow-sm">
+        <div className="flex flex-col 2xl:flex-row 2xl:items-center justify-between gap-4 sm:gap-5 z-10 w-full min-w-0">
+          {/* Introductory Content */}
+          <div className="space-y-2 sm:space-y-2.5 w-full min-w-0 flex-1">
+            {/* Status Badges: Flexible wrapping container, badges shrink-0 and whitespace-nowrap */}
+            <div className="flex flex-wrap items-center gap-2 w-full min-w-0">
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-sky-500/15 border border-sky-500/30 text-xs font-bold text-sky-300 shadow-sm shrink-0 whitespace-nowrap">
                 <span className="w-2 h-2 rounded-full bg-sky-400 animate-pulse shrink-0" />
                 <span>Live Store Sync</span>
               </span>
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-800/80 border border-slate-700 text-xs font-semibold text-slate-300">
-                <Calendar className="w-3.5 h-3.5 text-sky-400" />
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-800/80 border border-slate-700 text-xs font-semibold text-slate-300 shrink-0 whitespace-nowrap">
+                <Calendar className="w-3.5 h-3.5 text-sky-400 shrink-0" />
                 <span>{todayDateString}</span>
               </span>
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-800/80 border border-slate-700 text-xs font-semibold text-slate-300">
-                <MapPin className="w-3.5 h-3.5 text-cyan-400" />
-                <span>{activeStore.name} · {activeStore.city || 'Nashik'}</span>
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-800/80 border border-slate-700 text-xs font-semibold text-slate-300 shrink-0 whitespace-nowrap max-w-full">
+                <MapPin className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
+                <span className="truncate">{activeStore.name} · {activeStore.city || 'Nashik'}</span>
               </span>
               {lowStockProducts.length > 0 && (
-                <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-500/15 border border-amber-500/30 text-xs font-bold text-amber-300 tabular-nums">
+                <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-500/15 border border-amber-500/30 text-xs font-bold text-amber-300 tabular-nums shrink-0 whitespace-nowrap">
                   <AlertTriangle className="w-3.5 h-3.5 text-amber-400 shrink-0" />
                   <span>{lowStockProducts.length} Low Stock Alert{lowStockProducts.length > 1 ? 's' : ''}</span>
                 </div>
               )}
             </div>
 
-            <h1 className="text-xl sm:text-2xl lg:text-3xl font-extrabold text-white tracking-tight pt-0.5">
+            {/* Welcome Heading */}
+            <h1 className="text-xl sm:text-2xl lg:text-3xl font-extrabold text-white tracking-tight pt-0.5 w-full min-w-0 break-words">
               Welcome back, {userGreetingName}!
             </h1>
-            <p className="text-xs sm:text-sm text-slate-300 font-medium max-w-3xl">
+            <p className="text-xs sm:text-sm text-slate-300 font-medium max-w-3xl leading-relaxed">
               Your store operations and inventory are synchronized in real time. Here is your business performance snapshot for today.
             </p>
           </div>
 
           {/* Quick Action Navigation Buttons */}
-          <div className="flex flex-wrap items-center gap-2 sm:gap-2.5 shrink-0 pt-1 lg:pt-0">
+          <div className="flex flex-wrap items-center gap-2 sm:gap-2.5 w-full 2xl:w-auto 2xl:shrink-0 pt-1 2xl:pt-0">
             <button
               id="btn-hero-new-bill"
               onClick={onNavigateToPOS || onNavigateToInventory}
-              className="min-h-[38px] sm:min-h-[40px] px-3.5 sm:px-4 py-2 rounded-xl bg-gradient-to-r from-blue-600 to-sky-600 hover:from-blue-500 hover:to-sky-500 text-white text-xs sm:text-sm font-bold shadow-lg shadow-blue-500/25 flex items-center justify-center gap-1.5 transition-all active:scale-95 cursor-pointer"
+              className="flex-1 sm:flex-initial min-w-[140px] min-h-[38px] sm:min-h-[40px] px-3.5 sm:px-4 py-2 rounded-xl bg-gradient-to-r from-blue-600 to-sky-600 hover:from-blue-500 hover:to-sky-500 text-white text-xs sm:text-sm font-bold shadow-lg shadow-blue-500/25 flex items-center justify-center gap-1.5 transition-all active:scale-95 cursor-pointer whitespace-nowrap"
             >
-              <Plus className="w-4 h-4" />
+              <Plus className="w-4 h-4 shrink-0" />
               <span>+ New POS Bill</span>
             </button>
 
             <button
               id="btn-hero-add-stock"
               onClick={onNavigateToInventory}
-              className="min-h-[38px] sm:min-h-[40px] px-3 sm:px-3.5 py-2 rounded-xl bg-slate-800/90 hover:bg-slate-700 border border-slate-700 text-slate-200 text-xs sm:text-sm font-semibold flex items-center justify-center gap-1.5 transition-all active:scale-95 shadow-sm cursor-pointer"
+              className="flex-1 sm:flex-initial min-w-[110px] min-h-[38px] sm:min-h-[40px] px-3 sm:px-3.5 py-2 rounded-xl bg-slate-800/90 hover:bg-slate-700 border border-slate-700 text-slate-200 text-xs sm:text-sm font-semibold flex items-center justify-center gap-1.5 transition-all active:scale-95 shadow-sm cursor-pointer whitespace-nowrap"
             >
-              <Boxes className="w-4 h-4 text-cyan-400" />
+              <Boxes className="w-4 h-4 text-cyan-400 shrink-0" />
               <span>Add Stock</span>
             </button>
 
             <button
               id="btn-hero-wholesale-order"
               onClick={onNavigateToWholesale || onNavigateToRestock}
-              className="min-h-[38px] sm:min-h-[40px] px-3 sm:px-3.5 py-2 rounded-xl bg-slate-800/90 hover:bg-slate-700 border border-slate-700 text-slate-200 text-xs sm:text-sm font-semibold flex items-center justify-center gap-1.5 transition-all active:scale-95 shadow-sm cursor-pointer"
+              className="flex-1 sm:flex-initial min-w-[145px] min-h-[38px] sm:min-h-[40px] px-3 sm:px-3.5 py-2 rounded-xl bg-slate-800/90 hover:bg-slate-700 border border-slate-700 text-slate-200 text-xs sm:text-sm font-semibold flex items-center justify-center gap-1.5 transition-all active:scale-95 shadow-sm cursor-pointer whitespace-nowrap"
             >
-              <ShoppingCart className="w-4 h-4 text-amber-400" />
+              <ShoppingCart className="w-4 h-4 text-amber-400 shrink-0" />
               <span>Wholesale Orders</span>
             </button>
 
             <button
               id="btn-hero-view-reports"
               onClick={onNavigateToReports || onNavigateToInventory}
-              className="min-h-[38px] sm:min-h-[40px] px-3 sm:px-3.5 py-2 rounded-xl bg-slate-800/90 hover:bg-slate-700 border border-slate-700 text-slate-200 text-xs sm:text-sm font-semibold flex items-center justify-center gap-1.5 transition-all active:scale-95 shadow-sm cursor-pointer"
+              className="flex-1 sm:flex-initial min-w-[130px] min-h-[38px] sm:min-h-[40px] px-3 sm:px-3.5 py-2 rounded-xl bg-slate-800/90 hover:bg-slate-700 border border-slate-700 text-slate-200 text-xs sm:text-sm font-semibold flex items-center justify-center gap-1.5 transition-all active:scale-95 shadow-sm cursor-pointer whitespace-nowrap"
             >
-              <BarChart3 className="w-4 h-4 text-sky-400" />
+              <BarChart3 className="w-4 h-4 text-sky-400 shrink-0" />
               <span>Reports & GST</span>
             </button>
           </div>
@@ -440,7 +443,7 @@ export const RetailerDashboard: React.FC<RetailerDashboardProps> = ({
           <span className="text-xs text-slate-400 font-semibold">Live POS Stream</span>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3 sm:gap-4 w-full min-w-0 tabular-nums">
+        <div className="grid grid-cols-[repeat(auto-fit,minmax(230px,1fr))] gap-3 sm:gap-4 w-full min-w-0 tabular-nums">
           
           {/* KPI 1: Today's Sales */}
           <div className="p-4 sm:p-4.5 lg:p-5 rounded-2xl glass-panel glass-panel-interactive shadow-lg transition-all flex flex-col justify-between min-w-0 border border-slate-800/90 hover:border-slate-700 relative overflow-hidden group">
@@ -545,10 +548,10 @@ export const RetailerDashboard: React.FC<RetailerDashboardProps> = ({
       {/* ========================================================================= */}
       {/* SECTION 3: SALES ANALYTICS & INTRADAY PERFORMANCE                         */}
       {/* ========================================================================= */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-5 w-full min-w-0 items-stretch">
+      <div className="grid grid-cols-1 xl:grid-cols-12 gap-4 sm:gap-5 w-full min-w-0 items-stretch">
         
         {/* Left (8 Cols): Spacious Hourly Sales Trend Bar Chart */}
-        <div className="lg:col-span-8 p-4 sm:p-5 lg:p-6 rounded-2xl bg-[#0E1726] border border-slate-800 shadow-xl space-y-3.5 min-w-0 flex flex-col justify-between">
+        <div className="xl:col-span-8 p-4 sm:p-5 lg:p-6 rounded-2xl bg-[#0E1726] border border-slate-800 shadow-xl space-y-3.5 min-w-0 flex flex-col justify-between">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pb-2 border-b border-slate-800">
             <div>
               <div className="flex items-center gap-2">
@@ -633,7 +636,7 @@ export const RetailerDashboard: React.FC<RetailerDashboardProps> = ({
         </div>
 
         {/* Right (4 Cols): Business Drivers & Margin Summary */}
-        <div className="lg:col-span-4 p-4 sm:p-5 lg:p-6 rounded-2xl bg-[#0E1726] border border-slate-800 shadow-xl space-y-4 min-w-0 flex flex-col justify-between">
+        <div className="xl:col-span-4 p-4 sm:p-5 lg:p-6 rounded-2xl bg-[#0E1726] border border-slate-800 shadow-xl space-y-4 min-w-0 flex flex-col justify-between">
           <div>
             <div className="flex items-center gap-2 pb-2.5 border-b border-slate-800">
               <div className="p-1.5 sm:p-2 rounded-xl bg-sky-500/20 text-sky-400 border border-sky-500/30">
@@ -645,7 +648,7 @@ export const RetailerDashboard: React.FC<RetailerDashboardProps> = ({
               </div>
             </div>
 
-            <div className="space-y-2.5 mt-3">
+            <div className="grid grid-cols-1 sm:grid-cols-3 xl:grid-cols-1 gap-2.5 mt-3">
               <div className="p-2.5 sm:p-3 rounded-xl bg-[#070B14] border border-slate-800 flex items-center justify-between gap-3">
                 <div>
                   <div className="text-[10px] sm:text-[11px] font-semibold text-slate-400 uppercase tracking-wide">Estimated Profit</div>
@@ -748,7 +751,7 @@ export const RetailerDashboard: React.FC<RetailerDashboardProps> = ({
               </div>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5 sm:gap-3">
+            <div className="grid grid-cols-[repeat(auto-fit,minmax(300px,1fr))] gap-2.5 sm:gap-3">
               {lowStockProducts.map(p => {
                 const deficit = Math.max(1, p.minThreshold - p.stock);
 
@@ -915,10 +918,7 @@ export const RetailerDashboard: React.FC<RetailerDashboardProps> = ({
       {/* ========================================================================= */}
       {/* SECTION 6: BUSINESS PERFORMANCE ANALYTICS & INVENTORY HEALTH              */}
       {/* ========================================================================= */}
-      {/* ========================================================================= */}
-      {/* SECTION 6: BUSINESS PERFORMANCE ANALYTICS & INVENTORY HEALTH              */}
-      {/* ========================================================================= */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5 w-full min-w-0 items-stretch">
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(280px,1fr))] gap-4 sm:gap-5 w-full min-w-0 items-stretch">
         
         {/* Card 1: Top Selling Items (Today) */}
         <div className="p-4 sm:p-5 lg:p-6 rounded-2xl bg-[#0E1726] border border-slate-800 shadow-xl space-y-3.5 flex flex-col justify-between tabular-nums">

@@ -247,14 +247,17 @@ export const Sidebar: React.FC<SidebarProps> = ({
         tabIndex={-1}
         role="navigation"
         aria-label="Sidebar Navigation"
-        className="hidden md:flex w-[220px] lg:w-[235px] xl:w-[250px] 2xl:w-[260px] shrink-0 h-[100dvh] max-h-[100dvh] glass-panel border-r border-slate-800 text-slate-300 p-2 lg:p-2.5 xl:p-3 flex-col justify-between relative overflow-hidden outline-none select-none z-30"
+        className="hidden md:flex w-[240px] shrink-0 h-[100dvh] max-h-[100dvh] glass-panel border-r border-slate-800 text-slate-300 p-2.5 flex-col min-h-0 relative overflow-hidden outline-none select-none z-30"
       >
         {/* Subtle brand gradient backdrop BEHIND the glass sidebar */}
         <div className="absolute inset-0 -z-10 bg-gradient-to-b from-blue-600/10 via-sky-500/5 to-transparent pointer-events-none" />
         
-        <div className="space-y-1.5 lg:space-y-2 min-w-0 flex flex-col">
+        {/* ============================================================= */}
+        {/* REGION 1: BRANDING & STORE SELECTOR (Fixed Header, shrink-0)   */}
+        {/* ============================================================= */}
+        <div className="shrink-0 flex flex-col space-y-1.5 pb-2 border-b border-slate-800/80">
           {/* Ellic Brand Wordmark Header */}
-          <div className="flex items-center justify-between pb-1.5 border-b border-slate-800/80 shrink-0">
+          <div className="flex items-center justify-between shrink-0">
             {onNavigateToWebsite ? (
               <button
                 type="button"
@@ -276,28 +279,28 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
           {/* Active Store / Executive Admin Profile Pill */}
           {activeModule === 'admin' ? (
-            <div className="flex items-center gap-2 p-1.5 lg:p-2 rounded-xl bg-gradient-to-r from-blue-950/60 to-[#161D2C] border border-sky-500/30 shadow-sm shrink-0">
-              <div className="w-7 h-7 lg:w-8 lg:h-8 rounded-lg bg-gradient-to-tr from-sky-500 to-blue-600 text-white flex items-center justify-center font-black text-xs shadow-md shrink-0">
+            <div className="flex items-center gap-2 p-1.5 rounded-xl bg-gradient-to-r from-blue-950/60 to-[#161D2C] border border-sky-500/30 shadow-sm shrink-0">
+              <div className="w-7 h-7 rounded-lg bg-gradient-to-tr from-sky-500 to-blue-600 text-white flex items-center justify-center font-black text-xs shadow-md shrink-0">
                 <ShieldAlert className="w-3.5 h-3.5 text-white" />
               </div>
               <div className="min-w-0 flex-1">
-                <div className="text-xs lg:text-sm font-bold text-white truncate">
+                <div className="text-xs font-bold text-white truncate">
                   {isSuperAdmin ? 'Superadmin Hub' : 'Platform Operations'}
                 </div>
-                <div className="text-[10px] lg:text-[11px] text-sky-400 font-semibold truncate flex items-center gap-1.5 mt-0.5">
+                <div className="text-[10px] text-sky-400 font-semibold truncate flex items-center gap-1.5 mt-0.5">
                   <span className="w-1.5 h-1.5 rounded-full bg-sky-400 animate-pulse shrink-0" />
                   <span>Root Governance · {stores.length} Outlets</span>
                 </div>
               </div>
             </div>
           ) : (
-            <div className="flex items-center gap-2 p-1.5 lg:p-2 rounded-xl bg-[#161D2C] border border-slate-800 shadow-sm shrink-0">
-              <div className="w-7 h-7 lg:w-8 lg:h-8 rounded-lg bg-gradient-to-tr from-blue-600 to-sky-500 text-white flex items-center justify-center font-bold text-xs shadow-md shrink-0">
+            <div className="flex items-center gap-2 p-1.5 rounded-xl bg-[#161D2C] border border-slate-800 shadow-sm shrink-0">
+              <div className="w-7 h-7 rounded-lg bg-gradient-to-tr from-blue-600 to-sky-500 text-white flex items-center justify-center font-bold text-xs shadow-md shrink-0">
                 {activeStore.name?.slice(0, 2).toUpperCase() || 'EM'}
               </div>
               <div className="min-w-0 flex-1">
-                <div className="text-xs lg:text-sm font-bold text-white truncate">{activeStore.name || 'Main Store'}</div>
-                <div className="text-[10px] lg:text-[11px] text-sky-400 font-semibold truncate flex items-center gap-1.5 mt-0.5">
+                <div className="text-xs font-bold text-white truncate">{activeStore.name || 'Main Store'}</div>
+                <div className="text-[10px] text-sky-400 font-semibold truncate flex items-center gap-1.5 mt-0.5">
                   <span className="w-1.5 h-1.5 rounded-full bg-sky-400 shrink-0" />
                   <span>{isCrew ? 'Assigned Store' : 'Active Store'} · {activeStore.city || 'India'}</span>
                 </div>
@@ -314,7 +317,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   <button
                     key={mod.id}
                     onClick={() => setActiveModule(mod.id)}
-                    className={`min-h-[32px] lg:min-h-[36px] flex items-center justify-center gap-1 py-1 px-1 rounded-md text-[11px] lg:text-xs font-bold transition-all ${
+                    className={`min-h-[30px] flex items-center justify-center gap-1 py-1 px-1 rounded-md text-[11px] font-bold transition-all ${
                       isActive
                         ? 'bg-blue-600 text-white shadow-sm'
                         : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
@@ -327,60 +330,69 @@ export const Sidebar: React.FC<SidebarProps> = ({
               })}
             </div>
           )}
-
-          <nav aria-label={`${activeModule} navigation links`} className="space-y-0.5 lg:space-y-1">
-            <div className="px-2 py-0.5 text-[10px] lg:text-[11px] uppercase font-bold tracking-wider text-slate-400">
-              {activeModule.toUpperCase()} NAVIGATION
-            </div>
-
-            {items.map((item, index) => {
-              const isActive =
-                activeView === item.id ||
-                (item.id === 'admin_overview' && (activeView === 'admin_dashboard' || activeView === 'overview' || activeView === 'admin_overview')) ||
-                (item.id === `admin_${activeView}`);
-              return (
-                <button
-                  key={item.id}
-                  id={`nav-desktop-${item.id}`}
-                  onClick={() => onSelectView(item.id)}
-                  onKeyDown={(e) => handleNavKeyDown(e, index, items)}
-                  aria-current={isActive ? 'page' : undefined}
-                  aria-selected={isActive}
-                  className={`w-full min-h-[34px] xl:min-h-[38px] flex items-center justify-between px-2 lg:px-2.5 py-1.5 xl:py-2 rounded-xl text-xs xl:text-sm font-medium transition-all focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none ${
-                    isActive
-                      ? 'bg-gradient-to-r from-blue-600 to-sky-600 text-white shadow-md shadow-blue-500/20 font-bold'
-                      : 'text-slate-300 hover:bg-slate-800/80 hover:text-white'
-                  }`}
-                >
-                  <div className="flex items-center gap-2.5 min-w-0">
-                    <span className="shrink-0">{item.icon}</span>
-                    <span className="truncate">{item.label}</span>
-                  </div>
-
-                  {item.badge && (
-                    <span className="text-[10px] font-black px-1.5 py-0.5 rounded-md bg-sky-400/20 text-sky-300 border border-sky-400/30 shrink-0">
-                      {item.badge}
-                    </span>
-                  )}
-                  {item.count !== undefined && (
-                    <span className={`text-[11px] font-bold px-1.5 py-0.5 rounded-md tabular-nums shrink-0 ${
-                      isActive ? 'bg-white/20 text-white' : 'bg-slate-800 text-slate-400'
-                    }`}>
-                      {item.count}
-                    </span>
-                  )}
-                </button>
-              );
-            })}
-          </nav>
         </div>
 
-        <div className="shrink-0 pt-2 border-t border-slate-800/80 space-y-1.5 lg:space-y-2">
+        {/* ============================================================= */}
+        {/* REGION 2: INDEPENDENTLY SCROLLABLE NAVIGATION (flex-1 min-h-0) */}
+        {/* ============================================================= */}
+        <nav
+          aria-label={`${activeModule} navigation links`}
+          className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden py-1.5 space-y-0.5 pr-1 focus:outline-none [scrollbar-width:thin] [scrollbar-color:rgba(148,163,184,0.3)_transparent] hover:[scrollbar-color:rgba(148,163,184,0.5)_transparent]"
+        >
+          <div className="px-2 py-0.5 text-[10px] lg:text-[11px] uppercase font-bold tracking-wider text-slate-400 sticky top-0 bg-[#0E1726]/95 backdrop-blur-sm z-10">
+            {activeModule.toUpperCase()} NAVIGATION
+          </div>
+
+          {items.map((item, index) => {
+            const isActive =
+              activeView === item.id ||
+              (item.id === 'admin_overview' && (activeView === 'admin_dashboard' || activeView === 'overview' || activeView === 'admin_overview')) ||
+              (item.id === `admin_${activeView}`);
+            return (
+              <button
+                key={item.id}
+                id={`nav-desktop-${item.id}`}
+                onClick={() => onSelectView(item.id)}
+                onKeyDown={(e) => handleNavKeyDown(e, index, items)}
+                aria-current={isActive ? 'page' : undefined}
+                aria-selected={isActive}
+                className={`w-full min-h-[34px] flex items-center justify-between px-2.5 py-1.5 rounded-xl text-xs font-medium transition-all focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none ${
+                  isActive
+                    ? 'bg-gradient-to-r from-blue-600 to-sky-600 text-white shadow-md shadow-blue-500/20 font-bold'
+                    : 'text-slate-300 hover:bg-slate-800/80 hover:text-white'
+                }`}
+              >
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <span className="shrink-0">{item.icon}</span>
+                  <span className="truncate">{item.label}</span>
+                </div>
+
+                {item.badge && (
+                  <span className="text-[10px] font-black px-1.5 py-0.5 rounded-md bg-sky-400/20 text-sky-300 border border-sky-400/30 shrink-0">
+                    {item.badge}
+                  </span>
+                )}
+                {item.count !== undefined && (
+                  <span className={`text-[11px] font-bold px-1.5 py-0.5 rounded-md tabular-nums shrink-0 ${
+                    isActive ? 'bg-white/20 text-white' : 'bg-slate-800 text-slate-400'
+                  }`}>
+                    {item.count}
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </nav>
+
+        {/* ============================================================= */}
+        {/* REGION 3: BOTTOM-PINNED UTILITY PANELS (shrink-0, border-t)   */}
+        {/* ============================================================= */}
+        <div className="shrink-0 pt-2 border-t border-slate-800/80 space-y-1.5 max-h-[38vh] overflow-y-auto [scrollbar-width:none]">
           {activeModule === 'retailer' && (
             <button
               id="btn-sidebar-actions-required"
               onClick={() => onSelectView('inventory')}
-              className="w-full min-h-[42px] lg:min-h-[46px] p-2 lg:p-2.5 rounded-xl bg-amber-500/10 hover:bg-amber-500/15 border border-amber-500/30 hover:border-amber-500/50 text-left transition-all group flex items-center justify-between"
+              className="w-full min-h-[38px] p-2 rounded-xl bg-amber-500/10 hover:bg-amber-500/15 border border-amber-500/30 hover:border-amber-500/50 text-left transition-all group flex items-center justify-between"
               title="View items requiring replenishment"
             >
               <div className="flex items-center gap-2 min-w-0">
@@ -388,10 +400,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   <AlertTriangle className="w-3.5 h-3.5" />
                 </div>
                 <div className="min-w-0">
-                  <div className="text-[11px] lg:text-xs font-bold text-amber-300 truncate">
+                  <div className="text-[11px] font-bold text-amber-300 truncate">
                     {lowStockCount > 0 ? `${lowStockCount} Actions Required` : 'Inventory Healthy'}
                   </div>
-                  <div className="text-[9px] lg:text-[10px] text-amber-200/80 truncate">
+                  <div className="text-[9px] text-amber-200/80 truncate">
                     {lowStockCount > 0 ? `${lowStockCount} items below threshold` : 'All stocks optimal'}
                   </div>
                 </div>
@@ -406,7 +418,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               <button
                 id="btn-sidebar-sync-hub"
                 onClick={() => setIsSyncHubOpen(true)}
-                className="w-full min-h-[42px] lg:min-h-[46px] p-2 lg:p-2.5 rounded-xl bg-slate-900/80 hover:bg-slate-800 border border-emerald-500/30 hover:border-emerald-500/50 text-left transition-all group shadow-sm"
+                className="w-full min-h-[38px] p-2 rounded-xl bg-slate-900/80 hover:bg-slate-800 border border-emerald-500/30 hover:border-emerald-500/50 text-left transition-all group shadow-sm"
               >
                 <div className="flex items-center justify-between">
                   <span className="text-[9px] font-bold uppercase tracking-wider text-emerald-400 flex items-center gap-1">
@@ -417,7 +429,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     Security &rarr;
                   </span>
                 </div>
-                <div className="text-[11px] lg:text-xs font-semibold text-white truncate mt-0.5">
+                <div className="text-xs font-semibold text-white truncate mt-0.5">
                   {authUser.displayName || 'Merchant Partner'}
                 </div>
                 <div className="text-[9px] text-slate-400 truncate flex items-center gap-1">
@@ -425,7 +437,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 </div>
               </button>
             ) : isDemoMode ? (
-              <div className="p-2 lg:p-2.5 rounded-xl bg-[#161D2C] border border-emerald-500/30 space-y-1.5">
+              <div className="p-2 rounded-xl bg-[#161D2C] border border-emerald-500/30 space-y-1">
                 <div className="flex items-center justify-between">
                   <span className="text-[9px] font-bold uppercase tracking-wider text-emerald-400">
                     App Demo Mode
@@ -434,16 +446,16 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     Sample Data
                   </span>
                 </div>
-                <div className="text-[11px] lg:text-xs font-semibold text-white truncate">
+                <div className="text-xs font-semibold text-white truncate">
                   {storeUser?.name || 'Vikram Malhotra'}
                 </div>
                 {onNavigateToWebsite && (
                   <button
                     id="btn-sidebar-exit-demo"
                     onClick={onNavigateToWebsite}
-                    className="w-full min-h-[38px] lg:min-h-[40px] py-1.5 px-3 rounded-lg bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold flex items-center justify-center gap-2 transition-all shadow-md shadow-rose-600/20"
+                    className="w-full min-h-[34px] py-1 px-2.5 rounded-lg bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold flex items-center justify-center gap-1.5 transition-all shadow-md shadow-rose-600/20"
                   >
-                    <LogOut className="w-3.5 h-3.5" />
+                    <LogOut className="w-3 h-3" />
                     <span>Exit Demo</span>
                   </button>
                 )}
@@ -452,7 +464,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               <button
                 id="btn-sidebar-sign-in"
                 onClick={() => openAuthModal('login')}
-                className="w-full min-h-[40px] lg:min-h-[44px] py-2 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold flex items-center justify-center gap-2 transition-all shadow-md shadow-emerald-600/20"
+                className="w-full min-h-[36px] py-1.5 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold flex items-center justify-center gap-2 transition-all shadow-md shadow-emerald-600/20"
               >
                 <LogIn className="w-3.5 h-3.5" />
                 <span>Sign In</span>
@@ -466,7 +478,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               <button
                 id="btn-sidebar-website"
                 onClick={onNavigateToWebsite}
-                className="w-full min-h-[38px] lg:min-h-[42px] flex items-center justify-between px-2.5 lg:px-3 py-1.5 lg:py-2 rounded-xl text-xs font-semibold text-slate-300 hover:text-white bg-slate-900/40 hover:bg-slate-800/60 border border-slate-800 hover:border-slate-700 transition-all"
+                className="w-full min-h-[34px] flex items-center justify-between px-2.5 py-1.5 rounded-xl text-xs font-semibold text-slate-300 hover:text-white bg-slate-900/40 hover:bg-slate-800/60 border border-slate-800 hover:border-slate-700 transition-all"
                 title="Return to Marketing Website"
               >
                 <div className="flex items-center gap-2">
@@ -483,7 +495,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <button
               id="btn-sidebar-settings"
               onClick={() => setIsSettingsModalOpen(true)}
-              className="w-full min-h-[38px] lg:min-h-[42px] flex items-center justify-between px-2.5 lg:px-3 py-1.5 lg:py-2 rounded-xl text-xs font-semibold text-slate-300 hover:text-white bg-slate-900/60 hover:bg-slate-800/80 border border-slate-800/80 hover:border-slate-700/80 transition-all active:scale-[0.98]"
+              className="w-full min-h-[34px] flex items-center justify-between px-2.5 py-1.5 rounded-xl text-xs font-semibold text-slate-300 hover:text-white bg-slate-900/60 hover:bg-slate-800/80 border border-slate-800/80 hover:border-slate-700/80 transition-all active:scale-[0.98]"
               title="Open System Settings & Theme"
             >
               <div className="flex items-center gap-2">

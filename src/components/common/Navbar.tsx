@@ -202,10 +202,10 @@ export const Navbar: React.FC<NavbarProps> = ({
       {/* Subtle brand gradient backdrop BEHIND the glass navbar to give frosted refraction depth */}
       <div className="absolute inset-0 -z-10 bg-gradient-to-r from-blue-600/10 via-sky-500/5 to-blue-600/10 pointer-events-none" />
       <div className="w-full px-3 sm:px-5 lg:px-6">
-        <div className="flex items-center justify-between h-14 sm:h-[58px] gap-2 sm:gap-3">
+        <div className="flex items-center justify-between h-14 sm:h-[58px] gap-2 flex-nowrap min-w-0">
           
           {/* Brand Logo & Store Picker */}
-          <div className="flex items-center gap-1.5 sm:gap-3 shrink-0 min-w-0">
+          <div className="flex items-center gap-1.5 sm:gap-2.5 shrink min-w-0">
             {/* Mobile Hamburger Drawer Trigger (Android Navigation Icon) */}
             <button
               id="btn-hamburger-menu"
@@ -222,7 +222,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               <button
                 type="button"
                 onClick={onNavigateToWebsite}
-                className="flex items-center gap-2 cursor-pointer hover:opacity-90 transition-opacity"
+                className="flex items-center gap-2 cursor-pointer hover:opacity-90 transition-opacity shrink-0"
                 title="Return to Website"
               >
               {/* Full logo on sm and larger screens */}
@@ -238,7 +238,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               </div>
             </button>
             ) : (
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 shrink-0">
                 <div className="hidden sm:flex items-center">
                   <EllixConnectLogo size="sm" alt="Ellic" />
                 </div>
@@ -269,7 +269,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             {isSuperAdmin ? (
               <div
                 id="badge-navbar-admin-super"
-                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border border-sky-500/40 bg-sky-500/10 text-sky-300 text-xs font-bold shadow-sm"
+                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border border-sky-500/40 bg-sky-500/10 text-sky-300 text-xs font-bold shadow-sm shrink min-w-0"
                 title="Super Admin: Root Governance & Platform Control"
               >
                 <ShieldAlert className="w-3.5 h-3.5 text-sky-400 shrink-0" />
@@ -278,21 +278,21 @@ export const Navbar: React.FC<NavbarProps> = ({
             ) : isPlatformAdmin ? (
               <div
                 id="badge-navbar-admin-platform"
-                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border border-sky-500/30 bg-sky-500/10 text-sky-300 text-xs font-bold shadow-sm"
+                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border border-sky-500/30 bg-sky-500/10 text-sky-300 text-xs font-bold shadow-sm shrink min-w-0"
                 title="Level 2 Platform Administrator: Managing Clients & Stores"
               >
                 <ShieldCheck className="w-3.5 h-3.5 text-sky-400 shrink-0" />
                 <span className="truncate font-extrabold text-white">Platform Admin</span>
               </div>
             ) : (
-              <div ref={storeDropdownRef} className="relative">
+              <div ref={storeDropdownRef} className="relative shrink min-w-0">
                 <button
                   id="btn-navbar-store-select"
                   onClick={() => {
                     setShowStoreDropdown(!showStoreDropdown);
                     setShowRoleDropdown(false);
                   }}
-                  className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border text-xs font-bold transition-all shadow-sm max-w-[130px] xs:max-w-[165px] sm:max-w-[230px] ${
+                  className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border text-xs font-bold transition-all shadow-sm max-w-[120px] xs:max-w-[155px] sm:max-w-[190px] xl:max-w-[240px] truncate ${
                     isCrew
                       ? 'bg-amber-500/10 border-amber-500/30 text-amber-200 hover:bg-amber-500/20'
                       : 'bg-sky-500/10 border-sky-500/30 text-sky-300 hover:bg-blue-500/20'
@@ -345,9 +345,9 @@ export const Navbar: React.FC<NavbarProps> = ({
             )}
           </div>
 
-          {/* Global Subscription Status Indicator (FIX 9: Client/Store Owner only) */}
+          {/* Global Subscription Status Indicator (Client/Store Owner only) */}
           {subscriptionStatusBadge && (
-            <div className="hidden lg:flex items-center">
+            <div className="hidden xl:flex items-center shrink-0">
               <button
                 type="button"
                 onClick={() => setIsSettingsModalOpen(true)}
@@ -361,7 +361,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           )}
 
           {/* Right Action Controls */}
-          <div className="flex items-center gap-2 shrink-0">
+          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0 flex-nowrap">
 
             {/* Support 24/7 Text Trigger */}
             <button
@@ -370,7 +370,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               onClick={() => {
                 window.dispatchEvent(new CustomEvent('open-support-chat', { detail: { toggle: true } }));
               }}
-              className="text-xs sm:text-sm font-medium text-slate-300 hover:text-white transition-colors cursor-pointer whitespace-nowrap px-1.5 sm:px-2 py-1"
+              className="hidden 2xl:inline-flex text-xs sm:text-sm font-medium text-slate-300 hover:text-white transition-colors cursor-pointer whitespace-nowrap px-1.5 sm:px-2 py-1"
               title="24/7 Customer Support & Help"
             >
               Support 24/7
@@ -399,7 +399,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               <button
                 id="btn-nav-shortcuts"
                 onClick={onOpenShortcuts}
-                className="hidden sm:flex items-center gap-1 p-2 rounded-lg bg-slate-800/80 border border-slate-700/60 hover:bg-slate-700 text-slate-300 hover:text-white transition-all shrink-0 focus-visible:ring-2 focus-visible:ring-blue-500"
+                className="hidden lg:flex items-center gap-1 p-2 rounded-lg bg-slate-800/80 border border-slate-700/60 hover:bg-slate-700 text-slate-300 hover:text-white transition-all shrink-0 focus-visible:ring-2 focus-visible:ring-blue-500"
                 title="Keyboard Shortcuts Guide (Alt+/ or Shift+?)"
                 aria-label="Open keyboard shortcuts guide"
               >

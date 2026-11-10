@@ -121,11 +121,30 @@ export const HowItWorks: React.FC = () => {
           </h2>
         </div>
 
+        {/* Mobile / Tablet Horizontal Step Pills */}
+        <div className="flex xl:hidden overflow-x-auto gap-2 pb-2 mb-3 scrollbar-none">
+          {steps.map((s, idx) => (
+            <button
+              key={s.id}
+              type="button"
+              onClick={() => handleStepSelect(idx)}
+              className={`px-3.5 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all flex items-center gap-1.5 shrink-0 cursor-pointer ${
+                activeStepIndex === idx
+                  ? 'bg-blue-600 text-white shadow-sm'
+                  : 'bg-white dark:bg-slate-850 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700'
+              }`}
+            >
+              <span className="font-mono text-[10px] opacity-75">{s.step}</span>
+              <span>{s.title}</span>
+            </button>
+          ))}
+        </div>
+
         {/* Side-by-Side: Interactive Work Wheel on Left, Live Scrolling Implementation Monitor on Right */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 lg:gap-7 items-stretch">
+        <div className="grid grid-cols-1 xl:grid-cols-12 gap-5 xl:gap-7 items-stretch">
           
-          {/* Left: Vector Work Wheel Dial Component (Hidden on mobile for clean preview, visible on desktop) */}
-          <div className="hidden lg:flex lg:col-span-6 xl:col-span-6 flex-col">
+          {/* Left: Vector Work Wheel Dial Component (Hidden on mobile/tablet for clean preview, visible on desktop) */}
+          <div className="hidden xl:flex xl:col-span-6 flex-col">
             <WorkWheelStage
               items={steps.map((s) => ({
                 id: s.id,
@@ -143,7 +162,7 @@ export const HowItWorks: React.FC = () => {
           </div>
 
           {/* Right: Live Implementation Monitor (Target Card with Work Wheel scrolling applied) */}
-          <div className="lg:col-span-6 xl:col-span-6 flex flex-col">
+          <div className="col-span-1 xl:col-span-6 flex flex-col">
             <div
               ref={cardRef}
               {...scrollProps}

@@ -252,7 +252,7 @@ export const LandingHeader: React.FC<LandingHeaderProps> = ({
 
         {/* Desktop Public SaaS Navigation */}
         <nav
-          className="hidden md:flex items-center gap-1 lg:gap-2 text-sm font-medium"
+          className="hidden xl:flex items-center gap-1 2xl:gap-2 text-sm font-medium shrink-0"
           aria-label="Public website navigation"
         >
           {/* 1. Product Dropdown */}
@@ -727,8 +727,35 @@ export const LandingHeader: React.FC<LandingHeaderProps> = ({
             <ThemeToggle id="btn-theme-toggle-header" />
           </div>
 
+          {/* Tablet Quick Action (sm to xl) */}
+          <div className="hidden sm:flex xl:hidden items-center gap-2 shrink-0">
+            {currentUser ? (
+              onOpenAppPreview && (
+                <button
+                  type="button"
+                  data-cursor="hover"
+                  onClick={onOpenAppPreview}
+                  className="website-btn-glow px-3 py-1.5 text-xs font-semibold text-white bg-gradient-to-r from-blue-600 to-sky-600 hover:from-blue-500 hover:to-sky-500 rounded-xl shadow-xs transition-all flex items-center gap-1.5 cursor-pointer shrink-0"
+                >
+                  <LayoutDashboard className="w-3.5 h-3.5" />
+                  <span>{consoleButtonLabel}</span>
+                </button>
+              )
+            ) : (
+              <button
+                type="button"
+                data-cursor="hover"
+                onClick={onOpenGetStarted}
+                className="website-btn-glow px-3.5 py-1.5 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-500 rounded-xl shadow-xs transition-all flex items-center gap-1 cursor-pointer shrink-0"
+              >
+                <span>Get Started</span>
+                <ArrowRight className="w-3 h-3" />
+              </button>
+            )}
+          </div>
+
           {/* Desktop Auth State Handling */}
-          <div className="hidden md:flex items-center gap-2 lg:gap-2.5 shrink-0">
+          <div className="hidden xl:flex items-center gap-2 lg:gap-2.5 shrink-0">
             {currentUser ? (
               /* Authenticated User: Shows Profile & Respective Console (Admin Console strictly authenticated) */
               <div className="flex items-center gap-2">
@@ -815,21 +842,21 @@ export const LandingHeader: React.FC<LandingHeaderProps> = ({
             )}
           </div>
 
-          {/* Mobile Menu Toggle Button */}
+          {/* Mobile/Tablet Menu Toggle Button */}
           <button
             id="btn-nav-mobile-toggle"
             type="button"
             aria-label="Toggle navigation menu"
             aria-expanded={mobileMenuOpen}
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="p-2 rounded-xl text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 md:hidden cursor-pointer"
+            className="p-2 rounded-xl text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 xl:hidden cursor-pointer shrink-0"
           >
             {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
           </button>
         </div>
       </motion.div>
 
-      {/* Mobile Drawer / Collapsible Navigation */}
+      {/* Mobile & Tablet Drawer / Collapsible Navigation */}
       <AnimatePresence>
         {mobileMenuOpen && (
           <motion.div
@@ -837,7 +864,7 @@ export const LandingHeader: React.FC<LandingHeaderProps> = ({
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
             transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
-            className="md:hidden border-b border-slate-200 dark:border-slate-800 bg-white/98 dark:bg-[#070B14]/98 backdrop-blur-2xl px-4 pt-3 pb-6 space-y-3 shadow-2xl overflow-hidden"
+            className="xl:hidden border-b border-slate-200 dark:border-slate-800 bg-white/98 dark:bg-[#070B14]/98 backdrop-blur-2xl px-4 pt-3 pb-6 space-y-3 shadow-2xl max-h-[85vh] overflow-y-auto"
           >
             {/* Mobile Navigation List */}
             <div className="flex flex-col space-y-1 text-sm font-semibold">

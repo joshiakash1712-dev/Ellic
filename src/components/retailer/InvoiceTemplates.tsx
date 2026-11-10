@@ -485,7 +485,7 @@ export const InvoiceTemplates: React.FC = () => {
       </div>
 
       {/* Templates Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(280px,1fr))] gap-4">
         {filteredTemplates.map(tpl => {
           const isIntl = !!tpl.internationalSettings?.primaryCurrency && tpl.internationalSettings.primaryCurrency !== 'INR';
           const primaryCurr = tpl.internationalSettings?.primaryCurrency || 'INR';

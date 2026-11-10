@@ -72,12 +72,12 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
       <motion.div
         style={{ y: ambientOrbPrimaryY, scale: ambientOrbScale }}
         aria-hidden="true"
-        className="absolute -top-24 left-1/2 -translate-x-1/2 w-[42rem] h-[22rem] rounded-full bg-sky-500/10 dark:bg-sky-500/15 blur-3xl pointer-events-none will-change-transform ellix-ambient-drift"
+        className="absolute -top-24 left-1/2 -translate-x-1/2 w-[42rem] max-w-full h-[22rem] rounded-full bg-sky-500/10 dark:bg-sky-500/15 blur-3xl pointer-events-none will-change-transform ellix-ambient-drift overflow-hidden"
       />
       <motion.div
         style={{ y: ambientOrbSecondaryY }}
         aria-hidden="true"
-        className="absolute top-1/3 -right-24 w-[28rem] h-[28rem] rounded-full bg-sky-500/8 dark:bg-sky-500/10 blur-3xl pointer-events-none will-change-transform"
+        className="absolute top-1/3 -right-24 w-[28rem] max-w-full h-[28rem] rounded-full bg-sky-500/8 dark:bg-sky-500/10 blur-3xl pointer-events-none will-change-transform overflow-hidden"
       />
 
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -105,7 +105,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
             }
             animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
             transition={{ duration: 0.65, ease: smoothEase, delay: 0.1 }}
-            className="text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold text-slate-950 dark:text-white tracking-tight leading-[1.18] sm:leading-[1.12] break-words"
+            className="text-[clamp(1.85rem,4vw+0.75rem,3.75rem)] leading-[1.14] font-extrabold text-slate-950 dark:text-white tracking-tight break-words"
           >
             Run your store operations. <br className="hidden sm:inline" />
             <span className="bg-gradient-to-r from-blue-600 via-sky-500 to-sky-400 bg-clip-text text-transparent">
@@ -118,7 +118,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
             initial={prefersReducedMotion ? false : { opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.55, ease: smoothEase, delay: 0.18 }}
-            className="text-base sm:text-lg md:text-xl text-slate-600 dark:text-slate-300 font-normal leading-relaxed max-w-2xl mx-auto"
+            className="text-[clamp(0.95rem,1vw+0.65rem,1.25rem)] text-slate-600 dark:text-slate-300 font-normal leading-relaxed max-w-2xl mx-auto"
           >
             Ellic brings billing, inventory, customer khata, payments, and multi-batch stock control into one seamless platform built specifically for growing merchants and retail teams.
           </motion.p>
@@ -474,9 +474,9 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
               )}
 
               {activeWorkspaceMode === 'inventory' && (
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 relative animate-in fade-in duration-200">
+                <div className="grid grid-cols-1 xl:grid-cols-12 gap-4 relative animate-in fade-in duration-200">
                   {/* Left: Active Stock Audit Terminal */}
-                  <div className="lg:col-span-7 bg-white dark:bg-slate-900 rounded-2xl border-2 border-slate-300 dark:border-slate-800 p-4 sm:p-5 shadow-sm flex flex-col justify-between">
+                  <div className="xl:col-span-7 bg-white dark:bg-slate-900 rounded-2xl border-2 border-slate-300 dark:border-slate-800 p-4 sm:p-5 shadow-sm flex flex-col justify-between">
                     <div>
                       <div className="flex items-center justify-between gap-3 pb-3 mb-3 border-b-2 border-slate-200 dark:border-slate-800">
                         <div className="flex items-center gap-2">
@@ -536,7 +536,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
                   </div>
 
                   {/* Right: Supplier & Reorder Trigger */}
-                  <div className="lg:col-span-5 bg-white dark:bg-slate-900 rounded-2xl border-2 border-slate-300 dark:border-slate-800 p-4 sm:p-5 shadow-sm flex flex-col justify-between">
+                  <div className="xl:col-span-5 bg-white dark:bg-slate-900 rounded-2xl border-2 border-slate-300 dark:border-slate-800 p-4 sm:p-5 shadow-sm flex flex-col justify-between">
                     <div>
                       <div className="flex items-center justify-between gap-3 pb-3 mb-3 border-b-2 border-slate-200 dark:border-slate-800">
                         <span className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wide flex items-center gap-1.5">
@@ -574,9 +574,9 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
               )}
 
               {activeWorkspaceMode === 'finance' && (
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 relative animate-in fade-in duration-200">
+                <div className="grid grid-cols-1 xl:grid-cols-12 gap-4 relative animate-in fade-in duration-200">
                   {/* Left: Margin & Sales Breakdown */}
-                  <div className="lg:col-span-7 bg-white dark:bg-slate-900 rounded-2xl border-2 border-slate-300 dark:border-slate-800 p-4 sm:p-5 shadow-sm flex flex-col justify-between">
+                  <div className="xl:col-span-7 bg-white dark:bg-slate-900 rounded-2xl border-2 border-slate-300 dark:border-slate-800 p-4 sm:p-5 shadow-sm flex flex-col justify-between">
                     <div>
                       <div className="flex items-center justify-between gap-3 pb-3 mb-3 border-b-2 border-slate-200 dark:border-slate-800">
                         <div className="flex items-center gap-2">
@@ -613,7 +613,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
                   </div>
 
                   {/* Right: GSTR-1 Automated Ledger */}
-                  <div className="lg:col-span-5 bg-white dark:bg-slate-900 rounded-2xl border-2 border-slate-300 dark:border-slate-800 p-4 sm:p-5 shadow-sm flex flex-col justify-between">
+                  <div className="xl:col-span-5 bg-white dark:bg-slate-900 rounded-2xl border-2 border-slate-300 dark:border-slate-800 p-4 sm:p-5 shadow-sm flex flex-col justify-between">
                     <div>
                       <div className="flex items-center justify-between gap-3 pb-3 mb-3 border-b-2 border-slate-200 dark:border-slate-800">
                         <span className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wide flex items-center gap-1.5">

@@ -144,13 +144,22 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
 
             <a
               id="btn-hero-seehowitworks"
-              href="#problem"
+              href="#workflow"
+              onClick={(e) => {
+                e.preventDefault();
+                const el = document.getElementById('workflow');
+                if (el) {
+                  const headerHeight = document.querySelector('header')?.getBoundingClientRect().height || 68;
+                  const targetY = Math.round(el.getBoundingClientRect().top + window.scrollY - headerHeight - 4);
+                  window.scrollTo({ top: targetY, behavior: 'smooth' });
+                }
+              }}
               data-cursor="hover"
               data-magnetic="cta"
-              className="website-btn-glow w-full sm:w-auto px-6 py-3 sm:py-3.5 rounded-xl bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 active:bg-slate-100 text-slate-800 dark:text-slate-200 text-base font-semibold border border-slate-300 dark:border-slate-700 shadow-sm hover:border-blue-500/40 hover:shadow-md transition-all flex items-center justify-center gap-2 group"
+              className="website-btn-glow w-full sm:w-auto px-6 py-3 sm:py-3.5 rounded-xl bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 active:bg-slate-100 text-slate-800 dark:text-slate-200 text-base font-semibold border border-slate-300 dark:border-slate-700 shadow-sm hover:border-blue-500/40 hover:shadow-md transition-all flex items-center justify-center gap-2 group cursor-pointer"
             >
               <Play className="w-4 h-4 text-slate-600 dark:text-slate-400 fill-slate-600 dark:fill-slate-400 group-hover:scale-110 group-hover:text-blue-600 dark:group-hover:text-sky-400 transition-all duration-200" />
-              <span>See How It Works</span>
+              <span>Interactive Workflow Demo</span>
             </a>
           </motion.div>
 

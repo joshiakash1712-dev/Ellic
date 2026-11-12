@@ -33,7 +33,7 @@ export const LEGAL_CONFIG: LegalConfigType = {
   legalBusinessName: "[REPLACE WITH LEGAL ENTITY NAME]",
   brandName: "Ellic",
   businessAddress: "[REPLACE WITH REGISTERED/BUSINESS ADDRESS]",
-  supportEmail: "[REPLACE WITH SUPPORT EMAIL]",
+  supportEmail: "support@ellic.com",
   supportPhone: "[REPLACE WITH SUPPORT PHONE]",
   privacyEmail: "[REPLACE WITH PRIVACY CONTACT]",
   grievanceOfficerName: "[REPLACE IF APPLICABLE]",

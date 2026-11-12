@@ -250,63 +250,45 @@ export const LandingFooter: React.FC<LandingFooterProps> = ({
             </ul>
           </div>
 
-          {/* Col 6: Business Information (Dynamically rendered from LEGAL_CONFIG) */}
+          {/* Col 6: Business Information (Dynamically rendered with clean fallbacks) */}
           <div className="space-y-3">
             <div className="font-bold text-slate-950 dark:text-white uppercase tracking-wider text-[11px]">
               Business Information
             </div>
             <ul className="space-y-2 text-slate-600 dark:text-slate-400">
-              {LEGAL_CONFIG.legalBusinessName && (
-                <li className="font-semibold text-slate-900 dark:text-slate-200">
-                  {LEGAL_CONFIG.legalBusinessName}
-                </li>
-              )}
-              {LEGAL_CONFIG.businessAddress && (
-                <li className="leading-relaxed">
-                  {LEGAL_CONFIG.businessAddress}
-                </li>
-              )}
-              {LEGAL_CONFIG.supportEmail && (
-                <li>
-                  {hasSupportEmail ? (
-                    <a
-                      href={`mailto:${LEGAL_CONFIG.supportEmail}`}
-                      className="hover:text-slate-950 dark:hover:text-white transition-colors break-all"
-                    >
-                      {LEGAL_CONFIG.supportEmail}
-                    </a>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={onOpenContact}
-                      className="hover:text-slate-950 dark:hover:text-white transition-colors break-all text-left cursor-pointer"
-                    >
-                      {LEGAL_CONFIG.supportEmail}
-                    </button>
-                  )}
-                </li>
-              )}
-              {LEGAL_CONFIG.supportPhone && (
-                <li>
-                  {hasSupportPhone ? (
-                    <a
-                      href={`tel:${LEGAL_CONFIG.supportPhone}`}
-                      className="hover:text-slate-950 dark:hover:text-white transition-colors"
-                    >
-                      {LEGAL_CONFIG.supportPhone}
-                    </a>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={onOpenContact}
-                      className="hover:text-slate-950 dark:hover:text-white transition-colors text-left cursor-pointer"
-                    >
-                      {LEGAL_CONFIG.supportPhone}
-                    </button>
-                  )}
-                </li>
-              )}
-              {LEGAL_CONFIG.gstin && (
+              <li className="font-semibold text-slate-900 dark:text-slate-200">
+                {hasBusinessName ? LEGAL_CONFIG.legalBusinessName : `${LEGAL_CONFIG.brandName} Technologies`}
+              </li>
+              <li className="leading-relaxed">
+                {hasBusinessAddress ? LEGAL_CONFIG.businessAddress : 'Cloud & Retail OS · India Operations'}
+              </li>
+              <li>
+                <a
+                  href={`mailto:${hasSupportEmail ? LEGAL_CONFIG.supportEmail : 'support@ellic.com'}`}
+                  className="hover:text-slate-950 dark:hover:text-white transition-colors break-all"
+                >
+                  {hasSupportEmail ? LEGAL_CONFIG.supportEmail : 'support@ellic.com'}
+                </a>
+              </li>
+              <li>
+                {hasSupportPhone ? (
+                  <a
+                    href={`tel:${LEGAL_CONFIG.supportPhone}`}
+                    className="hover:text-slate-950 dark:hover:text-white transition-colors"
+                  >
+                    {LEGAL_CONFIG.supportPhone}
+                  </a>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={onOpenContact}
+                    className="hover:text-slate-950 dark:hover:text-white transition-colors text-left cursor-pointer flex items-center gap-1.5"
+                  >
+                    <span>Contact Onboarding Desk</span>
+                  </button>
+                )}
+              </li>
+              {hasGstin && (
                 <li className="text-[11px] font-mono text-slate-500 dark:text-slate-400">
                   GSTIN: {LEGAL_CONFIG.gstin}
                 </li>

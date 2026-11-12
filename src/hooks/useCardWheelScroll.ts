@@ -12,24 +12,22 @@ export interface UseCardWheelScrollOptions {
 }
 
 /**
- * Viewport-Aware Section Anchoring and Scroll-Lock Hook for Ellic Work Wheel
+ * High-Precision Viewport-Aware Scroll-Card Hook for Ellic Work Wheel Demonstrations
  * 
  * Capabilities:
- * - Dynamically calculates visible browser viewport height (accounting for sticky header).
- * - Centers the Work Wheel section within the visible viewport when it fits; anchors just below
- *   the header with scroll-safe containment when the window is compact or zoomed.
- * - Pins the section when the user enters the section, preventing the document from moving vertically
- *   while intermediate cards (0 to totalItems - 1) are rotated/navigated.
- * - Releases the scroll-lock naturally on the LAST card when scrolling DOWN, smoothly continuing to the next section.
- * - Releases the scroll-lock naturally on the FIRST card when scrolling UP, smoothly returning to the previous section.
- * - Adapts cleanly across 100% zoom, 80% zoom, resized windows, reduced-height screens, and mobile.
+ * - Natural Entry: Preceding content scrolls normally. Never forces an auto-scroll jump toward approaching sections.
+ * - Intentional Anchoring: Activates pinned card navigation ONLY when the section naturally aligns under the sticky header.
+ * - Scroll-Driven Progression: Natural wheel or trackpad gestures advance stages in-place with debounced momentum.
+ * - Synchronous Multi-Panel Updates: Both circular Work Wheel dial and right monitor update simultaneously.
+ * - Natural Release: Releases cleanly on the last card when scrolling down, and on the first card when scrolling up.
+ * - Responsive: Smooth natural scrolling on mobile/tablet (< 1024px) without wheel trapping.
  */
 export function useCardWheelScroll({
   totalItems,
   activeIndex,
   onActiveChange,
-  wheelThreshold = 38,
-  debounceMs = 260,
+  wheelThreshold = 46,
+  debounceMs = 280,
   sectionId,
   enableAnchor = true,
 }: UseCardWheelScrollOptions) {
@@ -50,90 +48,57 @@ export function useCardWheelScroll({
   const onActiveChangeRef = useRef(onActiveChange);
   onActiveChangeRef.current = onActiveChange;
 
-  const isPinnedRef = useRef(false);
   const wheelAccumulatorRef = useRef(0);
   const lastStepTimeRef = useRef(0);
-  const lastDockTimeRef = useRef(0);
   const touchStartYRef = useRef(0);
   const touchStartXRef = useRef(0);
 
-  // Dynamically compute the optimal viewport scroll position for this section
-  const calculateTargetScrollY = useCallback((el: HTMLElement): number => {
-    const rect = el.getBoundingClientRect();
+  // Helper to measure sticky header height dynamically
+  const getHeaderHeight = useCallback((): number => {
+    if (typeof document === 'undefined') return 68;
     const headerEl = document.querySelector('header');
-    const headerHeight = headerEl ? Math.round(headerEl.getBoundingClientRect().height) : 68;
-    const vh = window.innerHeight;
-    const availableHeight = Math.max(200, vh - headerHeight);
-    const sectionHeight = Math.round(rect.height);
-
-    let targetTop: number;
-    if (sectionHeight <= availableHeight) {
-      // Center the complete section vertically in the visible space under the sticky header
-      targetTop = headerHeight + Math.max(8, (availableHeight - sectionHeight) / 2);
-    } else {
-      // Section is taller than visible viewport: anchor top just under sticky header
-      targetTop = headerHeight + 8;
-    }
-
-    return Math.round(window.scrollY + rect.top - targetTop);
+    return headerEl ? Math.round(headerEl.getBoundingClientRect().height) : 68;
   }, []);
 
-  // Determine if this section is the dominant focused Work Wheel section in the viewport
+  // Determine if this section has naturally reached its reading anchor under the sticky header
   const isDominantSection = useCallback((): boolean => {
     if (typeof window === 'undefined' || window.innerWidth < 1024) return false;
     const el = sectionRef.current;
     if (!el) return false;
 
     const rect = el.getBoundingClientRect();
-    const vh = window.innerHeight;
-    const headerEl = document.querySelector('header');
-    const headerHeight = headerEl ? Math.round(headerEl.getBoundingClientRect().height) : 68;
+    const headerHeight = getHeaderHeight();
 
-    // Must be in active view
-    if (rect.top >= vh * 0.78 || rect.bottom <= headerHeight + 40) {
+    // Section must have naturally arrived at or slightly above the header anchor point.
+    // If rect.top > headerHeight + 18, it is still approaching from below -> DO NOT hijack!
+    if (rect.top > headerHeight + 18) {
       return false;
     }
 
-    const viewportCenter = headerHeight + (vh - headerHeight) / 2;
-    const sectionCenter = rect.top + rect.height / 2;
-    const myDistance = Math.abs(sectionCenter - viewportCenter);
+    // Section must still have substantial content in the visible viewport.
+    // If rect.bottom <= headerHeight + 120, it has scrolled past the top -> DO NOT hijack!
+    if (rect.bottom <= headerHeight + 120) {
+      return false;
+    }
 
-    // Multi-section arbitration: compare distance with other Work Wheel sections
+    // Multi-section arbitration: the section whose top is closest to headerHeight wins
     const allWorkSections = Array.from(document.querySelectorAll<HTMLElement>('section[data-work-wheel="true"]'));
     if (allWorkSections.length <= 1) return true;
 
+    const myDistance = Math.abs(rect.top - headerHeight);
     for (const other of allWorkSections) {
       if (other === el) continue;
       const otherRect = other.getBoundingClientRect();
-      const otherCenter = otherRect.top + otherRect.height / 2;
-      const otherDistance = Math.abs(otherCenter - viewportCenter);
-      if (otherDistance < myDistance) {
-        return false;
+      if (otherRect.top <= headerHeight + 18 && otherRect.bottom > headerHeight + 120) {
+        const otherDistance = Math.abs(otherRect.top - headerHeight);
+        if (otherDistance < myDistance) {
+          return false;
+        }
       }
     }
 
     return true;
-  }, []);
-
-  // Smoothly dock section to its optimal viewport position
-  const ensureDocked = useCallback(
-    (behavior: ScrollBehavior = 'smooth') => {
-      if (!enableAnchor) return;
-      if (typeof window === 'undefined' || window.innerWidth < 1024) return;
-      const el = sectionRef.current;
-      if (!el) return;
-
-      const targetY = calculateTargetScrollY(el);
-      const diff = Math.abs(window.scrollY - targetY);
-      if (diff > 5) {
-        window.scrollTo({
-          top: targetY,
-          behavior: prefersReducedMotion ? 'instant' : behavior,
-        });
-      }
-    },
-    [enableAnchor, calculateTargetScrollY, prefersReducedMotion]
-  );
+  }, [getHeaderHeight]);
 
   // Step active card by delta (-1 or +1) while keeping viewport stationary
   const stepBy = useCallback(
@@ -158,57 +123,74 @@ export function useCardWheelScroll({
     [debounceMs]
   );
 
-  // Programmatically scroll down to the next section or element
+  // Programmatically scroll down to the next section (only triggered by explicit button click)
   const scrollToNextSection = useCallback(() => {
     const el = sectionRef.current;
     if (!el) return;
     const nextEl = el.nextElementSibling as HTMLElement | null;
+    const headerHeight = getHeaderHeight();
     if (nextEl) {
-      nextEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      const targetY = Math.round(nextEl.getBoundingClientRect().top + window.scrollY - headerHeight - 4);
+      window.scrollTo({
+        top: targetY,
+        behavior: prefersReducedMotion ? 'instant' : 'smooth',
+      });
     } else {
       window.scrollBy({ top: window.innerHeight * 0.8, behavior: 'smooth' });
     }
-  }, []);
+  }, [getHeaderHeight, prefersReducedMotion]);
 
-  // Programmatically scroll up to previous section
+  // Programmatically scroll up to previous section (only triggered by explicit button click)
   const scrollToPrevSection = useCallback(() => {
     const el = sectionRef.current;
     if (!el) return;
     const prevEl = el.previousElementSibling as HTMLElement | null;
+    const headerHeight = getHeaderHeight();
     if (prevEl) {
-      prevEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      const targetY = Math.round(prevEl.getBoundingClientRect().top + window.scrollY - headerHeight - 4);
+      window.scrollTo({
+        top: targetY,
+        behavior: prefersReducedMotion ? 'instant' : 'smooth',
+      });
     } else {
       window.scrollBy({ top: -window.innerHeight * 0.8, behavior: 'smooth' });
     }
-  }, []);
+  }, [getHeaderHeight, prefersReducedMotion]);
 
-  // Main wheel event handler
+  // Main native wheel event handler
   const handleWheelNative = useCallback(
-    (e: WheelEvent, source: 'section' | 'window') => {
-      // On mobile viewports (< 1024px) where wheel dial is hidden, allow natural fluid scroll
+    (e: WheelEvent) => {
+      // Allow natural fluid scroll on mobile/tablet viewports (< 1024px)
       if (typeof window !== 'undefined' && window.innerWidth < 1024) return;
-
-      // Ignore pure horizontal gestures
-      if (Math.abs(e.deltaY) < 3 && Math.abs(e.deltaX) > 10) return;
 
       const dy = e.deltaY;
       if (Math.abs(dy) < 3) return;
 
+      // Ignore pure horizontal gestures
+      if (Math.abs(dy) < Math.abs(e.deltaX) * 0.75) return;
+
       const el = sectionRef.current;
       if (!el) return;
 
-      // If from window listener, only handle if this section is the dominant focused section
-      if (source === 'window' && !isDominantSection()) {
+      // Only handle if this section has naturally reached its reading anchor
+      if (!isDominantSection()) {
+        setIsAnchored(false);
         return;
       }
 
       const direction = dy > 0 ? 1 : -1;
       const current = activeIndexRef.current;
       const total = totalItemsRef.current;
+      const now = performance.now();
 
       // BOUNDARY 1: Scrolling DOWN and on the LAST card -> Release lock and let website scroll down!
       if (direction > 0 && current >= total - 1) {
-        isPinnedRef.current = false;
+        // If we just stepped to the last card, absorb lingering momentum so the user can see the final card
+        if (now - lastStepTimeRef.current < debounceMs) {
+          e.preventDefault();
+          e.stopPropagation();
+          return;
+        }
         setIsAnchored(false);
         wheelAccumulatorRef.current = 0;
         return;
@@ -216,26 +198,29 @@ export function useCardWheelScroll({
 
       // BOUNDARY 2: Scrolling UP and on the FIRST card -> Release lock and let website scroll up!
       if (direction < 0 && current <= 0) {
-        isPinnedRef.current = false;
+        // If we just stepped to the first card, absorb lingering momentum so the user can see the first card
+        if (now - lastStepTimeRef.current < debounceMs) {
+          e.preventDefault();
+          e.stopPropagation();
+          return;
+        }
         setIsAnchored(false);
         wheelAccumulatorRef.current = 0;
         return;
       }
 
-      // WITHIN WORK WHEEL RANGE: Pin section in viewport and step cards in-place
+      // WITHIN DEMONSTRATION RANGE:
+      // Prevent browser vertical document scroll while intermediate cards step in-place
       e.preventDefault();
       e.stopPropagation();
-
-      const now = performance.now();
-      // Ensure section is nicely docked in viewport when starting to step
-      if (!isPinnedRef.current || now - lastDockTimeRef.current > 1200) {
-        ensureDocked('smooth');
-        lastDockTimeRef.current = now;
-      }
-      isPinnedRef.current = true;
       setIsAnchored(true);
 
-      const isDiscreteTick = e.deltaMode !== 0 || Math.abs(dy) >= 35;
+      // Respect debounce timer to avoid multi-stage skipping
+      if (now - lastStepTimeRef.current < debounceMs) {
+        return;
+      }
+
+      const isDiscreteTick = e.deltaMode !== 0 || Math.abs(dy) >= 42;
 
       if (isDiscreteTick) {
         stepBy(direction);
@@ -251,10 +236,10 @@ export function useCardWheelScroll({
         }
       }
     },
-    [isDominantSection, ensureDocked, stepBy, wheelThreshold]
+    [isDominantSection, stepBy, debounceMs, wheelThreshold]
   );
 
-  // Touch swipe support for touchscreens on desktop/tablet preview (>= 1024px)
+  // Touch swipe support for touchscreens on desktop preview (>= 1024px)
   const handleTouchStartNative = useCallback((e: TouchEvent) => {
     if (e.touches.length > 0) {
       touchStartYRef.current = e.touches[0].clientY;
@@ -272,8 +257,8 @@ export function useCardWheelScroll({
       const deltaY = touchStartYRef.current - currentY; // positive = swipe up (scroll down)
       const deltaX = currentX - touchStartXRef.current;
 
-      if (Math.abs(deltaY) < 25) return;
-      if (Math.abs(deltaX) > Math.abs(deltaY) * 1.6) return;
+      if (Math.abs(deltaY) < 30) return;
+      if (Math.abs(deltaX) > Math.abs(deltaY) * 1.5) return;
 
       if (!isDominantSection()) return;
 
@@ -296,60 +281,25 @@ export function useCardWheelScroll({
     [isDominantSection, stepBy]
   );
 
-  // Attach non-passive native event listeners
+  // Attach non-passive wheel event listeners to both the section and window
   useEffect(() => {
     const sectionEl = sectionRef.current;
     if (!sectionEl) return;
 
-    const onSectionWheel = (e: WheelEvent) => handleWheelNative(e, 'section');
-    const onWindowWheel = (e: WheelEvent) => handleWheelNative(e, 'window');
+    const onWheel = (e: WheelEvent) => handleWheelNative(e);
 
-    sectionEl.addEventListener('wheel', onSectionWheel, { passive: false });
+    sectionEl.addEventListener('wheel', onWheel, { passive: false });
+    window.addEventListener('wheel', onWheel, { passive: false });
     sectionEl.addEventListener('touchstart', handleTouchStartNative, { passive: true });
     sectionEl.addEventListener('touchmove', handleTouchMoveNative, { passive: false });
-    window.addEventListener('wheel', onWindowWheel, { passive: false });
 
     return () => {
-      sectionEl.removeEventListener('wheel', onSectionWheel);
+      sectionEl.removeEventListener('wheel', onWheel);
+      window.removeEventListener('wheel', onWheel);
       sectionEl.removeEventListener('touchstart', handleTouchStartNative);
       sectionEl.removeEventListener('touchmove', handleTouchMoveNative);
-      window.removeEventListener('wheel', onWindowWheel);
     };
   }, [handleWheelNative, handleTouchStartNative, handleTouchMoveNative]);
-
-  // Recalculate and re-anchor on window resize, zoom change, or section dimension change
-  useEffect(() => {
-    const el = sectionRef.current;
-    if (!el) return;
-
-    let resizeTimer: number;
-    const handleResize = () => {
-      window.clearTimeout(resizeTimer);
-      resizeTimer = window.setTimeout(() => {
-        if (isPinnedRef.current && isDominantSection()) {
-          ensureDocked('instant');
-        }
-      }, 50);
-    };
-
-    window.addEventListener('resize', handleResize, { passive: true });
-    window.addEventListener('orientationchange', handleResize, { passive: true });
-
-    let observer: ResizeObserver | null = null;
-    if (typeof ResizeObserver !== 'undefined') {
-      observer = new ResizeObserver(() => {
-        handleResize();
-      });
-      observer.observe(el);
-    }
-
-    return () => {
-      window.clearTimeout(resizeTimer);
-      window.removeEventListener('resize', handleResize);
-      window.removeEventListener('orientationchange', handleResize);
-      if (observer) observer.disconnect();
-    };
-  }, [isDominantSection, ensureDocked]);
 
   // Keyboard navigation when focused
   const handleKeyDown = useCallback(

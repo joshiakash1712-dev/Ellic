@@ -34,6 +34,7 @@ import { useAuth } from '../../context/AuthContext';
 import { normalizeCanonicalRole } from '../../types';
 import { EllixConnectLogo } from '../branding/EllixConnectLogo';
 import { LanguageSwitcher } from './LanguageSwitcher';
+import { LanguageIcon } from './LanguageIcon';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -414,13 +415,13 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
               {/* Multi-Language & Localization Settings */}
               <div className="space-y-3 pt-2">
                 <div className="flex items-center gap-2">
-                  <Globe className="w-4 h-4 text-sky-500" />
+                  <LanguageIcon className="w-4 h-4 text-sky-500" variant="gradient" />
                   <h4 className="text-xs font-black uppercase tracking-wider text-slate-400 dark:text-slate-500">
-                    Application Language & Multi-Language Support
+                    Application Language
                   </h4>
                 </div>
                 <p className="text-xs text-slate-500 dark:text-slate-400">
-                  Switch Ellic to any Indian regional language or global language. Your choice is saved automatically.
+                  Choose your preferred language (English, हिन्दी, मराठी). Your preference is saved automatically across sessions.
                 </p>
                 <div
                   className={`p-4 rounded-xl border ${

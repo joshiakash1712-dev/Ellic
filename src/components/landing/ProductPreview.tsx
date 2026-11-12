@@ -174,6 +174,9 @@ export const ProductPreview: React.FC = () => {
                 </div>
 
                 <div className="flex items-center gap-2 shrink-0">
+                  <span className="hidden sm:inline-block text-[10px] text-slate-500 font-medium italic">
+                    Interactive product preview · Sample data
+                  </span>
                   <span className="text-[10px] sm:text-[11px] font-mono font-bold px-2 sm:px-2.5 py-0.5 rounded-md bg-blue-100 dark:bg-blue-950 text-blue-800 dark:text-sky-300 border-2 border-blue-200 dark:border-blue-900 shrink-0 whitespace-nowrap">
                     {activeTabMeta.badge}
                   </span>
@@ -314,10 +317,10 @@ export const ProductPreview: React.FC = () => {
                           </div>
                           <div className="space-y-2 text-xs">
                             <div className="p-3 rounded-lg bg-white dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-800 flex flex-wrap items-center justify-between gap-3 shadow-2xs">
-                              <div>
-                                <div className="font-bold text-slate-900 dark:text-white">Rahul Deshmukh</div>
-                                <div className="text-[10px] text-slate-500">+91 98765 43210 • Regular Customer</div>
-                              </div>
+                                <div>
+                                  <div className="font-bold text-slate-900 dark:text-white">Rahul Deshmukh</div>
+                                  <div className="text-[10px] text-slate-500 font-mono">+91 98XXX XXXXX • Regular Customer</div>
+                                </div>
                               <div className="flex items-center gap-2.5">
                                 <div className="text-right">
                                   <div className="font-bold text-rose-600 dark:text-rose-400">₹420.00 Due</div>

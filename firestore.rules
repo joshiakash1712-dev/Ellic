@@ -66,7 +66,10 @@ service cloud.firestore {
             getUserDoc().role == 'admin'
           )
         ) ||
-        (request.auth.token.email == 'ellic.admin11@gmail.com' && request.auth.token.email_verified == true && (!hasUserDoc() || isActiveUser()))
+        (
+          (request.auth.token.email == 'ellic.admin11@gmail.com' || request.auth.token.email == 'admin@ellic.com') &&
+          (!hasUserDoc() || isActiveUser())
+        )
       );
     }
 

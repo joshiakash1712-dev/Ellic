@@ -58,6 +58,7 @@ export interface EllixLandingPageProps {
 export const EllixLandingPage: React.FC<EllixLandingPageProps> = ({ onLaunchApp, onLaunchDemo }) => {
   const [isSignInOpen, setIsSignInOpen] = useState(false);
   const [isGetStartedOpen, setIsGetStartedOpen] = useState(false);
+  const [selectedPlanId, setSelectedPlanId] = useState<string | null>(null);
   const [isContactOpen, setIsContactOpen] = useState(false);
   const [isAiModalOpen, setIsAiModalOpen] = useState(false);
   const [isGuideModalOpen, setIsGuideModalOpen] = useState(false);
@@ -473,14 +474,17 @@ export const EllixLandingPage: React.FC<EllixLandingPageProps> = ({ onLaunchApp,
     setIsSignInOpen(true);
   };
 
-  const handleOpenGetStarted = () => {
+  const handleOpenGetStarted = (planId?: string) => {
+    if (planId && typeof planId === 'string') {
+      setSelectedPlanId(planId);
+    }
     setIsSignInOpen(false);
     setIsGetStartedOpen(true);
   };
 
   if (activeLegalPageSlug) {
     return (
-      <div className="website-root min-h-screen bg-[#f1f5f9] dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col font-['Plus_Jakarta_Sans',sans-serif] selection:bg-blue-500 selection:text-white antialiased overflow-x-hidden w-full max-w-full">
+      <div className="website-root min-h-screen bg-[#f1f5f9] dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col font-['Plus_Jakarta_Sans',sans-serif] selection:bg-blue-500 selection:text-white antialiased overflow-x-clip w-full max-w-full">
         <WebsiteCursor />
         <Suspense fallback={<div className="min-h-screen" />}>
           <LegalComplianceHub
@@ -520,6 +524,7 @@ export const EllixLandingPage: React.FC<EllixLandingPageProps> = ({ onLaunchApp,
               onClose={() => setIsGetStartedOpen(false)}
               onSwitchToSignIn={handleOpenSignIn}
               onOpenLegalPage={handleNavigateToLegalPage}
+              initialPlanId={selectedPlanId}
             />
           )}
           {isAiModalOpen && (
@@ -536,7 +541,7 @@ export const EllixLandingPage: React.FC<EllixLandingPageProps> = ({ onLaunchApp,
   return (
     <div
       ref={rootRef}
-      className="website-root min-h-screen bg-[#f1f5f9] dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col font-['Plus_Jakarta_Sans',sans-serif] selection:bg-blue-500 selection:text-white antialiased overflow-x-hidden w-full max-w-full transition-colors duration-200"
+      className="website-root min-h-screen bg-[#f1f5f9] dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col font-['Plus_Jakarta_Sans',sans-serif] selection:bg-blue-500 selection:text-white antialiased overflow-x-clip w-full max-w-full transition-colors duration-200"
     >
       {/* Accessible Skip to Content Link for Keyboard Users */}
       <a
@@ -568,7 +573,7 @@ export const EllixLandingPage: React.FC<EllixLandingPageProps> = ({ onLaunchApp,
       />
 
       {/* Main Content Sections */}
-      <main id="main-content" tabIndex={-1} className="flex-1 w-full max-w-full overflow-x-hidden focus:outline-none">
+      <main id="main-content" tabIndex={-1} className="flex-1 w-full max-w-full overflow-x-clip focus:outline-none">
         
         {/* 1. Hero */}
         <HeroSection
@@ -675,6 +680,7 @@ export const EllixLandingPage: React.FC<EllixLandingPageProps> = ({ onLaunchApp,
             onClose={() => setIsGetStartedOpen(false)}
             onSwitchToSignIn={handleOpenSignIn}
             onOpenLegalPage={handleNavigateToLegalPage}
+            initialPlanId={selectedPlanId}
           />
         )}
 

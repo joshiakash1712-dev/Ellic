@@ -1,14 +1,6 @@
 import en from './en.json';
 import hi from './hi.json';
 import mr from './mr.json';
-import gu from './gu.json';
-import ta from './ta.json';
-import te from './te.json';
-import bn from './bn.json';
-import es from './es.json';
-import fr from './fr.json';
-import de from './de.json';
-import ar from './ar.json';
 
 export type LocaleMessages = Record<string, any>;
 
@@ -23,15 +15,7 @@ export interface TranslateOptions {
 export const LOCALE_RESOURCES: Record<string, LocaleMessages> = {
   en,
   hi,
-  mr,
-  gu,
-  ta,
-  te,
-  bn,
-  es,
-  fr,
-  de,
-  ar
+  mr
 };
 
 /**

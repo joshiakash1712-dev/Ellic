@@ -1,5 +1,5 @@
 import React, { useState, useId } from 'react';
-import { ChevronDown, HelpCircle, Search, Sparkles, MessageCircle } from 'lucide-react';
+import { ChevronDown, HelpCircle, Search, Sparkles, MessageCircle, ArrowRight } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 
 interface FAQItem {
@@ -260,10 +260,12 @@ export const FAQSection: React.FC<FAQSectionProps> = ({ onOpenContact }) => {
 
           <button
             type="button"
+            data-cursor="hover"
             onClick={onOpenContact}
-            className="px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 dark:bg-blue-600 dark:hover:bg-blue-500 text-white text-xs font-semibold shadow-sm transition-all shrink-0"
+            className="website-btn-glow px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-white text-xs sm:text-sm font-semibold shadow-md shadow-blue-500/20 hover:shadow-blue-500/30 transition-all shrink-0 cursor-pointer flex items-center gap-2"
           >
-            Contact Merchant Support
+            <span>Contact Merchant Support</span>
+            <ArrowRight className="w-3.5 h-3.5 text-sky-200" />
           </button>
         </div>
 

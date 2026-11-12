@@ -80,12 +80,10 @@ export const WorkWheelStage: React.FC<WorkWheelStageProps> = ({
         lastWheelTimeRef.current = now;
         if (wheelAccumulatorRef.current > 0) {
           if (activeIndex < count - 1) {
-            e.preventDefault();
             onActiveChange(activeIndex + 1);
           }
         } else {
           if (activeIndex > 0) {
-            e.preventDefault();
             onActiveChange(activeIndex - 1);
           }
         }
@@ -199,17 +197,17 @@ export const WorkWheelStage: React.FC<WorkWheelStageProps> = ({
       <div className="absolute inset-0 bg-[linear-gradient(to_right,#334155_1px,transparent_1px),linear-gradient(to_bottom,#334155_1px,transparent_1px)] bg-[size:2.5rem_2.5rem] [mask-image:radial-gradient(ellipse_60%_60%_at_50%_50%,#000_60%,transparent_100%)] opacity-15 dark:opacity-20 pointer-events-none" />
 
       {/* Center 2D Rotary Dial Assembly */}
-      <div className="relative flex-1 min-h-[310px] sm:min-h-[350px] lg:min-h-[370px] flex items-center justify-center p-3 sm:p-4 overflow-hidden">
+      <div className="relative flex-1 min-h-[260px] sm:min-h-[290px] xl:min-h-[310px] flex items-center justify-center p-2 sm:p-3 xl:p-4 overflow-hidden">
         
         {/* Subtle Static Concentric Background Guides */}
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <div className="w-[330px] h-[330px] rounded-full border border-dashed border-slate-200 dark:border-slate-800/80 opacity-60" />
-          <div className="w-[260px] h-[260px] rounded-full border border-slate-200/70 dark:border-slate-800/50 opacity-50" />
-          <div className="w-[180px] h-[180px] rounded-full border border-sky-500/20 dark:border-sky-400/20 shadow-[0_0_20px_rgba(56,189,248,0.08)]" />
+          <div className="w-[300px] h-[300px] sm:w-[330px] sm:h-[330px] rounded-full border border-dashed border-slate-200 dark:border-slate-800/80 opacity-60" />
+          <div className="w-[230px] h-[230px] sm:w-[260px] sm:h-[260px] rounded-full border border-slate-200/70 dark:border-slate-800/50 opacity-50" />
+          <div className="w-[160px] h-[160px] sm:w-[180px] sm:h-[180px] rounded-full border border-sky-500/20 dark:border-sky-400/20 shadow-[0_0_20px_rgba(56,189,248,0.08)]" />
         </div>
 
         {/* The Rotary Assembly Box */}
-        <div className="relative w-[300px] sm:w-[330px] lg:w-[350px] h-[300px] sm:h-[330px] lg:h-[350px] flex items-center justify-center">
+        <div className="relative w-[280px] h-[280px] sm:w-[320px] sm:h-[320px] xl:w-[340px] xl:h-[340px] max-w-full aspect-square flex items-center justify-center">
           
           {/* Animated Rotating Assembly: Nodes and Tracks */}
           <motion.div

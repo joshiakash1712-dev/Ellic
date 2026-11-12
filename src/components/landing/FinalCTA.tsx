@@ -14,7 +14,7 @@ import {
 } from 'lucide-react';
 
 interface FinalCTAProps {
-  onOpenGetStarted?: () => void;
+  onOpenGetStarted?: (planId?: string) => void;
   onLaunchDemo?: () => void;
 }
 
@@ -237,7 +237,7 @@ export const FinalCTA: React.FC<FinalCTAProps> = ({ onOpenGetStarted, onLaunchDe
                 <div className="pt-6">
                   <button
                     type="button"
-                    onClick={onOpenGetStarted}
+                    onClick={() => onOpenGetStarted?.(plan.id)}
                     className={`w-full py-2.5 px-4 rounded-xl text-xs font-bold transition-all shadow-sm flex items-center justify-center gap-1.5 cursor-pointer ${
                       plan.popular
                         ? 'bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-white shadow-blue-500/25 hover:shadow-md'

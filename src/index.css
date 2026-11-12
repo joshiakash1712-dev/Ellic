@@ -556,7 +556,7 @@ html.theme-light .glass-panel-interactive:hover {
   .text-white,
   .text-slate-50,
   .text-slate-100
-):not(#theme-card-dark):not(#theme-card-dark *):not(.bg-blue-600 *):not(.bg-blue-700 *):not(.bg-blue-500 *):not(.bg-slate-900 *):not(.bg-slate-950 *):not(.bg-black *):not(.website-btn-glow *):not(.website-btn-glow):not(.bg-rose-600 *):not(.bg-emerald-600 *):not(.bg-amber-600 *) {
+):not(#theme-card-dark):not(#theme-card-dark *):not(.bg-blue-600):not(.bg-blue-600 *):not(.bg-blue-700):not(.bg-blue-700 *):not(.bg-blue-500):not(.bg-blue-500 *):not(.bg-slate-900):not(.bg-slate-900 *):not(.bg-slate-950):not(.bg-slate-950 *):not(.bg-black):not(.bg-black *):not(.website-btn-glow *):not(.website-btn-glow):not(.bg-rose-600):not(.bg-rose-600 *):not(.bg-emerald-600):not(.bg-emerald-600 *):not(.bg-amber-600):not(.bg-amber-600 *) {
   color: #0F172A !important;
 }
 
@@ -852,7 +852,7 @@ html, body {
   padding: 0;
   width: 100%;
   max-width: 100%;
-  overflow-x: hidden !important;
+  overflow-x: clip;
   position: relative;
 }
 
@@ -860,7 +860,7 @@ html, body {
   width: 100%;
   max-width: 100%;
   min-height: 100vh;
-  overflow-x: hidden !important;
+  overflow-x: clip;
   display: flex;
   flex-direction: column;
 }

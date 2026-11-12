@@ -18,6 +18,12 @@
     "paths": {
       "@/*": [
         "./*"
+      ],
+      "@designcodeio/threeui/style.css": [
+        "./src/shaders/threeui.css"
+      ],
+      "@designcodeio/threeui": [
+        "./src/shaders/index.ts"
       ]
     },
     "allowImportingTsExtensions": true,

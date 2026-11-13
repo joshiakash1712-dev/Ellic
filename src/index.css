@@ -469,7 +469,7 @@ html.theme-light .glass-panel-interactive:hover {
   #who-its-for .rounded-2xl,
   #product .rounded-2xl,
   #pricing .rounded-2xl
-):not(#theme-card-dark):not(#theme-card-dark *):not(.ellic-spiral-stage):not(.ellic-spiral-stage *) {
+):not(#theme-card-dark):not(#theme-card-dark *):not(.ellic-spiral-stage):not(.ellic-spiral-stage *):not(.ellic-spiral-section):not(.ellic-spiral-section *) {
   border-color: #94A3B8 !important;
   box-shadow: 0 4px 16px -2px rgba(15, 23, 42, 0.09), 0 2px 6px -1px rgba(15, 23, 42, 0.06) !important;
 }
@@ -487,7 +487,7 @@ html.theme-light .glass-panel-interactive:hover {
   .bg-slate-100\/80,
   .bg-slate-100\/75,
   .bg-slate-100\/70
-):not(#theme-card-dark *):not(.website-card-hover):not(.rounded-2xl.border-2) {
+):not(#theme-card-dark *):not(.website-card-hover):not(.rounded-2xl.border-2):not(.ellic-spiral-section):not(.ellic-spiral-section *) {
   background-color: #F1F5F9 !important;
   border-color: #94A3B8 !important;
 }
@@ -546,7 +546,7 @@ html.theme-light .glass-panel-interactive:hover {
   .shadow-lg,
   .shadow-xl,
   .shadow-2xl
-):not(#theme-card-dark) {
+):not(#theme-card-dark):not(.ellic-spiral-section):not(.ellic-spiral-section *) {
   box-shadow: 0 2px 10px rgba(15, 23, 42, 0.06), 0 1px 3px rgba(15, 23, 42, 0.04) !important;
 }
 
@@ -556,27 +556,27 @@ html.theme-light .glass-panel-interactive:hover {
   .text-white,
   .text-slate-50,
   .text-slate-100
-):not(#theme-card-dark):not(#theme-card-dark *):not(.bg-blue-600):not(.bg-blue-600 *):not(.bg-blue-700):not(.bg-blue-700 *):not(.bg-blue-500):not(.bg-blue-500 *):not(.bg-slate-900):not(.bg-slate-900 *):not(.bg-slate-950):not(.bg-slate-950 *):not(.bg-black):not(.bg-black *):not(.website-btn-glow *):not(.website-btn-glow):not(.bg-rose-600):not(.bg-rose-600 *):not(.bg-emerald-600):not(.bg-emerald-600 *):not(.bg-amber-600):not(.bg-amber-600 *) {
+):not(#theme-card-dark):not(#theme-card-dark *):not(.bg-blue-600):not(.bg-blue-600 *):not(.bg-blue-700):not(.bg-blue-700 *):not(.bg-blue-500):not(.bg-blue-500 *):not(.bg-slate-900):not(.bg-slate-900 *):not(.bg-slate-950):not(.bg-slate-950 *):not(.bg-black):not(.bg-black *):not(.website-btn-glow *):not(.website-btn-glow):not(.bg-rose-600):not(.bg-rose-600 *):not(.bg-emerald-600):not(.bg-emerald-600 *):not(.bg-amber-600):not(.bg-amber-600 *):not(.ellic-spiral-section):not(.ellic-spiral-section *) {
   color: #0F172A !important;
 }
 
 :where(html.light, html.theme-light) :where(.website-root, .ellix-app-shell, #notification-modal-overlay, #settings-modal-overlay, #account-sync-hub-overlay, #save-status-toast) :where(
   .text-slate-200,
   .text-slate-300
-):not(#theme-card-dark):not(#theme-card-dark *):not(.bg-blue-600 *):not(.bg-slate-900 *):not(.bg-slate-950 *) {
+):not(#theme-card-dark):not(#theme-card-dark *):not(.bg-blue-600 *):not(.bg-slate-900 *):not(.bg-slate-950 *):not(.ellic-spiral-section):not(.ellic-spiral-section *) {
   color: #334155 !important;
 }
 
 :where(html.light, html.theme-light) :where(.website-root, .ellix-app-shell, #notification-modal-overlay, #settings-modal-overlay, #account-sync-hub-overlay, #save-status-toast) :where(
   .text-slate-400,
   .text-slate-500
-):not(#theme-card-dark):not(#theme-card-dark *) {
+):not(#theme-card-dark):not(#theme-card-dark *):not(.ellic-spiral-section):not(.ellic-spiral-section *) {
   color: #475569 !important;
 }
 
 :where(html.light, html.theme-light) :where(.website-root, .ellix-app-shell, #notification-modal-overlay, #settings-modal-overlay, #account-sync-hub-overlay, #save-status-toast) :where(
   .text-slate-600
-):not(#theme-card-dark):not(#theme-card-dark *) {
+):not(#theme-card-dark):not(#theme-card-dark *):not(.ellic-spiral-section):not(.ellic-spiral-section *) {
   color: #1E293B !important;
 }
 
@@ -588,7 +588,7 @@ html.theme-light .glass-panel-interactive:hover {
   .text-sky-400,
   .text-sky-400\/80,
   .text-sky-500
-):not(#theme-card-dark *):not(.bg-blue-600 *):not(.bg-slate-900 *):not(.bg-slate-950 *) {
+):not(#theme-card-dark *):not(.bg-blue-600 *):not(.bg-slate-900 *):not(.bg-slate-950 *):not(.ellic-spiral-section):not(.ellic-spiral-section *) {
   color: #0284C7 !important;
 }
 
@@ -602,7 +602,7 @@ html.theme-light .glass-panel-interactive:hover {
   .text-amber-400\/80,
   .text-amber-400\/90,
   .text-amber-500
-):not(#theme-card-dark *):not(.bg-slate-900 *):not(.bg-slate-950 *) {
+):not(#theme-card-dark *):not(.bg-slate-900 *):not(.bg-slate-950 *):not(.ellic-spiral-section):not(.ellic-spiral-section *) {
   color: #B45309 !important;
 }
 
@@ -617,7 +617,7 @@ html.theme-light .glass-panel-interactive:hover {
   .text-red-300,
   .text-red-400,
   .text-red-500
-):not(#theme-card-dark *):not(.bg-slate-900 *):not(.bg-slate-950 *) {
+):not(#theme-card-dark *):not(.bg-slate-900 *):not(.bg-slate-950 *):not(.ellic-spiral-section):not(.ellic-spiral-section *) {
   color: #BE123C !important;
 }
 
@@ -625,7 +625,7 @@ html.theme-light .glass-panel-interactive:hover {
   .text-cyan-300,
   .text-cyan-400,
   .text-cyan-500
-):not(#theme-card-dark *):not(.bg-slate-900 *):not(.bg-slate-950 *) {
+):not(#theme-card-dark *):not(.bg-slate-900 *):not(.bg-slate-950 *):not(.ellic-spiral-section):not(.ellic-spiral-section *) {
   color: #0E7490 !important;
 }
 
@@ -633,28 +633,28 @@ html.theme-light .glass-panel-interactive:hover {
   .text-emerald-300,
   .text-emerald-400,
   .text-emerald-500
-):not(#theme-card-dark *):not(.bg-slate-900 *):not(.bg-slate-950 *) {
+):not(#theme-card-dark *):not(.bg-slate-900 *):not(.bg-slate-950 *):not(.ellic-spiral-section):not(.ellic-spiral-section *) {
   color: #047857 !important;
 }
 
 :where(html.light, html.theme-light) :where(.website-root, .ellix-app-shell, #notification-modal-overlay, #settings-modal-overlay, #account-sync-hub-overlay) :where(
   .text-indigo-300,
   .text-indigo-400
-):not(#theme-card-dark *):not(.bg-slate-950 *):not(.ellic-spiral-stage *) {
+):not(#theme-card-dark *):not(.bg-slate-950 *):not(.ellic-spiral-stage *):not(.ellic-spiral-section):not(.ellic-spiral-section *) {
   color: #4338CA !important;
 }
 
 :where(html.light, html.theme-light) :where(.website-root, .ellix-app-shell, #notification-modal-overlay, #settings-modal-overlay, #account-sync-hub-overlay) :where(
   .text-blue-300,
   .text-blue-400
-):not(#theme-card-dark *):not(.bg-slate-950 *):not(.ellic-spiral-stage *) {
+):not(#theme-card-dark *):not(.bg-slate-950 *):not(.ellic-spiral-stage *):not(.ellic-spiral-section):not(.ellic-spiral-section *) {
   color: #1D4ED8 !important;
 }
 
 :where(html.light, html.theme-light) :where(.website-root, .ellix-app-shell, #notification-modal-overlay, #settings-modal-overlay, #account-sync-hub-overlay) :where(
   .text-purple-300,
   .text-purple-400
-):not(#theme-card-dark *):not(.bg-slate-950 *):not(.ellic-spiral-stage *) {
+):not(#theme-card-dark *):not(.bg-slate-950 *):not(.ellic-spiral-stage *):not(.ellic-spiral-section):not(.ellic-spiral-section *) {
   color: #6D28D9 !important;
 }
 
@@ -1531,6 +1531,12 @@ html.light {
   }
 }
 
+.ellic-spiral-section {
+  background-color: #070B14 !important;
+  color: #F8FAFC;
+  isolation: isolate;
+}
+
 .ellic-spiral-stage {
   background-color: #070B14 !important;
   color: #F8FAFC;
@@ -1545,4 +1551,5 @@ html.light {
   backface-visibility: hidden;
   will-change: transform, opacity;
 }
+
 

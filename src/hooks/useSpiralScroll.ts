@@ -12,19 +12,27 @@ function clamp(val: number, min: number, max: number): number {
   return Math.max(min, Math.min(max, val));
 }
 
+const DESKTOP_SPIRAL_MIN_WIDTH = 900;
+const TICKS_PER_STAGE = 5;
+const TICK_STEP = 1 / TICKS_PER_STAGE; // 0.2 per scroll tick
+const TICK_DELTA_THRESHOLD = 34;
+const TICK_COOLDOWN_MS = 115;
+const STAGE_DETENT_MS = 220;
+const BOUNDARY_HOLD_MS = 260;
+
 /**
- * Continuous 3-Tick Scroll-Driven Spiral Controller
+ * Synchronized 5-Tick Scroll-Driven Spiral Controller
  *
- * Calibrates mouse wheel and trackpad gestures so each stage transition takes ~3 scroll ticks:
- * - Tick 1 (+0.333): Incoming card peeks forward from behind along the rear orbital curve.
- * - Tick 2 (+0.667): Outgoing card sweeps up & around the stationary central laser; active state switches synchronously.
- * - Tick 3 (+1.000): New stage locks cleanly into center foreground focus.
+ * Calibrates mouse wheel and trackpad gestures so each stage transition
+ * progresses through 5 deliberate ticks (1/5 = 0.20 increments):
+ * - Tick 1 (0.2): Objects behind peek in along the spiral edge.
+ * - Tick 2 (0.4): Peeking assembly rotates forward and displays clearly.
+ * - Tick 3 (0.6): Focused assembly locks 100% solid (zero transparency); all
+ *                 rear assemblies hide strictly behind it with zero bleed.
+ * - Tick 4 (0.8): Rear/upcoming assemblies emerge cleanly behind the front card.
+ * - Tick 5 (1.0): Active card changes (`activeIndex` switches cleanly) and settles.
  *
- * Guarantees:
- * - Zero premature auto-scrolling or section snapping before the user reaches the section.
- * - Exact reverse kinematics when scrolling upward.
- * - Clean boundary release at index 0 (up) and totalItems - 1 (down).
- * - Responsive without scroll-trapping on mobile/tablet (< 1024px).
+ * Supports symmetric forward & reverse 5-tick choreography and clean boundary release.
  */
 export function useSpiralScroll({
   totalItems,
@@ -43,9 +51,13 @@ export function useSpiralScroll({
   const activeIndexRef = useRef<number>(activeIndex);
   const totalItemsRef = useRef<number>(totalItems);
   const onActiveChangeRef = useRef(onActiveChange);
+
   const rafRef = useRef<number>(0);
   const settleTimerRef = useRef<number>(0);
-  const lastDiscreteTickTimeRef = useRef<number>(0);
+  const lastTickTimeRef = useRef<number>(0);
+  const lastWheelEventTimeRef = useRef<number>(0);
+  const wheelAccumRef = useRef<number>(0);
+  const stageDetentUntilRef = useRef<number>(0);
   const boundaryArrivalTimeRef = useRef<number>(0);
   const wasAtBoundaryRef = useRef<'start' | 'end' | null>(activeIndex === 0 ? 'start' : null);
 
@@ -58,48 +70,85 @@ export function useSpiralScroll({
     return headerEl ? Math.round(headerEl.getBoundingClientRect().height) : 68;
   }, []);
 
-  // Animation loop interpolating progress -> targetProgress and keeping activeIndex synced
+  const syncActiveIndexAtTick5 = useCallback((val: number) => {
+    const maxIdx = Math.max(0, totalItemsRef.current - 1);
+    const currentActive = activeIndexRef.current;
+
+    // Only switch active card once progress completes Tick 5 (>= 0.96 away from current active)
+    if (Math.abs(val - currentActive) >= 0.96) {
+      const nextActive = clamp(Math.round(val), 0, maxIdx);
+      if (nextActive !== currentActive) {
+        activeIndexRef.current = nextActive;
+        onActiveChangeRef.current(nextActive);
+      }
+    }
+  }, []);
+
   const ensureAnimationLoop = useCallback(() => {
     if (rafRef.current) return;
 
     const step = () => {
-      const target = clamp(targetProgressRef.current, 0, Math.max(0, totalItemsRef.current - 1));
+      const maxIdx = Math.max(0, totalItemsRef.current - 1);
+      const target = clamp(targetProgressRef.current, 0, maxIdx);
       const current = progressRef.current;
       const diff = target - current;
 
       if (Math.abs(diff) < 0.0018 || prefersReducedMotion) {
         progressRef.current = target;
         setProgress(target);
-        const rounded = clamp(Math.round(target), 0, Math.max(0, totalItemsRef.current - 1));
-        if (rounded !== activeIndexRef.current) {
-          activeIndexRef.current = rounded;
-          onActiveChangeRef.current(rounded);
-        }
+        syncActiveIndexAtTick5(target);
         rafRef.current = 0;
         return;
       }
 
-      const next = current + diff * 0.22;
+      const next = current + diff * 0.25;
       progressRef.current = next;
       setProgress(next);
-
-      const rounded = clamp(Math.round(next), 0, Math.max(0, totalItemsRef.current - 1));
-      if (rounded !== activeIndexRef.current) {
-        activeIndexRef.current = rounded;
-        onActiveChangeRef.current(rounded);
-      }
+      syncActiveIndexAtTick5(next);
 
       rafRef.current = window.requestAnimationFrame(step);
     };
 
     rafRef.current = window.requestAnimationFrame(step);
-  }, [prefersReducedMotion]);
+  }, [prefersReducedMotion, syncActiveIndexAtTick5]);
 
-  // Sync external activeIndex updates (e.g. button clicks, pills, direct stage click)
+  const goToStage = useCallback(
+    (index: number) => {
+      const maxIdx = Math.max(0, totalItemsRef.current - 1);
+      const clamped = clamp(index, 0, maxIdx);
+      wheelAccumRef.current = 0;
+      targetProgressRef.current = clamped;
+
+      if (clamped === 0) {
+        wasAtBoundaryRef.current = 'start';
+      } else if (clamped === maxIdx) {
+        wasAtBoundaryRef.current = 'end';
+      } else {
+        wasAtBoundaryRef.current = null;
+      }
+
+      if (clamped !== activeIndexRef.current) {
+        activeIndexRef.current = clamped;
+        onActiveChangeRef.current(clamped);
+      }
+
+      if (prefersReducedMotion) {
+        progressRef.current = clamped;
+        setProgress(clamped);
+      } else {
+        ensureAnimationLoop();
+      }
+    },
+    [ensureAnimationLoop, prefersReducedMotion]
+  );
+
+  // Sync external activeIndex overrides cleanly without disturbing in-flight 5-tick glides
   useEffect(() => {
+    const prev = activeIndexRef.current;
     activeIndexRef.current = activeIndex;
-    if (Math.round(targetProgressRef.current) !== activeIndex) {
+    if (prev !== activeIndex && Math.abs(targetProgressRef.current - activeIndex) > 0.12) {
       targetProgressRef.current = activeIndex;
+      wheelAccumRef.current = 0;
       if (prefersReducedMotion) {
         progressRef.current = activeIndex;
         setProgress(activeIndex);
@@ -116,50 +165,62 @@ export function useSpiralScroll({
     };
   }, []);
 
-  // Multi-section dominance check: section must naturally occupy top anchor zone
-  const isDominantSection = useCallback((): boolean => {
-    if (typeof window === 'undefined' || window.innerWidth < 1024) return false;
-    const el = sectionRef.current;
-    if (!el) return false;
+  const isDominantSection = useCallback(
+    (direction: 1 | -1): boolean => {
+      if (typeof window === 'undefined' || window.innerWidth < DESKTOP_SPIRAL_MIN_WIDTH) {
+        return false;
+      }
+      const el = sectionRef.current;
+      if (!el) return false;
 
-    const rect = el.getBoundingClientRect();
-    const headerHeight = getHeaderHeight();
+      const headerHeight = getHeaderHeight();
+      const vh = window.innerHeight || 800;
+      const anchorBandTop = headerHeight + 8;
+      const anchorBandBottom = vh - 60;
 
-    // Never hijack while the section is still approaching from below
-    if (rect.top > headerHeight + 28) return false;
-    // Release once mostly scrolled past top
-    if (rect.bottom <= headerHeight + 220) return false;
+      const scoreSection = (sec: HTMLElement): number => {
+        const rect = sec.getBoundingClientRect();
+        if (rect.top > Math.min(vh * 0.42, headerHeight + 240)) return -1;
+        if (rect.bottom < headerHeight + 200) return -1;
 
-    const allSections = Array.from(
-      document.querySelectorAll<HTMLElement>('section[data-work-wheel="true"]')
-    );
-    if (allSections.length <= 1) return true;
+        const visibleTop = Math.max(rect.top, anchorBandTop);
+        const visibleBottom = Math.min(rect.bottom, anchorBandBottom);
+        const visibleHeight = Math.max(0, visibleBottom - visibleTop);
+        const minRequired = Math.min(260, vh * 0.34);
+        if (visibleHeight < minRequired) return -1;
 
-    const myDistance = Math.abs(rect.top - headerHeight);
-    for (const other of allSections) {
-      if (other === el) continue;
-      const otherRect = other.getBoundingClientRect();
-      if (otherRect.top <= headerHeight + 28 && otherRect.bottom > headerHeight + 220) {
-        if (Math.abs(otherRect.top - headerHeight) < myDistance) {
+        const secCenter = rect.top + rect.height * 0.5;
+        const viewCenter = headerHeight + (vh - headerHeight) * 0.5;
+        const centerDist = Math.abs(secCenter - viewCenter);
+        return visibleHeight - centerDist * 0.45 + (direction > 0 && rect.top <= headerHeight + 90 ? 40 : 0);
+      };
+
+      const myScore = scoreSection(el);
+      if (myScore < 0) return false;
+
+      const allSections = Array.from(
+        document.querySelectorAll<HTMLElement>('section[data-work-wheel="true"]')
+      );
+      for (const other of allSections) {
+        if (other === el) continue;
+        const otherScore = scoreSection(other);
+        if (otherScore > myScore) {
           return false;
         }
       }
-    }
 
-    return true;
-  }, [getHeaderHeight]);
+      return true;
+    },
+    [getHeaderHeight]
+  );
 
-  const scheduleTrackpadSettle = useCallback(() => {
+  const scheduleGentleSettle = useCallback(() => {
     if (settleTimerRef.current) window.clearTimeout(settleTimerRef.current);
     settleTimerRef.current = window.setTimeout(() => {
       const currentTarget = targetProgressRef.current;
-      const nearestInt = Math.round(currentTarget);
-      // If close to an integer card center or idle in between, snap smoothly to nearest 1/3 or card lock
-      const nextSnapped =
-        Math.abs(currentTarget - nearestInt) < 0.24
-          ? nearestInt
-          : Math.round(currentTarget * 3) / 3;
-      const clamped = clamp(nextSnapped, 0, Math.max(0, totalItemsRef.current - 1));
+      const maxIdx = Math.max(0, totalItemsRef.current - 1);
+      const snappedTick = Math.round(currentTarget * TICKS_PER_STAGE) / TICKS_PER_STAGE;
+      const clamped = clamp(snappedTick, 0, maxIdx);
       if (Math.abs(clamped - targetProgressRef.current) > 0.002) {
         targetProgressRef.current = clamped;
         ensureAnimationLoop();
@@ -169,102 +230,115 @@ export function useSpiralScroll({
 
   const handleWheelNative = useCallback(
     (e: WheelEvent) => {
-      if (typeof window !== 'undefined' && window.innerWidth < 1024) return;
+      if (typeof window !== 'undefined' && window.innerWidth < DESKTOP_SPIRAL_MIN_WIDTH) return;
       const dy = e.deltaY;
-      if (Math.abs(dy) < 2.5) return;
-      if (Math.abs(dy) < Math.abs(e.deltaX) * 0.8) return;
+      if (Math.abs(dy) < 2) return;
+      if (Math.abs(dy) < Math.abs(e.deltaX) * 0.85) return;
 
-      if (!isDominantSection()) {
+      const direction: 1 | -1 = dy > 0 ? 1 : -1;
+      if (!isDominantSection(direction)) {
         setIsAnchored(false);
         return;
       }
 
       const maxIdx = Math.max(0, totalItemsRef.current - 1);
-      const direction = dy > 0 ? 1 : -1;
       const currentTarget = targetProgressRef.current;
       const now = performance.now();
 
-      // Boundary release: Down at last stage
+      // Clean boundary release: scrolling down past final stage
       if (direction > 0 && currentTarget >= maxIdx - 0.004) {
         if (wasAtBoundaryRef.current !== 'end') {
           wasAtBoundaryRef.current = 'end';
           boundaryArrivalTimeRef.current = now;
         }
-        if (now - boundaryArrivalTimeRef.current < 260) {
+        if (now - boundaryArrivalTimeRef.current < BOUNDARY_HOLD_MS) {
           e.preventDefault();
           e.stopPropagation();
           return;
         }
         setIsAnchored(false);
+        wheelAccumRef.current = 0;
         return;
       }
 
-      // Boundary release: Up at first stage
+      // Clean boundary release: scrolling up past first stage
       if (direction < 0 && currentTarget <= 0.004) {
         if (wasAtBoundaryRef.current !== 'start') {
           wasAtBoundaryRef.current = 'start';
           boundaryArrivalTimeRef.current = now;
         }
-        if (now - boundaryArrivalTimeRef.current < 260) {
+        if (now - boundaryArrivalTimeRef.current < BOUNDARY_HOLD_MS) {
           e.preventDefault();
           e.stopPropagation();
           return;
         }
         setIsAnchored(false);
+        wheelAccumRef.current = 0;
         return;
       }
 
-      // Within spiral stage progression -> capture scroll cleanly in-place
       e.preventDefault();
       e.stopPropagation();
       setIsAnchored(true);
       wasAtBoundaryRef.current = null;
 
-      const isDiscreteTick = e.deltaMode !== 0 || Math.abs(dy) >= 38;
+      if (now < stageDetentUntilRef.current) {
+        wheelAccumRef.current = 0;
+        return;
+      }
 
-      if (isDiscreteTick) {
-        // Cooldown prevents trackpad spike bursts from skipping >1 third per tick
-        if (now - lastDiscreteTickTimeRef.current < 85) {
+      if (now - lastTickTimeRef.current < TICK_COOLDOWN_MS) {
+        return;
+      }
+
+      const isDiscreteWheel = e.deltaMode !== 0 || Math.abs(dy) >= 44;
+
+      if (isDiscreteWheel) {
+        wheelAccumRef.current = 0;
+      } else {
+        if (
+          now - lastWheelEventTimeRef.current > 160 ||
+          (wheelAccumRef.current !== 0 && Math.sign(wheelAccumRef.current) !== direction)
+        ) {
+          wheelAccumRef.current = 0;
+        }
+        lastWheelEventTimeRef.current = now;
+        wheelAccumRef.current += dy;
+
+        if (Math.abs(wheelAccumRef.current) < TICK_DELTA_THRESHOLD) {
+          scheduleGentleSettle();
           return;
         }
-        lastDiscreteTickTimeRef.current = now;
-
-        // Quantize to 1/3 card increments so ~3 ticks = 1 complete card transition
-        const nextTickQuantized =
-          direction > 0
-            ? Math.round((currentTarget + 1 / 3) * 3) / 3
-            : Math.round((currentTarget - 1 / 3) * 3) / 3;
-
-        const nextTarget = clamp(nextTickQuantized, 0, maxIdx);
-        if (nextTarget >= maxIdx - 0.004) {
-          wasAtBoundaryRef.current = 'end';
-          boundaryArrivalTimeRef.current = now;
-        } else if (nextTarget <= 0.004) {
-          wasAtBoundaryRef.current = 'start';
-          boundaryArrivalTimeRef.current = now;
-        }
-
-        targetProgressRef.current = nextTarget;
-        ensureAnimationLoop();
-      } else {
-        // Smooth proportional trackpad progress (~135px travel per full card = 3 gentle micro-gestures)
-        const nextTarget = clamp(currentTarget + dy / 135, 0, maxIdx);
-        if (nextTarget >= maxIdx - 0.004 && currentTarget < maxIdx - 0.004) {
-          wasAtBoundaryRef.current = 'end';
-          boundaryArrivalTimeRef.current = now;
-        } else if (nextTarget <= 0.004 && currentTarget > 0.004) {
-          wasAtBoundaryRef.current = 'start';
-          boundaryArrivalTimeRef.current = now;
-        }
-        targetProgressRef.current = nextTarget;
-        ensureAnimationLoop();
-        scheduleTrackpadSettle();
+        wheelAccumRef.current = 0;
       }
+
+      lastTickTimeRef.current = now;
+
+      // Advance strictly by 1 calibrated tick (1/5 = 0.20) so 5 ticks = 1 complete stage change
+      const quantizedNext =
+        Math.round((currentTarget + direction * TICK_STEP) * TICKS_PER_STAGE) / TICKS_PER_STAGE;
+      const nextTarget = clamp(quantizedNext, 0, maxIdx);
+
+      // Engage magnetic stage detent right on Tick 5 card settlement
+      if (Math.abs(nextTarget - Math.round(nextTarget)) < 0.015) {
+        stageDetentUntilRef.current = now + STAGE_DETENT_MS;
+      }
+
+      if (nextTarget >= maxIdx - 0.004) {
+        wasAtBoundaryRef.current = 'end';
+        boundaryArrivalTimeRef.current = now;
+      } else if (nextTarget <= 0.004) {
+        wasAtBoundaryRef.current = 'start';
+        boundaryArrivalTimeRef.current = now;
+      }
+
+      targetProgressRef.current = nextTarget;
+      ensureAnimationLoop();
+      scheduleGentleSettle();
     },
-    [ensureAnimationLoop, isDominantSection, scheduleTrackpadSettle]
+    [ensureAnimationLoop, isDominantSection, scheduleGentleSettle]
   );
 
-  // Attach native non-passive wheel listener to section & window when dominant
   useEffect(() => {
     const sectionEl = sectionRef.current;
     if (!sectionEl) return;
@@ -309,38 +383,49 @@ export function useSpiralScroll({
     }
   }, [getHeaderHeight, prefersReducedMotion]);
 
-  const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLElement>) => {
-    const current = activeIndexRef.current;
-    const total = totalItemsRef.current;
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLElement>) => {
+      const current = activeIndexRef.current;
+      const total = totalItemsRef.current;
 
-    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
-      if (current < total - 1) {
+      if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+        if (current < total - 1) {
+          e.preventDefault();
+          goToStage(current + 1);
+        }
+      } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+        if (current > 0) {
+          e.preventDefault();
+          goToStage(current - 1);
+        }
+      } else if (e.key === 'Home') {
         e.preventDefault();
-        onActiveChangeRef.current(current + 1);
-      }
-    } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
-      if (current > 0) {
+        goToStage(0);
+      } else if (e.key === 'End') {
         e.preventDefault();
-        onActiveChangeRef.current(current - 1);
+        goToStage(total - 1);
       }
-    }
-  }, []);
+    },
+    [goToStage]
+  );
 
-  // Derive 3-tick phase within the current active step transition (0, 1, 2, 3)
-  const fractionalRemainder = progress - Math.floor(progress);
-  const currentTickStep =
-    progress >= totalItems - 1 - 0.01
-      ? 3
-      : Math.min(3, Math.round(fractionalRemainder * 3));
+  // Derive visible 5-tick step phase relative to activeIndex (0 = settled/locked, 1..5 = orbit ticks)
+  const deltaFromActive = Math.abs(progress - activeIndex);
+  const isSettled = deltaFromActive < 0.03;
+  const currentTickStep = isSettled
+    ? TICKS_PER_STAGE
+    : Math.max(1, Math.min(TICKS_PER_STAGE, Math.round(deltaFromActive * TICKS_PER_STAGE)));
 
   return {
     sectionRef,
     cardRef,
     progress,
     currentTickStep,
+    isSettled,
     isAnchored,
     isLastItem: activeIndex === totalItems - 1,
     isFirstItem: activeIndex === 0,
+    goToStage,
     scrollToNextSection,
     scrollToPrevSection,
     scrollProps: {

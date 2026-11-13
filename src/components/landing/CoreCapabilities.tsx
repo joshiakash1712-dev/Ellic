@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   Receipt,
   Boxes,
@@ -7,19 +7,17 @@ import {
   ShieldCheck,
   BarChart3,
   CheckCircle2,
-  Sparkles,
   ArrowRight,
   ArrowLeft,
-  MousePointer,
 } from 'lucide-react';
-import { motion, AnimatePresence, useReducedMotion } from 'motion/react';
-import { SpiralWorkflowStage } from './SpiralWorkflowStage';
-import { useSpiralScroll } from '../../hooks/useSpiralScroll';
+import { UnifiedSpiralShowcase } from './UnifiedSpiralShowcase';
+import type { SpiralDialItemDef } from './SpiralDialPanel';
 
-interface CapabilityCard {
+interface CapabilityCard extends SpiralDialItemDef {
   id: string;
   number: string;
   title: string;
+  tagline: string;
   badge: string;
   icon: React.ElementType;
   description: string;
@@ -31,7 +29,7 @@ interface CapabilityCard {
   };
 }
 
-const capabilities: CapabilityCard[] = [
+const rawCapabilities = [
   {
     id: 'billing',
     number: '01',
@@ -144,222 +142,157 @@ const capabilities: CapabilityCard[] = [
 
 export const CoreCapabilities: React.FC = () => {
   const [activeCapIndex, setActiveCapIndex] = useState(0);
-  const prefersReducedMotion = useReducedMotion();
-  const currentCap = capabilities[activeCapIndex] || capabilities[0];
-  const Icon = currentCap.icon;
 
-  const handleCapSelect = React.useCallback((idx: number) => {
-    setActiveCapIndex(idx);
-  }, []);
-
-  const {
-    sectionRef,
-    cardRef,
-    progress,
-    currentTickStep,
-    scrollProps,
-    scrollToNextSection,
-  } = useSpiralScroll({
-    totalItems: capabilities.length,
-    activeIndex: activeCapIndex,
-    onActiveChange: setActiveCapIndex,
-    sectionId: 'features',
-  });
-
-  const capItems = React.useMemo(
+  const capItems: CapabilityCard[] = useMemo(
     () =>
-      capabilities.map((c) => ({
-        id: c.id,
-        number: c.number,
-        title: c.title,
+      rawCapabilities.map((c) => ({
+        ...c,
         tagline: c.badge,
-        description: c.description,
-        icon: c.icon,
       })),
     []
   );
 
   return (
-    <section
-      ref={sectionRef}
-      id="features"
-      data-work-wheel="true"
-      className="py-6 sm:py-8 lg:py-10 scroll-mt-20 bg-slate-50/70 dark:bg-slate-900/50 border-b border-slate-200/80 dark:border-slate-800/80 transition-colors overflow-hidden"
-    >
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        
-        {/* Section Header */}
-        <div className="max-w-3xl mx-auto text-center mb-4 sm:mb-6 lg:mb-7">
-          <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-3xl font-extrabold text-slate-950 dark:text-white tracking-tight break-words">
-            Six tools unified into one calm platform.
-          </h2>
-        </div>
-
-        {/* Mobile / Tablet Horizontal Capability Pills & Compact Spiral Stage */}
-        <div className="flex lg:hidden overflow-x-auto gap-2 pb-2 mb-3 scrollbar-none">
-          {capabilities.map((c, idx) => (
-            <button
-              key={c.id}
-              type="button"
-              onClick={() => handleCapSelect(idx)}
-              className={`px-3.5 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all flex items-center gap-1.5 shrink-0 cursor-pointer ${
-                activeCapIndex === idx
-                  ? 'bg-blue-600 text-white shadow-sm'
-                  : 'bg-white dark:bg-slate-850 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700'
-              }`}
-            >
-              <span className="font-mono text-[10px] opacity-75">{c.number}</span>
-              <span>{c.title}</span>
-            </button>
-          ))}
-        </div>
-
-        <div className="lg:hidden mb-4">
-          <SpiralWorkflowStage
-            items={capItems}
-            activeIndex={activeCapIndex}
-            progress={progress}
-            currentTickStep={currentTickStep}
-            onActiveChange={handleCapSelect}
-            label="Capabilities '26"
-            sublabel="Core Platform"
-            compact={true}
-            className="min-h-[250px]"
-          />
-        </div>
-
-        {/* Side-by-Side: Interactive 3D Spiral Stage on Left, Live Scrolling Capability Monitor on Right */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 lg:gap-6 xl:gap-7 items-stretch">
-          
-          {/* Left: 3D Spiral Orbit Stage */}
-          <div className="hidden lg:flex lg:col-span-6 flex-col">
-            <SpiralWorkflowStage
-              items={capItems}
-              activeIndex={activeCapIndex}
-              progress={progress}
-              currentTickStep={currentTickStep}
-              onActiveChange={handleCapSelect}
-              label="Capabilities '26"
-              sublabel="Core Platform"
-              className="h-full min-h-[clamp(360px,52vh,440px)]"
-            />
-          </div>
-
-          {/* Right: Live Capability Monitor */}
-          <div className="col-span-1 lg:col-span-6 flex flex-col">
+    <UnifiedSpiralShowcase
+      sectionId="features"
+      eyebrow="Unified Retail OS"
+      heading="Six tools unified into one calm platform."
+      description="Replace fragmented billing software, stock spreadsheets, and paper ledgers with one synchronized retail cockpit."
+      items={capItems}
+      activeIndex={activeCapIndex}
+      onActiveChange={setActiveCapIndex}
+      dialLabel="Capabilities '26"
+      dialSublabel="Core Platform"
+      prevLabel="Prev Tool"
+      nextLabel="Next Tool"
+      renderSimulator={(cap, { index, total, isActive, isInteractive, onPrev, onNext }) => {
+        const CapIcon = cap.icon;
+        return (
+          <div
+            className="p-4 sm:p-5 rounded-2xl border flex flex-col justify-between h-full transition-colors duration-200"
+            style={{
+              backgroundColor: isActive ? '#0E1726' : '#09111E',
+              borderColor: isActive ? 'rgba(56, 189, 248, 0.34)' : 'rgba(148, 163, 184, 0.2)',
+              boxShadow: isActive
+                ? '0 22px 48px -12px rgba(0, 0, 0, 0.72), 0 0 28px rgba(37, 99, 235, 0.18), inset 0 1px 0 rgba(186, 230, 253, 0.14)'
+                : '0 14px 32px -12px rgba(0, 0, 0, 0.6)',
+            }}
+          >
+            {/* Header Badge */}
             <div
-              ref={cardRef}
-              {...scrollProps}
-              className="p-5 sm:p-6 rounded-2xl bg-white dark:bg-slate-900 border-2 border-slate-300 dark:border-slate-700 shadow-md flex flex-col justify-between h-full outline-none focus:ring-2 focus:ring-blue-500/30 transition-all"
+              className="flex items-center justify-between pb-2.5 mb-2.5 border-b gap-2 shrink-0"
+              style={{ borderColor: 'rgba(56, 189, 248, 0.16)' }}
             >
-              {/* Header Badge */}
-              <div className="flex items-center justify-between pb-3 mb-3 border-b-2 border-slate-200 dark:border-slate-800 gap-2 shrink-0">
-                  <div className="flex items-center gap-2 min-w-0">
-                    <div className="flex items-center gap-1.5 shrink-0">
-                      <span className="w-2.5 h-2.5 rounded-full bg-red-400/80" />
-                      <span className="w-2.5 h-2.5 rounded-full bg-amber-400/80" />
-                      <span className="w-2.5 h-2.5 rounded-full bg-emerald-400/80" />
-                    </div>
-                    <span className="ml-1 text-[11px] font-mono uppercase tracking-wider font-bold text-slate-500 dark:text-slate-400 truncate">
-                      Live Capability Monitor
-                    </span>
-                  </div>
+              <div className="flex items-center gap-2 min-w-0">
+                <div className="flex items-center gap-1.5 shrink-0">
+                  <span className="w-2.5 h-2.5 rounded-full bg-rose-400/80" />
+                  <span className="w-2.5 h-2.5 rounded-full bg-amber-400/80" />
+                  <span className="w-2.5 h-2.5 rounded-full bg-emerald-400/80" />
                 </div>
+                <span className="ml-1 text-[11px] font-mono uppercase tracking-wider font-bold text-[#CBD5E1] truncate">
+                  Live Capability Monitor
+                </span>
+              </div>
+              <span
+                className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-md border shrink-0"
+                style={{
+                  backgroundColor: 'rgba(37, 99, 235, 0.22)',
+                  borderColor: 'rgba(56, 189, 248, 0.4)',
+                  color: '#7DD3FC',
+                }}
+              >
+                {cap.badge}
+              </span>
+            </div>
 
-                {/* Animated Capability Details with internal scroll safeguard */}
-                <div className="flex-1 overflow-y-auto max-h-[min(420px,calc(100dvh-14.5rem))] pr-0.5 scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-slate-800">
-                  <AnimatePresence mode="wait">
-                    <motion.div
-                      key={currentCap.id}
-                      initial={prefersReducedMotion ? { opacity: 0 } : { opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={prefersReducedMotion ? { opacity: 0 } : { opacity: 0, y: -10 }}
-                      transition={{ duration: 0.22, ease: 'easeOut' }}
-                      className="space-y-3.5"
-                    >
-                      {/* Title & Tagline */}
-                      <div>
-                        <div className="inline-flex items-center gap-1.5 text-[11px] font-bold text-blue-600 dark:text-sky-400 uppercase tracking-wider">
-                          <Icon className="w-3.5 h-3.5" />
-                          <span>{currentCap.badge}</span>
-                        </div>
-                        <h3 className="text-xl sm:text-2xl font-extrabold text-slate-950 dark:text-white mt-0.5">
-                          {currentCap.title}
-                        </h3>
-                        <p className="mt-1.5 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
-                          {currentCap.description}
-                        </p>
-                      </div>
-
-                      {/* Operational Telemetry Card */}
-                      <div className="p-3 sm:p-3.5 rounded-xl bg-slate-100/80 dark:bg-slate-950/60 border-2 border-slate-300 dark:border-slate-800 shadow-2xs">
-                        <div className="flex items-center justify-between text-xs mb-1">
-                          <span className="text-slate-600 dark:text-slate-400 font-medium">
-                            {currentCap.telemetry.label}
-                          </span>
-                          <span className="font-mono font-bold text-blue-600 dark:text-sky-400">
-                            {currentCap.telemetry.value}
-                          </span>
-                        </div>
-                        <div className="text-[11px] text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5 font-medium">
-                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
-                          <span>{currentCap.telemetry.status}</span>
-                        </div>
-                      </div>
-
-                      {/* Feature Points Checklist */}
-                      <div className="pt-1.5 space-y-2">
-                        <div className="text-[10px] font-mono uppercase tracking-wider text-slate-400 font-bold">
-                          Included In Store License
-                        </div>
-                        {currentCap.points.map((point, idx) => (
-                          <div key={idx} className="flex items-start gap-2 text-xs text-slate-700 dark:text-slate-300">
-                            <CheckCircle2 className="w-3.5 h-3.5 text-blue-600 dark:text-sky-400 shrink-0 mt-0.5" />
-                            <span className="leading-snug">{point}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </motion.div>
-                  </AnimatePresence>
+            {/* Capability Details */}
+            <div className="flex-1 overflow-y-auto pr-0.5 space-y-3 scrollbar-thin">
+              <div>
+                <div className="inline-flex items-center gap-1.5 text-[11px] font-bold text-[#38BDF8] uppercase tracking-wider">
+                  <CapIcon className="w-3.5 h-3.5" />
+                  <span>TOOL {cap.number} · {cap.badge}</span>
                 </div>
-
-              {/* Bottom Card Controls & Footer */}
-              <div className="pt-3 mt-3 border-t-2 border-slate-200 dark:border-slate-800 flex items-center justify-between gap-2 shrink-0">
-                <button
-                  type="button"
-                  disabled={activeCapIndex === 0}
-                  onClick={() => handleCapSelect(Math.max(0, activeCapIndex - 1))}
-                  className="px-3.5 py-2 rounded-lg border-2 border-slate-300 dark:border-slate-700 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer flex items-center gap-1"
-                >
-                  <ArrowLeft className="w-3.5 h-3.5" />
-                  <span>Prev Tool</span>
-                </button>
-
-                <div className="text-[11px] font-mono font-medium text-slate-500">
-                  {activeCapIndex + 1} / {capabilities.length}
-                </div>
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (activeCapIndex < capabilities.length - 1) {
-                      handleCapSelect(activeCapIndex + 1);
-                    } else {
-                      scrollToNextSection();
-                    }
-                  }}
-                  className="px-3.5 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold flex items-center gap-1 cursor-pointer shadow-sm transition-colors border border-blue-700"
-                >
-                  <span>{activeCapIndex === capabilities.length - 1 ? 'Next Section' : 'Next Tool'}</span>
-                  <ArrowRight className="w-3.5 h-3.5" />
-                </button>
+                <h3 className="text-lg sm:text-xl font-extrabold text-white mt-0.5">
+                  {cap.title}
+                </h3>
+                <p className="mt-1 text-xs text-[#CBD5E1] leading-relaxed">
+                  {cap.description}
+                </p>
               </div>
 
+              {/* Operational Telemetry Card */}
+              <div
+                className="p-3 rounded-xl border"
+                style={{
+                  backgroundColor: '#070B14',
+                  borderColor: 'rgba(56, 189, 248, 0.22)',
+                }}
+              >
+                <div className="flex items-center justify-between text-xs mb-1 gap-2">
+                  <span className="text-[#94A3B8] font-medium">
+                    {cap.telemetry.label}
+                  </span>
+                  <span className="font-mono font-bold text-[#38BDF8]">
+                    {cap.telemetry.value}
+                  </span>
+                </div>
+                <div className="text-[11px] text-[#34D399] flex items-center gap-1.5 font-medium">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0" />
+                  <span>{cap.telemetry.status}</span>
+                </div>
+              </div>
+
+              {/* Feature Points Checklist */}
+              <div className="pt-1 space-y-2">
+                <div className="text-[10px] font-mono uppercase tracking-wider text-[#94A3B8] font-bold">
+                  Included In Store License
+                </div>
+                {cap.points.map((point, idx) => (
+                  <div key={idx} className="flex items-start gap-2 text-xs text-[#E2E8F0]">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-[#38BDF8] shrink-0 mt-0.5" />
+                    <span className="leading-snug">{point}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Bottom Controls */}
+            <div
+              className="pt-2.5 mt-2.5 border-t flex items-center justify-between gap-2 shrink-0"
+              style={{ borderColor: 'rgba(56, 189, 248, 0.16)' }}
+            >
+              <button
+                type="button"
+                tabIndex={isInteractive ? 0 : -1}
+                disabled={index === 0}
+                onClick={onPrev}
+                className="px-3 py-1.5 rounded-lg border text-xs font-semibold text-[#E2E8F0] hover:bg-slate-800/80 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer flex items-center gap-1 transition-colors"
+                style={{
+                  backgroundColor: '#070B14',
+                  borderColor: 'rgba(148, 163, 184, 0.3)',
+                }}
+              >
+                <ArrowLeft className="w-3.5 h-3.5" />
+                <span>Prev Tool</span>
+              </button>
+
+              <div className="text-[11px] font-mono font-medium text-[#94A3B8]">
+                {index + 1} / {total}
+              </div>
+
+              <button
+                type="button"
+                tabIndex={isInteractive ? 0 : -1}
+                onClick={onNext}
+                className="px-3 py-1.5 rounded-lg bg-[#2563EB] hover:bg-[#3B82F6] text-white text-xs font-semibold flex items-center gap-1 cursor-pointer transition-colors border border-[#38BDF8]/50"
+              >
+                <span>{index === total - 1 ? 'Next Section' : 'Next Tool'}</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </button>
             </div>
           </div>
-
-        </div>
-      </div>
-    </section>
+        );
+      }}
+    />
   );
 };

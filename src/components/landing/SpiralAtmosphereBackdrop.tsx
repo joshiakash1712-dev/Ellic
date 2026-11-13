@@ -42,18 +42,17 @@ function detectWebGLSupport(): boolean {
 }
 
 export interface SpiralAtmosphereBackdropProps {
-  /** Whether to show only the lightweight CSS + central laser backdrop (e.g. small mobile viewports) */
+  /** Compact mode skips heavy orbital mesh geometry on narrow mobile screens */
   liteMode?: boolean;
 }
 
 /**
- * ThreeUI Atmospheric Blade + Cylindrical Orbital Backdrop
+ * Full-Section Deep-Navy Spatial Atmosphere Backdrop
  *
- * - Mounted cleanly inside `.shader-frame`.
- * - Strictly stationary vertical central laser blade (`pointerEvents: "none"` prevents cursor-reactive tilting).
- * - Calibrated hue (+54deg on atmospheric-blade) so cyan/cobalt matches Ellic's `#2563EB` / `#38BDF8` brand palette.
- * - Viewport-gated via IntersectionObserver so only nearby/visible sections allocate live WebGL contexts.
- * - Instant pure-CSS obsidian + central vertical beam fallback on reduced motion, SSR, or offscreen idle.
+ * - Renders inside `.shader-frame` with `pointerEvents: 'none'` so zero cursor tracking occurs.
+ * - Combines a precision coordinate grid, ThreeUI Gallery orbital ribbon, and subtle
+ *   subdued LaserCollection (`atmospheric-blade`) background accent behind the stationary central pole.
+ * - Viewport-gated via IntersectionObserver so only visible/adjacent sections allocate WebGL contexts.
  */
 export const SpiralAtmosphereBackdrop: React.FC<SpiralAtmosphereBackdropProps> = ({
   liteMode = false,
@@ -90,7 +89,7 @@ export const SpiralAtmosphereBackdrop: React.FC<SpiralAtmosphereBackdropProps> =
         );
         setInViewport(visibleInLayout);
       },
-      { rootMargin: '260px 0px' }
+      { rootMargin: '120px 0px' }
     );
     observer.observe(el);
     return () => observer.disconnect();
@@ -98,26 +97,15 @@ export const SpiralAtmosphereBackdrop: React.FC<SpiralAtmosphereBackdropProps> =
 
   const renderWebGL = inViewport && canUseWebGL && !prefersReducedMotion;
 
-  const cssFallbackPole = (
-    <>
-      <div
-        aria-hidden="true"
-        className="absolute inset-0 pointer-events-none"
-        style={{
-          background:
-            'radial-gradient(ellipse 64% 58% at 50% 50%, rgba(37, 99, 235, 0.22) 0%, rgba(14, 23, 38, 0.72) 56%, #070B14 100%)',
-        }}
-      />
-      <div
-        aria-hidden="true"
-        className="absolute inset-y-4 left-1/2 -translate-x-1/2 w-[3px] pointer-events-none"
-        style={{
-          background:
-            'linear-gradient(180deg, transparent 0%, rgba(56, 189, 248, 0.45) 22%, rgba(224, 242, 254, 0.92) 50%, rgba(56, 189, 248, 0.45) 78%, transparent 100%)',
-          boxShadow: '0 0 28px 6px rgba(56, 189, 248, 0.34), 0 0 64px 12px rgba(37, 99, 235, 0.22)',
-        }}
-      />
-    </>
+  const fallbackAtmosphere = (
+    <div
+      aria-hidden="true"
+      className="absolute inset-0 pointer-events-none"
+      style={{
+        background:
+          'radial-gradient(ellipse 68% 58% at 50% 52%, rgba(37, 99, 235, 0.16) 0%, rgba(14, 23, 38, 0.72) 55%, #070B14 100%)',
+      }}
+    />
   );
 
   return (
@@ -134,35 +122,35 @@ export const SpiralAtmosphereBackdrop: React.FC<SpiralAtmosphereBackdropProps> =
         pointerEvents: 'none',
       }}
     >
-      {/* Base Grid + Obsidian Radial Glow (Instant Paint, Zero Shift) */}
+      {/* Architectural Spatial Micro-Grid */}
       <div
         className="absolute inset-0 opacity-20 pointer-events-none"
         style={{
           backgroundImage:
             'linear-gradient(to right, rgba(56, 189, 248, 0.12) 1px, transparent 1px), linear-gradient(to bottom, rgba(56, 189, 248, 0.12) 1px, transparent 1px)',
-          backgroundSize: '2.5rem 2.5rem',
-          maskImage: 'radial-gradient(ellipse 75% 75% at 50% 50%, #000 50%, transparent 100%)',
-          WebkitMaskImage: 'radial-gradient(ellipse 75% 75% at 50% 50%, #000 50%, transparent 100%)',
+          backgroundSize: '2.75rem 2.75rem',
+          maskImage: 'radial-gradient(ellipse 76% 74% at 50% 54%, #000 45%, transparent 100%)',
+          WebkitMaskImage: 'radial-gradient(ellipse 76% 74% at 50% 54%, #000 45%, transparent 100%)',
         }}
       />
 
-      {cssFallbackPole}
+      {fallbackAtmosphere}
 
       {renderWebGL && (
-        <WebGLErrorBoundary fallback={cssFallbackPole}>
+        <WebGLErrorBoundary fallback={fallbackAtmosphere}>
           {/* Cylindrical orbital depth ribbon (Three.js r149 Gallery) */}
           {!liteMode && (
             <div
               className="absolute inset-0 pointer-events-none"
-              style={{ pointerEvents: 'none', opacity: 0.24 }}
+              style={{ pointerEvents: 'none', opacity: 0.2 }}
             >
               <Gallery
-                speed={0.3}
-                scale={1.12}
-                opacity={0.75}
+                speed={0.26}
+                scale={1.15}
+                opacity={0.7}
                 hue={20}
-                saturation={0.55}
-                brightness={0.62}
+                saturation={0.5}
+                brightness={0.58}
                 style={{
                   backgroundColor: 'transparent',
                   backgroundImage: 'none',
@@ -172,31 +160,31 @@ export const SpiralAtmosphereBackdrop: React.FC<SpiralAtmosphereBackdropProps> =
             </div>
           )}
 
-          {/* Deep dark scrim preserving foreground card typography contrast over rotating gallery */}
+          {/* Deep vignette scrim safeguarding foreground typography readability */}
           <div
             className="absolute inset-0 pointer-events-none"
             style={{
               pointerEvents: 'none',
               background:
-                'radial-gradient(ellipse 68% 64% at 50% 50%, rgba(7, 11, 20, 0.45) 0%, rgba(7, 11, 20, 0.86) 76%, rgba(7, 11, 20, 0.96) 100%)',
+                'radial-gradient(ellipse 70% 64% at 50% 54%, rgba(7, 11, 20, 0.44) 0%, rgba(7, 11, 20, 0.86) 76%, rgba(7, 11, 20, 0.96) 100%)',
             }}
           />
 
-          {/* Stationary central vertical Atmospheric Laser Blade (pointerEvents="none" guarantees zero cursor tilt) */}
+          {/* Subdued stationary LaserCollection background accent (pointerEvents="none" prevents cursor tilt) */}
           <div
             className="absolute inset-0 pointer-events-none overflow-hidden"
-            style={{ pointerEvents: 'none' }}
+            style={{ pointerEvents: 'none', opacity: 0.34 }}
           >
             <LaserCollection
               variant="atmospheric-blade"
-              speed={0.7}
-              size={0.95}
-              length={1.2}
-              density={0.95}
-              opacity={0.92}
+              speed={0.48}
+              size={0.85}
+              length={1.15}
+              density={0.62}
+              opacity={0.75}
               hue={54}
-              saturation={1.0}
-              brightness={0.95}
+              saturation={0.85}
+              brightness={0.68}
               style={{
                 pointerEvents: 'none',
                 background: 'transparent',

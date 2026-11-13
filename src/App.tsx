@@ -52,6 +52,9 @@ const SubscriptionPaywall = lazy(() =>
 const WholesalerPortal = lazy(() =>
   import('./components/wholesaler/WholesalerPortal').then((m) => ({ default: m.WholesalerPortal }))
 );
+const CustomerPortal = lazy(() =>
+  import('./components/customer/CustomerPortal').then((m) => ({ default: m.CustomerPortal }))
+);
 const AdminPanel = lazy(() =>
   import('./components/admin/AdminPanel').then((m) => ({ default: m.AdminPanel }))
 );
@@ -199,6 +202,9 @@ const MainLayout: React.FC<MainLayoutProps> = ({ onNavigateToWebsite }) => {
       employees: 'Store Crew & Roles',
       journey_map: 'Customer Journey Map',
       wholesaler: 'Wholesaler Portal',
+      customer_catalog: 'Customer Product Catalog',
+      customer_stores: 'Nearby Ellic Stores',
+      customer_orders: 'Customer Orders & Pickup QR',
       admin_overview: 'Admin Control Hub',
     };
     setLiveAnnouncement(`Navigated to ${viewNames[target] || target}`);
@@ -243,66 +249,39 @@ const MainLayout: React.FC<MainLayoutProps> = ({ onNavigateToWebsite }) => {
       return <SubscriptionPaywall />;
     }
 
-    // Customer Account View (Default for unpromoted sign-ins)
-    if (canonicalRole === 'customer') {
+    // Customer Website / Customer Account View
+    if (canonicalRole === 'customer' || activeModule === 'customer') {
+      const customerInitialTab =
+        activeView === 'customer_stores'
+          ? 'stores'
+          : activeView === 'customer_orders'
+            ? 'my_orders'
+            : 'products';
       return (
-        <div className="max-w-4xl mx-auto p-4 sm:p-6 space-y-6">
-          <div className="p-6 rounded-2xl bg-[#121826] border border-slate-800 shadow-xl space-y-4">
-            <div className="flex items-center gap-3">
-              <div className="p-3 rounded-xl bg-sky-500/10 border border-sky-500/20 text-sky-400">
-                <Users className="w-6 h-6" />
+        <div className="space-y-4">
+          {canonicalRole === 'customer' && (
+            <div className="p-3.5 rounded-2xl bg-[#121826] border border-slate-800 flex flex-wrap items-center justify-between gap-3">
+              <div className="text-xs text-slate-300">
+                Signed in as <strong className="text-sky-300">{userProfile?.email || 'Customer'}</strong> · Role:{' '}
+                <span className="font-semibold text-emerald-400">Customer</span>
               </div>
-              <div>
-                <h2 className="text-xl font-bold text-white">Customer Account Portal</h2>
-                <p className="text-xs text-slate-400">
-                  Signed in as <strong className="text-sky-300">{userProfile?.email || 'Customer'}</strong> · Platform Role: <span className="font-semibold text-emerald-400">Customer</span>
-                </p>
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  onClick={() => handleSelectView('journey_map')}
+                  className="px-3 py-1.5 rounded-lg bg-sky-600 hover:bg-sky-500 text-white font-bold text-xs transition-all"
+                >
+                  Explore Platform
+                </button>
+                <button
+                  onClick={() => setIsSettingsModalOpen(true)}
+                  className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs border border-slate-700 transition-all"
+                >
+                  Profile Settings
+                </button>
               </div>
             </div>
-            <div className="p-4 rounded-xl bg-[#0B0F19] border border-slate-800/80 text-xs text-slate-300 space-y-2">
-              <p>
-                Welcome to <strong>Ellic</strong>. Your account is registered with default <strong>Customer</strong> access. You can browse connected retail outlets, review product catalogs, and view store information.
-              </p>
-              <p className="text-slate-400">
-                Are you a store owner or merchant wanting to use Ellic POS & Inventory? Once an Ellic Administrator assigns or verifies your paid subscription, your account will be promoted to <strong>Client (Store Owner)</strong> to unlock full POS Billing, Inventory, and Khata CRM.
-              </p>
-            </div>
-            <div className="flex flex-wrap items-center gap-3 pt-1">
-              <button
-                onClick={() => handleSelectView('journey_map')}
-                className="px-4 py-2 rounded-lg bg-sky-600 hover:bg-sky-500 text-white font-bold text-xs shadow-md transition-all"
-              >
-                Explore Platform Capabilities
-              </button>
-              <button
-                onClick={() => setIsSettingsModalOpen(true)}
-                className="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs border border-slate-700 transition-all"
-              >
-                Profile Settings
-              </button>
-            </div>
-          </div>
-          <div className="space-y-3">
-            <h3 className="text-sm font-bold text-slate-300">Connected Ellic Stores</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {stores.map(st => (
-                <div key={st.id} className="p-4 rounded-xl bg-[#121826] border border-slate-800 space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="font-bold text-white text-sm">{st.name}</span>
-                    <span className={`text-[10px] px-2 py-0.5 rounded-md font-semibold border ${
-                      st.status === 'paused'
-                        ? 'bg-rose-500/10 text-rose-400 border-rose-500/20'
-                        : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
-                    }`}>
-                      {st.status === 'paused' ? 'Paused' : 'Open'}
-                    </span>
-                  </div>
-                  <p className="text-xs text-slate-400">{st.address}, {st.city}</p>
-                  <p className="text-[11px] text-slate-500">Contact: {st.phone} · Timings: {st.timings}</p>
-                </div>
-              ))}
-            </div>
-          </div>
+          )}
+          <CustomerPortal initialTab={customerInitialTab} />
         </div>
       );
     }

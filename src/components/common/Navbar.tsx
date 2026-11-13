@@ -188,7 +188,8 @@ export const Navbar: React.FC<NavbarProps> = ({
     { id: 'ellix_admin', label: 'Ellic Admin (Level 2)', desc: 'Operational Admin: Client approvals & subscriptions', badge: 'L2' },
     { id: 'client', label: 'Store Owner (Level 3)', desc: 'Store Owner: Multi-store inventory, crew & billing', badge: 'L3' },
     { id: 'crew', label: 'Store Crew (Level 4)', desc: 'Assigned store crew: POS billing & stock lookup', badge: 'L4' },
-    { id: 'wholesaler_admin', label: 'Wholesale Partner', desc: 'B2B Catalog & Bulk Restock Orders', badge: 'B2B' }
+    { id: 'wholesaler_admin', label: 'Wholesale Partner', desc: 'B2B Catalog & Bulk Restock Orders', badge: 'B2B' },
+    { id: 'customer', label: 'Customer Website', desc: 'Online Storefront, Live Stock & Pickup QR Orders', badge: 'SHOP' }
   ];
 
   return (
@@ -579,6 +580,8 @@ export const Navbar: React.FC<NavbarProps> = ({
                               setActiveRole(r.id);
                               if (r.id === 'wholesaler_admin') {
                                 setActiveModule('wholesaler');
+                              } else if (r.id === 'customer') {
+                                setActiveModule('customer');
                               } else if (r.id === 'super_admin' || r.id === 'ellix_admin' || r.id === 'platform_admin') {
                                 setActiveModule('admin');
                               } else {

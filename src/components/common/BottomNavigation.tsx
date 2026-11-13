@@ -11,7 +11,9 @@ import {
   Building2,
   Sliders,
   ShieldCheck,
-  Menu
+  Menu,
+  ShoppingBag,
+  Store as StoreIcon
 } from 'lucide-react';
 
 interface BottomNavigationProps {
@@ -141,11 +143,37 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({
     }
   ];
 
+  // Customer Critical Actions: Catalog, Stores, Orders, More
+  const customerTabs: BottomTab[] = [
+    {
+      id: 'customer_catalog',
+      label: 'Catalog',
+      icon: <ShoppingBag className="w-5 h-5" />
+    },
+    {
+      id: 'customer_stores',
+      label: 'Stores',
+      icon: <StoreIcon className="w-5 h-5" />
+    },
+    {
+      id: 'customer_orders',
+      label: 'Orders',
+      icon: <Receipt className="w-5 h-5" />
+    },
+    {
+      id: 'more',
+      label: 'More',
+      icon: <Menu className="w-5 h-5" />
+    }
+  ];
+
   const currentTabs =
     activeModule === 'retailer'
       ? (isCrew ? crewTabs : clientTabs)
       : activeModule === 'wholesaler'
       ? wholesalerTabs
+      : activeModule === 'customer'
+      ? customerTabs
       : adminTabs;
 
   // Secondary views that live inside the More/Drawer menu

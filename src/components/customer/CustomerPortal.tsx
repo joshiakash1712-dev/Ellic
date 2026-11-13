@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
-import { useStore } from '../../context/StoreContext';
-import { Product, Store, CustomerOrder } from '../../types';
+import React, { useState, useEffect } from 'react';
+import { useStore, InsufficientStockError } from '../../context/StoreContext';
+import { Product, CustomerOrder } from '../../types';
 import {
   ShoppingBag,
   Search,
@@ -12,28 +12,34 @@ import {
   AlertCircle,
   XCircle,
   QrCode,
-  ShieldCheck,
-  CreditCard,
-  Truck,
-  Heart,
-  ChevronRight,
-  Sparkles,
-  Compass,
-  ArrowRight
+  RotateCcw
 } from 'lucide-react';
 
-export const CustomerPortal: React.FC = () => {
+interface CustomerPortalProps {
+  initialTab?: 'products' | 'stores' | 'my_orders';
+}
+
+export const CustomerPortal: React.FC<CustomerPortalProps> = ({ initialTab }) => {
   const {
     products,
     stores,
+    activeStore,
+    setActiveStore,
     customerOrders,
     createCustomerOrder,
+    updateCustomerOrderStatus,
     currentUser
   } = useStore();
 
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedStore, setSelectedStore] = useState<Store>(stores[0]);
-  const [activeTab, setActiveTab] = useState<'products' | 'stores' | 'my_orders'>('products');
+  const selectedStore = activeStore || stores[0];
+  const [activeTab, setActiveTab] = useState<'products' | 'stores' | 'my_orders'>(initialTab || 'products');
+
+  useEffect(() => {
+    if (initialTab) {
+      setActiveTab(initialTab);
+    }
+  }, [initialTab]);
 
   // Reservation / Order Modal
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
@@ -42,6 +48,13 @@ export const CustomerPortal: React.FC = () => {
   const [paymentOption, setPaymentOption] = useState<'pay_online' | 'pay_at_store'>('pay_online');
   const [deliveryAddr, setDeliveryAddr] = useState('14 Sea View Towers, Worli, Mumbai');
   const [confirmedOrder, setConfirmedOrder] = useState<CustomerOrder | null>(null);
+  const [orderError, setOrderError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+
+  // Keep selectedProduct synchronized with live WebSocket inventory updates
+  const liveSelectedProduct = selectedProduct
+    ? (products.find(p => p.id === selectedProduct.id) || selectedProduct)
+    : null;
 
   const filteredProducts = products.filter(
     p =>
@@ -50,37 +63,79 @@ export const CustomerPortal: React.FC = () => {
       p.brand.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const handlePlaceOrder = (e: React.FormEvent) => {
+  const openOrderModal = (prod: Product) => {
+    setSelectedProduct(prod);
+    setOrderQty(prod.stock > 0 ? 1 : 0);
+    setOrderError(null);
+    setIsSubmitting(false);
+  };
+
+  const handlePlaceOrder = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedProduct) return;
+    if (!liveSelectedProduct || isSubmitting) return;
 
-    const total = selectedProduct.sellingPrice * orderQty;
+    const requestedQty = Number(orderQty);
+    if (!Number.isFinite(requestedQty) || requestedQty <= 0) {
+      setOrderError('Please enter a valid quantity of at least 1.');
+      return;
+    }
 
-    const newOrd = createCustomerOrder({
-      customerId: 'cust-1',
-      customerName: 'Rahul Deshmukh',
-      customerPhone: '+91 98211 22334',
-      storeId: selectedStore.id,
-      storeName: selectedStore.name,
-      orderType,
-      deliveryAddress: orderType === 'delivery' ? deliveryAddr : undefined,
-      items: [
-        {
-          productId: selectedProduct.id,
-          productName: selectedProduct.name,
-          quantity: orderQty,
-          unitPrice: selectedProduct.sellingPrice,
-          image: selectedProduct.image
+    if (liveSelectedProduct.stock < requestedQty) {
+      setOrderError(
+        liveSelectedProduct.stock === 0
+          ? `"${liveSelectedProduct.name}" just went out of stock.`
+          : `Only ${liveSelectedProduct.stock} ${liveSelectedProduct.unit || 'units'} remaining in stock.`
+      );
+      return;
+    }
+
+    setOrderError(null);
+    setIsSubmitting(true);
+
+    try {
+      const total = liveSelectedProduct.sellingPrice * requestedQty;
+      const customerDisplayName =
+        currentUser?.name && !currentUser.name.includes('Demo')
+          ? currentUser.name
+          : 'Rahul Deshmukh';
+
+      const newOrd = await createCustomerOrder({
+        customerId: currentUser?.id || 'cust-1',
+        customerName: customerDisplayName,
+        customerPhone: '+91 98211 22334',
+        storeId: selectedStore.id,
+        storeName: selectedStore.name,
+        orderType,
+        deliveryAddress: orderType === 'delivery' ? deliveryAddr : undefined,
+        items: [
+          {
+            productId: liveSelectedProduct.id,
+            productName: liveSelectedProduct.name,
+            quantity: requestedQty,
+            unitPrice: liveSelectedProduct.sellingPrice,
+            image: liveSelectedProduct.image
+          }
+        ],
+        totalAmount: total,
+        paymentStatus: paymentOption === 'pay_online' ? 'paid_online' : 'pay_at_store',
+        paymentMethod: paymentOption === 'pay_online' ? 'UPI / Card' : 'Pay at Counter',
+        orderStatus: 'placed'
+      });
+
+      setConfirmedOrder(newOrd);
+      setSelectedProduct(null);
+    } catch (err: any) {
+      if (err instanceof InsufficientStockError) {
+        setOrderError(err.message);
+        if (typeof err.availableStock === 'number' && err.availableStock > 0) {
+          setOrderQty(Math.min(requestedQty, err.availableStock));
         }
-      ],
-      totalAmount: total,
-      paymentStatus: paymentOption === 'pay_online' ? 'paid_online' : 'pay_at_store',
-      paymentMethod: paymentOption === 'pay_online' ? 'UPI / Card' : 'Pay at Counter',
-      orderStatus: 'placed'
-    });
-
-    setConfirmedOrder(newOrd);
-    setSelectedProduct(null);
+      } else {
+        setOrderError(err?.message || 'Unable to reserve product right now. Please try again.');
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const getStockBadge = (prod: Product) => {
@@ -124,7 +179,7 @@ export const CustomerPortal: React.FC = () => {
             Reserve Nearby Products & Order Before Visiting
           </h1>
           <p className="text-xs text-slate-300 leading-relaxed">
-            Check stock availability across local stores, reserve products for instant pickup with a QR Code, or order online.
+            Check live stock availability across local stores, reserve products for instant pickup with a QR Code, or order online.
           </p>
         </div>
 
@@ -132,7 +187,7 @@ export const CustomerPortal: React.FC = () => {
           <MapPin className="w-5 h-5 text-sky-400 shrink-0" />
           <div className="text-xs">
             <span className="text-[10px] uppercase font-bold text-slate-400 block">Active Store Outlet</span>
-            <span className="font-extrabold text-white">{selectedStore.name}</span>
+            <span className="font-extrabold text-white">{selectedStore?.name || 'Select Store'}</span>
           </div>
         </div>
 
@@ -224,7 +279,7 @@ export const CustomerPortal: React.FC = () => {
 
                 <button
                   disabled={prod.stock === 0}
-                  onClick={() => setSelectedProduct(prod)}
+                  onClick={() => openOrderModal(prod)}
                   className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
                     prod.stock > 0
                       ? 'bg-gradient-to-r from-blue-600 to-sky-500 hover:from-blue-500 hover:to-sky-400 text-white shadow-lg shadow-blue-600/20 hover:scale-105'
@@ -247,7 +302,7 @@ export const CustomerPortal: React.FC = () => {
             <div
               key={st.id}
               className={`p-5 rounded-2xl bg-slate-900 border transition-all space-y-4 ${
-                selectedStore.id === st.id
+                selectedStore?.id === st.id
                   ? 'border-sky-500 ring-2 ring-sky-500/20 shadow-2xl'
                   : 'border-slate-800 hover:border-slate-700'
               }`}
@@ -277,15 +332,15 @@ export const CustomerPortal: React.FC = () => {
               </div>
 
               <button
-                onClick={() => setSelectedStore(st)}
+                onClick={() => setActiveStore(st)}
                 className={`w-full py-2.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
-                  selectedStore.id === st.id
+                  selectedStore?.id === st.id
                     ? 'bg-sky-600 text-white'
                     : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
                 }`}
               >
-                <span>{selectedStore.id === st.id ? 'Selected Active Store' : 'Select This Store'}</span>
-                {selectedStore.id === st.id && <CheckCircle2 className="w-4 h-4 text-white" />}
+                <span>{selectedStore?.id === st.id ? 'Selected Active Store' : 'Select This Store'}</span>
+                {selectedStore?.id === st.id && <CheckCircle2 className="w-4 h-4 text-white" />}
               </button>
             </div>
           ))}
@@ -307,20 +362,35 @@ export const CustomerPortal: React.FC = () => {
                 className="p-5 rounded-2xl bg-slate-800/80 border border-slate-700/80 flex flex-col md:flex-row items-start md:items-center justify-between gap-4"
               >
                 <div className="space-y-2">
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-wrap">
                     <span className="text-sm font-extrabold text-white font-mono">{ord.orderNumber}</span>
-                    <span className="text-[10px] px-2.5 py-0.5 rounded-full bg-sky-500/20 text-sky-300 font-extrabold uppercase border border-sky-500/30">
+                    <span className={`text-[10px] px-2.5 py-0.5 rounded-full font-extrabold uppercase border ${
+                      ord.orderStatus === 'cancelled'
+                        ? 'bg-rose-500/20 text-rose-300 border-rose-500/30'
+                        : 'bg-sky-500/20 text-sky-300 border-sky-500/30'
+                    }`}>
                       {ord.orderStatus.replace('_', ' ')}
                     </span>
                   </div>
 
                   <div className="text-xs text-slate-300">
-                    Outlet: <strong>{ord.storeName}</strong> | Type: <strong className="uppercase">{ord.orderType}</strong>
+                    Outlet: <strong>{ord.storeName}</strong> | Type: <strong className="uppercase">{ord.orderType}</strong> | Total: <strong className="text-sky-300">₹{ord.totalAmount}</strong>
                   </div>
 
                   <div className="text-xs text-slate-400">
                     {ord.items.map(i => `${i.quantity}x ${i.productName}`).join(', ')}
                   </div>
+
+                  {(ord.orderStatus === 'placed' || ord.orderStatus === 'confirmed') && (
+                    <button
+                      type="button"
+                      onClick={() => updateCustomerOrderStatus(ord.id, 'cancelled')}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-rose-950/70 text-rose-300 border border-rose-500/30 text-[11px] font-bold transition-colors"
+                    >
+                      <RotateCcw className="w-3 h-3" />
+                      <span>Cancel Reservation</span>
+                    </button>
+                  )}
                 </div>
 
                 {/* Pickup QR Code Banner */}
@@ -341,7 +411,7 @@ export const CustomerPortal: React.FC = () => {
       )}
 
       {/* Reserve / Checkout Product Modal */}
-      {selectedProduct && (
+      {liveSelectedProduct && (
         <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4">
           <div className="bg-slate-900 border border-slate-800 text-slate-100 rounded-2xl w-full max-w-md overflow-hidden shadow-2xl">
             <div className="p-4 border-b border-slate-800 flex items-center justify-between">
@@ -354,16 +424,25 @@ export const CustomerPortal: React.FC = () => {
             <form onSubmit={handlePlaceOrder} className="p-6 space-y-4 text-xs">
               <div className="flex gap-3">
                 <img
-                  src={selectedProduct.image}
-                  alt={selectedProduct.name}
+                  src={liveSelectedProduct.image}
+                  alt={liveSelectedProduct.name}
                   className="w-16 h-16 rounded-lg object-cover border border-slate-700"
                 />
                 <div>
-                  <h4 className="font-extrabold text-white text-sm">{selectedProduct.name}</h4>
-                  <div className="text-sky-400 font-bold text-xs mt-1">₹{selectedProduct.sellingPrice} / unit</div>
-                  <div className="text-[10px] text-slate-400">Outlet: {selectedStore.name}</div>
+                  <h4 className="font-extrabold text-white text-sm">{liveSelectedProduct.name}</h4>
+                  <div className="text-sky-400 font-bold text-xs mt-1">₹{liveSelectedProduct.sellingPrice} / unit</div>
+                  <div className="text-[10px] text-slate-400">
+                    Outlet: {selectedStore?.name} · <strong className={liveSelectedProduct.stock > 0 ? 'text-emerald-400' : 'text-rose-400'}>{liveSelectedProduct.stock} {liveSelectedProduct.unit} live</strong>
+                  </div>
                 </div>
               </div>
+
+              {orderError && (
+                <div className="p-3 rounded-xl bg-rose-500/15 border border-rose-500/30 text-rose-300 text-xs flex items-start gap-2">
+                  <AlertCircle className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
+                  <span>{orderError}</span>
+                </div>
+              )}
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
@@ -371,9 +450,14 @@ export const CustomerPortal: React.FC = () => {
                   <input
                     type="number"
                     min={1}
-                    max={selectedProduct.stock}
+                    max={Math.max(1, liveSelectedProduct.stock)}
                     value={orderQty}
-                    onChange={e => setOrderQty(Number(e.target.value))}
+                    disabled={liveSelectedProduct.stock === 0 || isSubmitting}
+                    onChange={e => {
+                      const val = Number(e.target.value);
+                      setOrderQty(Number.isFinite(val) ? val : 1);
+                      if (orderError) setOrderError(null);
+                    }}
                     className="w-full bg-slate-800 border border-slate-700 rounded-lg p-2 text-white font-bold"
                   />
                 </div>
@@ -382,6 +466,7 @@ export const CustomerPortal: React.FC = () => {
                   <label className="text-slate-400 font-semibold block mb-1">Order Type</label>
                   <select
                     value={orderType}
+                    disabled={isSubmitting}
                     onChange={e => setOrderType(e.target.value as any)}
                     className="w-full bg-slate-800 border border-slate-700 rounded-lg p-2 text-white"
                   >
@@ -391,11 +476,26 @@ export const CustomerPortal: React.FC = () => {
                 </div>
               </div>
 
+              {orderType === 'delivery' && (
+                <div>
+                  <label className="text-slate-400 font-semibold block mb-1">Delivery Address</label>
+                  <input
+                    type="text"
+                    required
+                    value={deliveryAddr}
+                    disabled={isSubmitting}
+                    onChange={e => setDeliveryAddr(e.target.value)}
+                    className="w-full bg-slate-800 border border-slate-700 rounded-lg p-2 text-white"
+                  />
+                </div>
+              )}
+
               <div>
                 <label className="text-slate-400 font-semibold block mb-1">Payment Option</label>
                 <div className="grid grid-cols-2 gap-2">
                   <button
                     type="button"
+                    disabled={isSubmitting}
                     onClick={() => setPaymentOption('pay_online')}
                     className={`p-2 rounded-lg text-xs font-bold border ${
                       paymentOption === 'pay_online'
@@ -407,6 +507,7 @@ export const CustomerPortal: React.FC = () => {
                   </button>
                   <button
                     type="button"
+                    disabled={isSubmitting}
                     onClick={() => setPaymentOption('pay_at_store')}
                     className={`p-2 rounded-lg text-xs font-bold border ${
                       paymentOption === 'pay_at_store'
@@ -422,13 +523,14 @@ export const CustomerPortal: React.FC = () => {
               <div className="pt-3 border-t border-slate-800 flex justify-between items-center">
                 <div>
                   <span className="text-[10px] text-slate-400 block">Total Price</span>
-                  <span className="text-base font-black text-sky-400">₹{selectedProduct.sellingPrice * orderQty}</span>
+                  <span className="text-base font-black text-sky-400">₹{liveSelectedProduct.sellingPrice * Math.max(0, orderQty)}</span>
                 </div>
                 <button
                   type="submit"
-                  className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-sky-500 text-white font-bold shadow-lg"
+                  disabled={isSubmitting || liveSelectedProduct.stock === 0}
+                  className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-sky-500 disabled:opacity-50 text-white font-bold shadow-lg"
                 >
-                  Confirm Reservation
+                  {isSubmitting ? 'Reserving Stock...' : 'Confirm Reservation'}
                 </button>
               </div>
             </form>

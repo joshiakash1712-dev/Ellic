@@ -92,7 +92,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
             transition={{ duration: 0.45, ease: smoothEase, delay: 0.04 }}
             className="flex flex-wrap items-center justify-center gap-1.5 sm:gap-2 text-[10px] sm:text-xs font-bold tracking-wider sm:tracking-widest text-blue-600 dark:text-sky-400 uppercase select-none text-center"
           >
-            <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-blue-600 dark:bg-sky-400 shadow-[0_0_8px_rgba(37,99,235,0.7)] animate-pulse shrink-0" />
+            <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-blue-600 dark:bg-sky-400 shadow-[0_0_8px_rgba(37,99,235,0.7)] shrink-0" />
             <span>Retail &amp; Commerce Operating System</span>
           </motion.div>
 
@@ -211,7 +211,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
                   <div className="h-4 w-px bg-slate-300 dark:bg-slate-600 mx-2 hidden sm:block" />
                 </div>
                 <span className="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-full bg-sky-500 animate-pulse" />
+                  <span className="w-2 h-2 rounded-full bg-sky-500" />
                   Ellic POS
                 </span>
               </div>
@@ -483,9 +483,9 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
               )}
 
               {activeWorkspaceMode === 'inventory' && (
-                <div className="grid grid-cols-1 xl:grid-cols-12 gap-4 relative animate-in fade-in duration-200">
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 relative animate-in fade-in duration-200">
                   {/* Left: Active Stock Audit Terminal */}
-                  <div className="xl:col-span-7 bg-white dark:bg-slate-900 rounded-2xl border-2 border-slate-300 dark:border-slate-800 p-4 sm:p-5 shadow-sm flex flex-col justify-between">
+                  <div className="lg:col-span-7 bg-white dark:bg-slate-900 rounded-2xl border-2 border-slate-300 dark:border-slate-800 p-4 sm:p-5 shadow-sm flex flex-col justify-between">
                     <div>
                       <div className="flex items-center justify-between gap-3 pb-3 mb-3 border-b-2 border-slate-200 dark:border-slate-800">
                         <div className="flex items-center gap-2">
@@ -545,7 +545,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
                   </div>
 
                   {/* Right: Supplier & Reorder Trigger */}
-                  <div className="xl:col-span-5 bg-white dark:bg-slate-900 rounded-2xl border-2 border-slate-300 dark:border-slate-800 p-4 sm:p-5 shadow-sm flex flex-col justify-between">
+                  <div className="lg:col-span-5 bg-white dark:bg-slate-900 rounded-2xl border-2 border-slate-300 dark:border-slate-800 p-4 sm:p-5 shadow-sm flex flex-col justify-between">
                     <div>
                       <div className="flex items-center justify-between gap-3 pb-3 mb-3 border-b-2 border-slate-200 dark:border-slate-800">
                         <span className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wide flex items-center gap-1.5">
@@ -583,9 +583,9 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
               )}
 
               {activeWorkspaceMode === 'finance' && (
-                <div className="grid grid-cols-1 xl:grid-cols-12 gap-4 relative animate-in fade-in duration-200">
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 relative animate-in fade-in duration-200">
                   {/* Left: Margin & Sales Breakdown */}
-                  <div className="xl:col-span-7 bg-white dark:bg-slate-900 rounded-2xl border-2 border-slate-300 dark:border-slate-800 p-4 sm:p-5 shadow-sm flex flex-col justify-between">
+                  <div className="lg:col-span-7 bg-white dark:bg-slate-900 rounded-2xl border-2 border-slate-300 dark:border-slate-800 p-4 sm:p-5 shadow-sm flex flex-col justify-between">
                     <div>
                       <div className="flex items-center justify-between gap-3 pb-3 mb-3 border-b-2 border-slate-200 dark:border-slate-800">
                         <div className="flex items-center gap-2">
@@ -622,7 +622,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
                   </div>
 
                   {/* Right: GSTR-1 Automated Ledger */}
-                  <div className="xl:col-span-5 bg-white dark:bg-slate-900 rounded-2xl border-2 border-slate-300 dark:border-slate-800 p-4 sm:p-5 shadow-sm flex flex-col justify-between">
+                  <div className="lg:col-span-5 bg-white dark:bg-slate-900 rounded-2xl border-2 border-slate-300 dark:border-slate-800 p-4 sm:p-5 shadow-sm flex flex-col justify-between">
                     <div>
                       <div className="flex items-center justify-between gap-3 pb-3 mb-3 border-b-2 border-slate-200 dark:border-slate-800">
                         <span className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wide flex items-center gap-1.5">

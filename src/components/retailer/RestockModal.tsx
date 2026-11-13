@@ -33,7 +33,7 @@ export const RestockModal: React.FC<RestockModalProps> = ({
   onClose,
   onSuccess
 }) => {
-  const { suppliers, activeStore, updateProduct, addRestockLog, currentUser, activeRole, addSupplier } = useStore();
+  const { suppliers, activeStore, addRestockLog, currentUser, activeRole, addSupplier } = useStore();
   const { userProfile, currentUser: authUser } = useAuth();
 
   const isCrew =
@@ -158,12 +158,7 @@ export const RestockModal: React.FC<RestockModalProps> = ({
       const actorName = userProfile?.name || currentUser?.name || authUser?.displayName || 'Crew Member';
       const actorId = authUser?.uid || currentUser?.id || 'staff';
 
-      // 3. Update product stock (strictly modifying stock field only)
-      updateProduct(product.id, {
-        stock: newStock
-      });
-
-      // 4. Create immutable restock log
+      // 3. Atomically record restock log and update product stock via WebSocket & Firestore
       addRestockLog({
         storeId: activeStore.id,
         productId: product.id,

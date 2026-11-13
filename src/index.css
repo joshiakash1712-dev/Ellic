@@ -469,7 +469,7 @@ html.theme-light .glass-panel-interactive:hover {
   #who-its-for .rounded-2xl,
   #product .rounded-2xl,
   #pricing .rounded-2xl
-):not(#theme-card-dark):not(#theme-card-dark *) {
+):not(#theme-card-dark):not(#theme-card-dark *):not(.ellic-spiral-stage):not(.ellic-spiral-stage *) {
   border-color: #94A3B8 !important;
   box-shadow: 0 4px 16px -2px rgba(15, 23, 42, 0.09), 0 2px 6px -1px rgba(15, 23, 42, 0.06) !important;
 }
@@ -640,21 +640,21 @@ html.theme-light .glass-panel-interactive:hover {
 :where(html.light, html.theme-light) :where(.website-root, .ellix-app-shell, #notification-modal-overlay, #settings-modal-overlay, #account-sync-hub-overlay) :where(
   .text-indigo-300,
   .text-indigo-400
-):not(#theme-card-dark *) {
+):not(#theme-card-dark *):not(.bg-slate-950 *):not(.ellic-spiral-stage *) {
   color: #4338CA !important;
 }
 
 :where(html.light, html.theme-light) :where(.website-root, .ellix-app-shell, #notification-modal-overlay, #settings-modal-overlay, #account-sync-hub-overlay) :where(
   .text-blue-300,
   .text-blue-400
-):not(#theme-card-dark *) {
+):not(#theme-card-dark *):not(.bg-slate-950 *):not(.ellic-spiral-stage *) {
   color: #1D4ED8 !important;
 }
 
 :where(html.light, html.theme-light) :where(.website-root, .ellix-app-shell, #notification-modal-overlay, #settings-modal-overlay, #account-sync-hub-overlay) :where(
   .text-purple-300,
   .text-purple-400
-):not(#theme-card-dark *) {
+):not(#theme-card-dark *):not(.bg-slate-950 *):not(.ellic-spiral-stage *) {
   color: #6D28D9 !important;
 }
 
@@ -1517,3 +1517,32 @@ html.light {
     transform: translate(4vw, -6vh) scale(1.08);
   }
 }
+
+/* ------------------------------------------------------------- */
+/* ELLIC 3D SPIRAL STAGE & THREEUI SHADER FRAME UTILITIES        */
+/* ------------------------------------------------------------- */
+@layer components {
+  .shader-frame {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    isolation: isolate;
+  }
+}
+
+.ellic-spiral-stage {
+  background-color: #070B14 !important;
+  color: #F8FAFC;
+  border-color: rgba(56, 189, 248, 0.24);
+  perspective: 1200px;
+  transform-style: preserve-3d;
+}
+
+.ellic-spiral-card {
+  background-color: #0E1726;
+  transform-style: preserve-3d;
+  backface-visibility: hidden;
+  will-change: transform, opacity;
+}
+

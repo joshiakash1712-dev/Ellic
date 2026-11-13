@@ -24,7 +24,10 @@ import {
   SaveFeedback,
   normalizeCanonicalRole,
   isUserStatusInactive,
-  PlatformTelemetryStats
+  PlatformTelemetryStats,
+  WebSocketSyncStatus,
+  WebSocketRoomPresence,
+  WebSocketParty
 } from '../types';
 import {
   mockStores,
@@ -57,6 +60,8 @@ import {
   releaseStoreInvoiceNumberReservation,
   stripMockFixtures
 } from '../lib/firestoreSync';
+export { InsufficientStockError };
+import { inventorySocket } from '../lib/inventorySocket';
 import { doc, setDoc, deleteDoc, onSnapshot } from 'firebase/firestore';
 import { db as firestoreDb } from '../lib/firebase';
 
@@ -102,6 +107,8 @@ interface StoreContextType {
   // Cloud Firestore Sync State
   cloudSyncState: CloudSyncState;
   saveFeedback: SaveFeedback;
+  wsStatus: WebSocketSyncStatus;
+  wsPresence: WebSocketRoomPresence;
   forceCloudSync: () => Promise<void>;
   isDataLoading: boolean;
   setIsDataLoading: React.Dispatch<React.SetStateAction<boolean>>;
@@ -111,6 +118,7 @@ interface StoreContextType {
   updateProduct: (id: string, updates: Partial<Product>) => void;
   deleteProduct: (id: string) => void;
   toggleProductSharing: (id: string) => void;
+  updateWholesalerProductStock: (id: string, stockAvailable: number) => void;
   createInvoice: (invoice: Omit<POSInvoice, 'id' | 'invoiceNumber'> & { id?: string }) => Promise<POSInvoice>;
   deleteInvoice: (id: string) => void;
   addInvoiceTemplate: (template: Omit<InvoiceTemplate, 'id' | 'createdAt'>) => InvoiceTemplate;
@@ -120,7 +128,7 @@ interface StoreContextType {
   sendRestockRequest: (productId: string, quantity: number, wholesalerId?: string) => void;
   updateRestockOrder: (orderId: string, status: RestockOrder['status'], extra?: Partial<RestockOrder>) => void;
   acceptQuotationAndGeneratePO: (orderId: string) => void;
-  createCustomerOrder: (orderData: Omit<CustomerOrder, 'id' | 'orderNumber' | 'createdAt' | 'pickupQrCode'>) => CustomerOrder;
+  createCustomerOrder: (orderData: Omit<CustomerOrder, 'id' | 'orderNumber' | 'createdAt' | 'pickupQrCode'>) => Promise<CustomerOrder>;
   updateCustomerOrderStatus: (orderId: string, status: CustomerOrder['orderStatus']) => void;
   addCustomer: (customer: Omit<CustomerProfile, 'id' | 'totalPurchases'>) => CustomerProfile;
   updateCustomer: (id: string, updates: Partial<CustomerProfile>) => void;
@@ -239,9 +247,17 @@ export const StoreProvider: React.FC<{ children: React.ReactNode; isDemoMode?: b
   const [wholesalers, setWholesalers] = useState<Wholesaler[]>(() =>
     loadStoreScopedCache('ellix_wholesalers', activeStore.id, mockWholesalers)
   );
-  const [wholesalerProducts] = useState<WholesalerProduct[]>(() =>
+  const [wholesalerProducts, rawSetWholesalerProducts] = useState<WholesalerProduct[]>(() =>
     isDemoMode ? mockWholesalerProducts : []
   );
+  const wholesalerProductsRef = React.useRef<WholesalerProduct[]>(wholesalerProducts);
+  const setWholesalerProducts = React.useCallback((updater: React.SetStateAction<WholesalerProduct[]>) => {
+    const next = typeof updater === 'function'
+      ? (updater as (prev: WholesalerProduct[]) => WholesalerProduct[])(wholesalerProductsRef.current)
+      : updater;
+    wholesalerProductsRef.current = next;
+    rawSetWholesalerProducts(next);
+  }, []);
 
   const [connections, setConnections] = useState<RetailerWholesalerConnection[]>(() => {
     if (isDemoMode) return mockConnections;
@@ -282,13 +298,29 @@ export const StoreProvider: React.FC<{ children: React.ReactNode; isDemoMode?: b
     rawSetInvoices(next);
   }, []);
 
-  const [restockOrders, setRestockOrders] = useState<RestockOrder[]>(() =>
+  const [restockOrders, rawSetRestockOrders] = useState<RestockOrder[]>(() =>
     loadStoreScopedCache('ellix_restock_orders', activeStore.id, mockRestockOrders)
   );
+  const restockOrdersRef = React.useRef<RestockOrder[]>(restockOrders);
+  const setRestockOrders = React.useCallback((updater: React.SetStateAction<RestockOrder[]>) => {
+    const next = typeof updater === 'function'
+      ? (updater as (prev: RestockOrder[]) => RestockOrder[])(restockOrdersRef.current)
+      : updater;
+    restockOrdersRef.current = next;
+    rawSetRestockOrders(next);
+  }, []);
 
-  const [customerOrders, setCustomerOrders] = useState<CustomerOrder[]>(() =>
+  const [customerOrders, rawSetCustomerOrders] = useState<CustomerOrder[]>(() =>
     loadStoreScopedCache('ellix_customer_orders', activeStore.id, mockCustomerOrders)
   );
+  const customerOrdersRef = React.useRef<CustomerOrder[]>(customerOrders);
+  const setCustomerOrders = React.useCallback((updater: React.SetStateAction<CustomerOrder[]>) => {
+    const next = typeof updater === 'function'
+      ? (updater as (prev: CustomerOrder[]) => CustomerOrder[])(customerOrdersRef.current)
+      : updater;
+    customerOrdersRef.current = next;
+    rawSetCustomerOrders(next);
+  }, []);
 
   const [employees, setEmployees] = useState<Employee[]>(() =>
     loadStoreScopedCache('ellix_employees', activeStore.id, mockEmployees)
@@ -361,6 +393,15 @@ export const StoreProvider: React.FC<{ children: React.ReactNode; isDemoMode?: b
     status: 'idle',
     message: '',
     timestamp: 0
+  });
+
+  const [wsStatus, setWsStatus] = useState<WebSocketSyncStatus>('disconnected');
+  const [wsPresence, setWsPresence] = useState<WebSocketRoomPresence>({
+    retailer: 0,
+    wholesaler: 0,
+    customer: 0,
+    admin: 0,
+    total: 0
   });
 
   // Data fetching / hydration state for smooth perceived performance & skeleton loaders
@@ -627,6 +668,10 @@ export const StoreProvider: React.FC<{ children: React.ReactNode; isDemoMode?: b
   const handleSetActiveModule = React.useCallback((requestedModule: ActiveModule) => {
     if (!isDemoMode && authUser) {
       if (canonicalRole === 'unauthorized') return;
+      if (canonicalRole === 'customer' && requestedModule !== 'customer') {
+        console.warn('[RBAC] Denied module switch away from customer for customer role');
+        return;
+      }
       if (requestedModule === 'admin' && !isPlatformAdminRole) {
         console.warn('[RBAC] Denied module switch to admin for role:', canonicalRole);
         return;
@@ -652,6 +697,8 @@ export const StoreProvider: React.FC<{ children: React.ReactNode; isDemoMode?: b
         setActiveModule('admin');
       } else if (resolved === 'wholesaler_admin') {
         setActiveModule('wholesaler');
+      } else if (resolved === 'customer') {
+        setActiveModule('customer');
       } else {
         setActiveModule('retailer');
       }
@@ -663,7 +710,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode; isDemoMode?: b
     if (!storeObj) return false;
     if (isDemoMode || !authUser) return true;
     if (canonicalRole === 'unauthorized') return false;
-    if (isPlatformAdminRole || isWholesalerRole) return true;
+    if (isPlatformAdminRole || isWholesalerRole || canonicalRole === 'customer') return true;
     const assignedIds = userProfile?.assignedStoreIds;
     if (isCrewRole) {
       if (Array.isArray(assignedIds) && assignedIds.length > 0) {
@@ -819,16 +866,19 @@ export const StoreProvider: React.FC<{ children: React.ReactNode; isDemoMode?: b
       return;
     }
 
+    const isCustomerRole = canonicalRole === 'customer';
     const cachedProducts = loadStoreScopedCache('ellix_products', activeStore.id, mockProducts);
     setProducts(
       !isDemoMode && authUser && isWholesalerRole
         ? cachedProducts.filter(p => p.sharedWithWholesalers === true)
-        : cachedProducts
+        : !isDemoMode && authUser && isCustomerRole
+          ? cachedProducts.map(p => ({ ...p, purchasePrice: 0 }))
+          : cachedProducts
     );
 
-    if (!isDemoMode && authUser && (isCrewRole || isWholesalerRole)) {
+    if (!isDemoMode && authUser && (isCrewRole || isWholesalerRole || isCustomerRole)) {
       setCustomers([]);
-      setCustomerOrders([]);
+      setCustomerOrders(isCustomerRole ? loadStoreScopedCache('ellix_customer_orders', activeStore.id, mockCustomerOrders) : []);
       setEmployees([]);
       setAuditLogs([]);
       setWholesalers([]);
@@ -844,7 +894,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode; isDemoMode?: b
 
     const cachedStoreInvoices = loadStoreScopedCache('ellix_invoices', activeStore.id, mockInvoices);
     reconcileStoreInvoiceCounter(activeStore.id, cachedStoreInvoices);
-    if (!isDemoMode && authUser && isWholesalerRole) {
+    if (!isDemoMode && authUser && (isWholesalerRole || isCustomerRole)) {
       setInvoices([]);
     } else if (!isDemoMode && authUser && isCrewRole) {
       const uid = userProfile?.uid || authUser.uid;
@@ -853,13 +903,13 @@ export const StoreProvider: React.FC<{ children: React.ReactNode; isDemoMode?: b
       setInvoices(cachedStoreInvoices);
     }
 
-    if (!isDemoMode && authUser && isCrewRole) {
+    if (!isDemoMode && authUser && (isCrewRole || isCustomerRole)) {
       setRestockOrders([]);
     } else {
       setRestockOrders(loadStoreScopedCache('ellix_restock_orders', activeStore.id, mockRestockOrders));
     }
 
-    if (!isDemoMode && authUser && isWholesalerRole) {
+    if (!isDemoMode && authUser && (isWholesalerRole || isCustomerRole)) {
       setSuppliers([]);
       setRestockLogs([]);
     } else {
@@ -938,6 +988,156 @@ export const StoreProvider: React.FC<{ children: React.ReactNode; isDemoMode?: b
 
     return () => unsub();
   }, [activeStore.id, authUser?.uid, isDemoMode, userProfile?.uid, canonicalRole, canUserAccessStore]);
+
+  // Real-Time WebSocket Inventory Synchronization Effect (Retailer <-> Wholesaler <-> Customer)
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (canonicalRole === 'unauthorized' || canonicalRole === 'ellix_admin') {
+      inventorySocket.disconnect();
+      return;
+    }
+    if (!isDemoMode && !authUser) {
+      inventorySocket.disconnect();
+      return;
+    }
+
+    const party: WebSocketParty =
+      activeModule === 'wholesaler' || isWholesalerRole
+        ? 'wholesaler'
+        : activeModule === 'customer' || canonicalRole === 'customer'
+        ? 'customer'
+        : activeModule === 'admin'
+        ? 'admin'
+        : 'retailer';
+
+    inventorySocket.setListeners({
+      onStatusChange: (status) => {
+        setWsStatus(status);
+      },
+      onPresence: (presence) => {
+        setWsPresence(presence);
+      },
+      onSnapshot: (snapshot) => {
+        if (snapshot.storeId !== activeStore.id) return;
+        if (Array.isArray(snapshot.products) && (snapshot.products.length > 0 || isDemoMode || party === 'customer')) {
+          setProducts(snapshot.products);
+        }
+        if (Array.isArray(snapshot.wholesalerProducts) && (snapshot.wholesalerProducts.length > 0 || isDemoMode)) {
+          setWholesalerProducts(snapshot.wholesalerProducts);
+        }
+        if (Array.isArray(snapshot.restockOrders) && (snapshot.restockOrders.length > 0 || isDemoMode) && party !== 'customer') {
+          setRestockOrders(snapshot.restockOrders);
+        }
+        if (Array.isArray(snapshot.customerOrders) && (snapshot.customerOrders.length > 0 || isDemoMode) && party !== 'wholesaler') {
+          setCustomerOrders(snapshot.customerOrders);
+        }
+      },
+      onDelta: (delta) => {
+        if (delta.storeId !== activeStore.id) return;
+        setProducts(prev => {
+          const removedSet = new Set(delta.removedProductIds || []);
+          const updatedMap = new Map<string, Product>(
+            (delta.updatedProducts || []).map(p => [p.id, p])
+          );
+          const nextList: Product[] = [];
+          const seen = new Set<string>();
+
+          for (const existing of prev) {
+            if (removedSet.has(existing.id)) continue;
+            const updated = updatedMap.get(existing.id);
+            if (updated) {
+              nextList.push({ ...existing, ...updated });
+              seen.add(existing.id);
+            } else {
+              nextList.push(existing);
+              seen.add(existing.id);
+            }
+          }
+          for (const [id, up] of updatedMap.entries()) {
+            if (!seen.has(id) && !removedSet.has(id)) {
+              nextList.unshift(up);
+            }
+          }
+          return nextList;
+        });
+      },
+      onAuthoritativeProductsSync: (authProducts) => {
+        if (!Array.isArray(authProducts) || authProducts.length === 0) return;
+        const map = new Map(authProducts.map(p => [p.id, p]));
+        setProducts(prev => prev.map(p => (map.has(p.id) ? { ...p, ...map.get(p.id)! } : p)));
+      },
+      onRestockOrderUpdated: (order) => {
+        if (!order?.id) return;
+        setRestockOrders(prev => {
+          const exists = prev.some(o => o.id === order.id);
+          if (exists) {
+            return prev.map(o => (o.id === order.id ? { ...o, ...order } : o));
+          }
+          return [order, ...prev];
+        });
+      },
+      onCustomerOrderUpdated: (order) => {
+        if (!order?.id || order.storeId !== activeStore.id) return;
+        setCustomerOrders(prev => {
+          const exists = prev.some(o => o.id === order.id);
+          if (exists) {
+            return prev.map(o => (o.id === order.id ? { ...o, ...order } : o));
+          }
+          return [order, ...prev];
+        });
+      },
+      onInvoiceSynced: ({ invoice, customer, auditLog }) => {
+        if (!invoice?.id || invoice.storeId !== activeStore.id) return;
+        reconcileStoreInvoiceCounter(activeStore.id, [invoice]);
+        setInvoices(prev => {
+          if (prev.some(inv => inv.id === invoice.id)) return prev;
+          return [invoice, ...prev];
+        });
+        if (customer?.id) {
+          setCustomers(prev => prev.map(c => (c.id === customer.id ? { ...c, ...customer } : c)));
+        }
+        if (auditLog?.id) {
+          setAuditLogs(prev => (prev.some(l => l.id === auditLog.id) ? prev : [auditLog, ...prev]));
+        }
+      },
+      onWholesalerCatalogDelta: (updatedWsProducts) => {
+        if (!Array.isArray(updatedWsProducts) || updatedWsProducts.length === 0) return;
+        const map = new Map(updatedWsProducts.map(wp => [wp.id, wp]));
+        setWholesalerProducts(prev => {
+          const next = prev.map(wp => (map.has(wp.id) ? { ...wp, ...map.get(wp.id)! } : wp));
+          for (const [id, wp] of map.entries()) {
+            if (!next.some(item => item.id === id)) {
+              next.push(wp);
+            }
+          }
+          return next;
+        });
+      }
+    });
+
+    void inventorySocket.connect({
+      mode: isDemoMode ? 'demo' : 'live',
+      storeId: activeStore.id,
+      party,
+      getIdToken: authUser ? () => authUser.getIdToken() : undefined,
+      getInitialState: () => ({
+        products: productsRef.current,
+        wholesalerProducts: wholesalerProductsRef.current,
+        restockOrders: restockOrdersRef.current,
+        customerOrders: customerOrdersRef.current
+      })
+    });
+
+    return () => {
+      // keep socket alive across module transitions within same session; cleanup happens on unmount/auth loss
+    };
+  }, [activeStore.id, activeModule, isDemoMode, authUser?.uid, canonicalRole, isWholesalerRole]);
+
+  useEffect(() => {
+    return () => {
+      inventorySocket.disconnect();
+    };
+  }, []);
 
   // Real-Time Client Subscription State Sync (Firestore Authoritative)
   useEffect(() => {
@@ -1048,7 +1248,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode; isDemoMode?: b
 
   // Product Actions
   const addProduct = (productData: Omit<Product, 'id'>) => {
-    if (!isDemoMode && authUser && (canonicalRole === 'unauthorized' || isWholesalerRole || !canUserAccessStore(activeStore))) {
+    if (!isDemoMode && authUser && (canonicalRole === 'unauthorized' || isWholesalerRole || canonicalRole === 'customer' || !canUserAccessStore(activeStore))) {
       console.warn('[RBAC] Unauthorized addProduct blocked');
       return;
     }
@@ -1061,14 +1261,18 @@ export const StoreProvider: React.FC<{ children: React.ReactNode; isDemoMode?: b
     };
     setProducts(prev => [newProduct, ...prev]);
     syncManager.syncProduct(activeStore.id, newProduct);
+    void inventorySocket
+      .sendMutation('product:upsert', { product: newProduct }, { queueIfOffline: true })
+      .catch(() => {});
     addAuditLog('Add Product', `Added product: ${newProduct.name} (Stock: ${newProduct.stock})`);
   };
 
   const updateProduct = (id: string, updates: Partial<Product>) => {
-    if (!isDemoMode && authUser && (canonicalRole === 'unauthorized' || isWholesalerRole || !canUserAccessStore(activeStore))) {
+    if (!isDemoMode && authUser && (canonicalRole === 'unauthorized' || isWholesalerRole || canonicalRole === 'customer' || !canUserAccessStore(activeStore))) {
       console.warn('[RBAC] Unauthorized updateProduct blocked');
       return;
     }
+    let updatedProductForWs: Product | null = null;
     setProducts(prev => prev.map(p => {
       if (p.id === id) {
         if (!isDemoMode && authUser && isCrewRole) {
@@ -1079,10 +1283,12 @@ export const StoreProvider: React.FC<{ children: React.ReactNode; isDemoMode?: b
           }
           const { sharedWithWholesalers: _ignoredSharing, ...crewSafeUpdates } = updates;
           const updated = { ...p, ...crewSafeUpdates };
+          updatedProductForWs = updated;
           syncManager.syncProduct(activeStore.id, updated);
           return updated;
         }
         const updated = { ...p, ...updates };
+        updatedProductForWs = updated;
         syncManager.syncProduct(activeStore.id, updated);
         // Check low stock threshold trigger
         if (updated.stock <= updated.minThreshold && p.stock > p.minThreshold) {
@@ -1097,6 +1303,11 @@ export const StoreProvider: React.FC<{ children: React.ReactNode; isDemoMode?: b
       }
       return p;
     }));
+    if (updatedProductForWs) {
+      void inventorySocket
+        .sendMutation('product:upsert', { product: updatedProductForWs }, { queueIfOffline: true })
+        .catch(() => {});
+    }
     addAuditLog('Update Product', `Updated product ID ${id}`);
   };
 
@@ -1107,6 +1318,9 @@ export const StoreProvider: React.FC<{ children: React.ReactNode; isDemoMode?: b
     }
     setProducts(prev => prev.filter(p => p.id !== id));
     syncManager.deleteProduct(activeStore.id, id);
+    void inventorySocket
+      .sendMutation('product:delete', { productId: id }, { queueIfOffline: true })
+      .catch(() => {});
     addAuditLog('Delete Product', `Deleted product ID ${id}`);
   };
 
@@ -1115,16 +1329,47 @@ export const StoreProvider: React.FC<{ children: React.ReactNode; isDemoMode?: b
       console.warn('[RBAC] Forbidden: Only Client/Admin can toggle wholesaler product sharing');
       return;
     }
+    let updatedProductForWs: Product | null = null;
     setProducts(prev => prev.map(p => {
       if (p.id === id) {
         const updatedShare = !p.sharedWithWholesalers;
         const updated = { ...p, sharedWithWholesalers: updatedShare };
+        updatedProductForWs = updated;
         syncManager.syncProduct(activeStore.id, updated);
         addAuditLog('Product Wholesaler Sharing Toggled', `${p.name} sharing set to ${updatedShare ? 'Enabled' : 'Disabled'}`);
         return updated;
       }
       return p;
     }));
+    if (updatedProductForWs) {
+      void inventorySocket
+        .sendMutation('product:upsert', { product: updatedProductForWs }, { queueIfOffline: true })
+        .catch(() => {});
+    }
+  };
+
+  const updateWholesalerProductStock = (id: string, stockAvailable: number) => {
+    if (!isDemoMode && authUser && !isWholesalerRole && !isPlatformAdminRole) {
+      console.warn('[RBAC] Forbidden: Only wholesalers or admins can update wholesaler catalog stock');
+      return;
+    }
+    const cleanStock = Math.max(0, Math.floor(Number(stockAvailable) || 0));
+    let updatedItem: WholesalerProduct | null = null;
+    setWholesalerProducts(prev =>
+      prev.map(wp => {
+        if (wp.id === id) {
+          updatedItem = { ...wp, stockAvailable: cleanStock };
+          return updatedItem;
+        }
+        return wp;
+      })
+    );
+    if (updatedItem) {
+      void inventorySocket
+        .sendMutation('wholesaler:catalog_update', { product: updatedItem }, { queueIfOffline: true })
+        .catch(() => {});
+      addAuditLog('Wholesaler Stock Updated', `Updated ${(updatedItem as WholesalerProduct).name} available stock to ${cleanStock}`);
+    }
   };
 
   // Billing POS Invoice (Concurrency-Safe & Transactional)
@@ -1299,16 +1544,54 @@ export const StoreProvider: React.FC<{ children: React.ReactNode; isDemoMode?: b
         status: 'success'
       };
 
-      // 4. Atomic persistence, invoiceNumber uniqueness & stock verification via Firestore transaction
+      // 4. Server-authoritative WebSocket lock + Firestore transaction atomic stock verification
       let txCommittedProducts: Product[] | undefined;
       try {
-        txCommittedProducts = await syncManager.syncPOSSaleAtomic(
-          targetStoreId,
-          newInvoice,
-          previewUpdatedProducts,
-          updatedCustObj,
-          auditLogObj
-        );
+        if (inventorySocket.isReady()) {
+          const wsAck = await inventorySocket.sendMutation<{
+            invoice: POSInvoice;
+            updatedProducts: Product[];
+          }>(
+            'pos:sale',
+            {
+              invoice: newInvoice,
+              customer: updatedCustObj,
+              auditLog: auditLogObj
+            },
+            { requestId: `pos-${invoiceId}` }
+          );
+          if (Array.isArray(wsAck?.updatedProducts)) {
+            txCommittedProducts = wsAck.updatedProducts;
+          }
+          // Ensure Firestore persistence if server ran without ADC credentials
+          if (!isDemoMode) {
+            try {
+              const firestoreProds = await syncManager.syncPOSSaleAtomic(
+                targetStoreId,
+                newInvoice,
+                txCommittedProducts || previewUpdatedProducts,
+                updatedCustObj,
+                auditLogObj
+              );
+              if (Array.isArray(firestoreProds) && firestoreProds.length > 0) {
+                txCommittedProducts = firestoreProds;
+              }
+            } catch (fsErr: any) {
+              if (isInsufficientStockError(fsErr)) {
+                throw fsErr;
+              }
+              // Non-stock Firestore offline fallback already persisted via server WS
+            }
+          }
+        } else {
+          txCommittedProducts = await syncManager.syncPOSSaleAtomic(
+            targetStoreId,
+            newInvoice,
+            previewUpdatedProducts,
+            updatedCustObj,
+            auditLogObj
+          );
+        }
       } catch (err: any) {
         releaseReservation();
         releaseStoreInvoiceNumberReservation(targetStoreId, invoiceId);
@@ -1476,7 +1759,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode; isDemoMode?: b
       console.warn('[RBAC] Forbidden: Crew cannot send B2B wholesaler restock requests');
       return;
     }
-    const prod = products.find(p => p.id === productId);
+    const prod = productsRef.current.find(p => p.id === productId);
     const ws = wholesalers.find(w => w.id === wholesalerId);
     if (!prod) return;
 
@@ -1496,6 +1779,9 @@ export const StoreProvider: React.FC<{ children: React.ReactNode; isDemoMode?: b
 
     setRestockOrders(prev => [newRestockOrder, ...prev]);
     syncManager.syncRestockOrder(activeStore.id, newRestockOrder);
+    void inventorySocket
+      .sendMutation('restock:order_upsert', { order: newRestockOrder }, { queueIfOffline: true })
+      .catch(() => {});
 
     addNotification({
       title: 'Restock Suggestion Sent',
@@ -1508,26 +1794,49 @@ export const StoreProvider: React.FC<{ children: React.ReactNode; isDemoMode?: b
   };
 
   const updateRestockOrder = (orderId: string, status: RestockOrder['status'], extra?: Partial<RestockOrder>) => {
-    if (!isDemoMode && authUser && (isCrewRole || canonicalRole === 'unauthorized')) {
-      console.warn('[RBAC] Forbidden: Crew cannot modify B2B restock orders');
+    if (!isDemoMode && authUser && (isCrewRole || canonicalRole === 'unauthorized' || canonicalRole === 'customer')) {
+      console.warn('[RBAC] Forbidden: Current role cannot modify B2B restock orders');
       return;
     }
+    let updatedOrderForWs: RestockOrder | null = null;
+    const canApplyDeliveryStock = isDemoMode || isAuthorizedOwnerOrAdmin || isWholesalerRole;
+
     setRestockOrders(prev => prev.map(ro => {
       if (ro.id === orderId) {
-        const updated = { ...ro, status, ...extra };
+        const alreadyApplied = Boolean(ro.stockAppliedOnDelivery);
+        const shouldCreditStock = status === 'delivered' && canApplyDeliveryStock && !alreadyApplied;
+        const updated: RestockOrder = {
+          ...ro,
+          status,
+          ...extra,
+          ...(shouldCreditStock ? { stockAppliedOnDelivery: true } : {})
+        };
+        updatedOrderForWs = updated;
         syncManager.syncRestockOrder(activeStore.id, updated);
 
-        // If delivered, auto-update stock in retailer inventory (Client/Owner/Admin only)
-        if (status === 'delivered' && isAuthorizedOwnerOrAdmin) {
-          setProducts(pList => pList.map(p => {
-            if (p.id === ro.productId) {
-              const qtyToAdd = updated.quotedQty || updated.suggestedQty;
-              const updatedProduct = { ...p, stock: p.stock + qtyToAdd };
-              syncManager.syncProduct(activeStore.id, updatedProduct);
-              return updatedProduct;
-            }
-            return p;
-          }));
+        if (shouldCreditStock) {
+          const qtyToAdd = Math.max(0, Number(updated.quotedQty || updated.suggestedQty || 0));
+          if (qtyToAdd > 0) {
+            setProducts(pList => pList.map(p => {
+              if (p.id === ro.productId) {
+                const updatedProduct = { ...p, stock: p.stock + qtyToAdd };
+                syncManager.syncProduct(activeStore.id, updatedProduct);
+                return updatedProduct;
+              }
+              return p;
+            }));
+
+            setWholesalerProducts(wsList => wsList.map(wp => {
+              const nameMatch =
+                wp.wholesalerId === ro.wholesalerId &&
+                (wp.id === ro.productId ||
+                  wp.name.trim().toLowerCase() === ro.productName.trim().toLowerCase());
+              if (nameMatch) {
+                return { ...wp, stockAvailable: Math.max(0, wp.stockAvailable - qtyToAdd) };
+              }
+              return wp;
+            }));
+          }
 
           addNotification({
             title: 'Stock Auto-Updated upon Delivery',
@@ -1541,6 +1850,21 @@ export const StoreProvider: React.FC<{ children: React.ReactNode; isDemoMode?: b
       }
       return ro;
     }));
+
+    if (updatedOrderForWs) {
+      void inventorySocket
+        .sendMutation(
+          'restock:order_status',
+          {
+            orderId,
+            status,
+            extra,
+            order: updatedOrderForWs
+          },
+          { queueIfOffline: true }
+        )
+        .catch(() => {});
+    }
 
     addAuditLog('Restock Order Status Updated', `PO #${orderId} set to ${status}`);
   };
@@ -1556,44 +1880,168 @@ export const StoreProvider: React.FC<{ children: React.ReactNode; isDemoMode?: b
     });
   };
 
-  // Customer Orders & Reservations
-  const createCustomerOrder = (orderData: Omit<CustomerOrder, 'id' | 'orderNumber' | 'createdAt' | 'pickupQrCode'>): CustomerOrder => {
+  // Customer Orders & Reservations (Atomic WebSocket Stock Deduction)
+  const createCustomerOrder = async (
+    orderData: Omit<CustomerOrder, 'id' | 'orderNumber' | 'createdAt' | 'pickupQrCode'>
+  ): Promise<CustomerOrder> => {
+    if (!Array.isArray(orderData.items) || orderData.items.length === 0) {
+      throw new InsufficientStockError('Customer order must contain at least one item.');
+    }
+
+    // Aggregate requested quantities per product
+    const requestedByProduct = new Map<string, { quantity: number; productName: string }>();
+    for (const item of orderData.items) {
+      const qty = Number(item.quantity);
+      if (!Number.isFinite(qty) || qty <= 0) {
+        throw new InsufficientStockError(
+          `Invalid order quantity (${item.quantity}) for "${item.productName || item.productId}".`,
+          { productId: item.productId, requestedQuantity: qty }
+        );
+      }
+      const existing = requestedByProduct.get(item.productId);
+      requestedByProduct.set(item.productId, {
+        quantity: (existing?.quantity || 0) + qty,
+        productName: item.productName || existing?.productName || item.productId
+      });
+    }
+
+    // Pre-check local inventory snapshot before hitting server
+    for (const [productId, req] of requestedByProduct.entries()) {
+      const prod = productsRef.current.find(p => p.id === productId);
+      const reservedQty = inFlightReservedStockRef.current.get(productId) || 0;
+      const availableStock = prod ? Math.max(0, Number(prod.stock ?? 0) - reservedQty) : 0;
+      if (!prod || availableStock < req.quantity) {
+        throw new InsufficientStockError(
+          `Insufficient stock for "${prod?.name || req.productName}": only ${availableStock} available, requested ${req.quantity}.`,
+          { productId, availableStock, requestedQuantity: req.quantity }
+        );
+      }
+    }
+
+    // Reserve in-flight quantities synchronously to prevent duplicate click races
+    for (const [productId, req] of requestedByProduct.entries()) {
+      const prevReserved = inFlightReservedStockRef.current.get(productId) || 0;
+      inFlightReservedStockRef.current.set(productId, prevReserved + req.quantity);
+    }
+
+    const releaseReservation = () => {
+      for (const [productId, req] of requestedByProduct.entries()) {
+        const currentReserved = inFlightReservedStockRef.current.get(productId) || 0;
+        const nextReserved = Math.max(0, currentReserved - req.quantity);
+        if (nextReserved === 0) {
+          inFlightReservedStockRef.current.delete(productId);
+        } else {
+          inFlightReservedStockRef.current.set(productId, nextReserved);
+        }
+      }
+    };
+
     const ordNumber = `ORD-ELLIC-${Math.floor(1000 + Math.random() * 9000)}`;
     const qrCode = `QR-PICKUP-${ordNumber}`;
+    const orderId = `co-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
 
     const newOrder: CustomerOrder = {
       ...orderData,
-      id: `co-${Date.now()}`,
+      id: orderId,
       orderNumber: ordNumber,
       createdAt: new Date().toISOString().replace('T', ' ').slice(0, 16),
-      pickupQrCode: qrCode
+      pickupQrCode: qrCode,
+      stockReserved: true
     };
 
-    setCustomerOrders(prev => [newOrder, ...prev]);
-    syncManager.syncCustomerOrder(activeStore.id, newOrder);
+    try {
+      let committedProducts: Product[] | undefined;
+      if (inventorySocket.isReady()) {
+        const ack = await inventorySocket.sendMutation<{
+          order: CustomerOrder;
+          updatedProducts: Product[];
+        }>('customer:order_create', { order: newOrder }, { requestId: `custord-${orderId}` });
+        if (Array.isArray(ack?.updatedProducts)) {
+          committedProducts = ack.updatedProducts;
+        }
+      }
 
-    // Add Notification to Retailer
-    addNotification({
-      title: `New Customer Order (${newOrder.orderType.toUpperCase()})`,
-      message: `Order #${ordNumber} received from ${newOrder.customerName} (₹${newOrder.totalAmount}).`,
-      category: 'customer_order',
-      linkModule: 'retailer'
-    });
+      releaseReservation();
 
-    addAuditLog('Customer Order Placed', `Order #${ordNumber} created by ${newOrder.customerName}`);
+      const committedById = new Map<string, Product>(
+        Array.isArray(committedProducts) ? committedProducts.map(p => [p.id, p]) : []
+      );
+      setProducts(prev =>
+        prev.map(p => {
+          const req = requestedByProduct.get(p.id);
+          if (!req) return p;
+          const serverProd = committedById.get(p.id);
+          const nextStock =
+            serverProd && Number.isFinite(Number(serverProd.stock))
+              ? Math.max(0, Number(serverProd.stock))
+              : Math.max(0, p.stock - req.quantity);
+          return { ...p, stock: nextStock };
+        })
+      );
 
-    return newOrder;
+      setCustomerOrders(prev => [newOrder, ...prev.filter(o => o.id !== newOrder.id)]);
+      if (!isDemoMode && isAuthorizedOwnerOrAdmin) {
+        syncManager.syncCustomerOrder(activeStore.id, newOrder);
+      }
+
+      addNotification({
+        title: `New Customer Order (${newOrder.orderType.toUpperCase()})`,
+        message: `Order #${ordNumber} received from ${newOrder.customerName} (₹${newOrder.totalAmount}).`,
+        category: 'customer_order',
+        linkModule: 'retailer'
+      });
+
+      addAuditLog('Customer Order Placed', `Order #${ordNumber} created by ${newOrder.customerName}`);
+      return newOrder;
+    } catch (err: any) {
+      releaseReservation();
+      if (isInsufficientStockError(err) && err.productId && typeof err.availableStock === 'number') {
+        const remoteStock = Math.max(0, err.availableStock);
+        setProducts(prev =>
+          prev.map(p => (p.id === err.productId ? { ...p, stock: remoteStock } : p))
+        );
+      }
+      throw err;
+    }
   };
 
   const updateCustomerOrderStatus = (orderId: string, status: CustomerOrder['orderStatus']) => {
+    let targetOrder: CustomerOrder | null = null;
     setCustomerOrders(prev => prev.map(co => {
       if (co.id === orderId) {
-        const updated = { ...co, orderStatus: status };
-        syncManager.syncCustomerOrder(activeStore.id, updated);
+        const shouldRestoreStock =
+          status === 'cancelled' && co.orderStatus !== 'cancelled' && co.stockReserved !== false;
+        const updated: CustomerOrder = {
+          ...co,
+          orderStatus: status,
+          stockReserved: shouldRestoreStock ? false : co.stockReserved
+        };
+        targetOrder = updated;
+        if (!isDemoMode && isAuthorizedOwnerOrAdmin) {
+          syncManager.syncCustomerOrder(activeStore.id, updated);
+        }
+        if (shouldRestoreStock) {
+          setProducts(pList =>
+            pList.map(p => {
+              const matchedItem = co.items.find(it => it.productId === p.id);
+              if (!matchedItem) return p;
+              const restored = { ...p, stock: p.stock + Number(matchedItem.quantity || 0) };
+              if (!isDemoMode && isAuthorizedOwnerOrAdmin) {
+                syncManager.syncProduct(activeStore.id, restored);
+              }
+              return restored;
+            })
+          );
+        }
         return updated;
       }
       return co;
     }));
+    if (targetOrder) {
+      void inventorySocket
+        .sendMutation('customer:order_status', { orderId, status }, { queueIfOffline: true })
+        .catch(() => {});
+    }
     addAuditLog('Customer Order Updated', `Order #${orderId} status set to ${status}`);
   };
 
@@ -1883,7 +2331,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode; isDemoMode?: b
 
   // Manual Restock Workflow & Logging
   const addRestockLog = (logData: Omit<RestockLog, 'id' | 'date'>) => {
-    if (!isDemoMode && authUser && (canonicalRole === 'unauthorized' || isWholesalerRole || !canUserAccessStore(activeStore))) {
+    if (!isDemoMode && authUser && (canonicalRole === 'unauthorized' || canonicalRole === 'customer' || isWholesalerRole || !canUserAccessStore(activeStore))) {
       console.warn('[RBAC] Unauthorized addRestockLog blocked');
       return;
     }
@@ -1907,13 +2355,15 @@ export const StoreProvider: React.FC<{ children: React.ReactNode; isDemoMode?: b
     setRestockLogs(prev => [newLog, ...prev]);
     syncManager.syncRestockLog(activeStore.id, newLog);
 
-    // Update product stock by quantityAdded
+    // Update product stock by quantityAdded (skip if caller already updated stock to >= newStock)
     setProducts(prev => prev.map(p => {
       if (p.id === logData.productId) {
-        const addedQty = logData.quantityAdded || logData.quantity || 0;
+        const targetStock = Number.isFinite(Number(logData.newStock))
+          ? Math.max(p.stock, Number(logData.newStock))
+          : p.stock + addedQty;
         const updated = {
           ...p,
-          stock: p.stock + addedQty,
+          stock: targetStock,
           supplierId: logData.supplierId || p.supplierId,
           supplierName: logData.supplierName || p.supplierName,
           lastRestockedAt: new Date().toISOString(),
@@ -1925,6 +2375,20 @@ export const StoreProvider: React.FC<{ children: React.ReactNode; isDemoMode?: b
       }
       return p;
     }));
+
+    void inventorySocket
+      .sendMutation(
+        'product:restock',
+        {
+          productId: logData.productId,
+          quantityAdded: addedQty,
+          log: newLog,
+          supplierId: logData.supplierId,
+          supplierName: logData.supplierName
+        },
+        { queueIfOffline: true }
+      )
+      .catch(() => {});
 
     addAuditLog(
       'Stock Restocked',
@@ -2498,21 +2962,35 @@ export const StoreProvider: React.FC<{ children: React.ReactNode; isDemoMode?: b
     }
     if (isDemoMode) {
       const defaultStoreId = mockStores[0].id;
+      const defaultProducts = loadStoreScopedCache('ellix_products', defaultStoreId, mockProducts);
+      const defaultRestockOrders = loadStoreScopedCache('ellix_restock_orders', defaultStoreId, mockRestockOrders);
+      const defaultCustomerOrders = loadStoreScopedCache('ellix_customer_orders', defaultStoreId, mockCustomerOrders);
       setStores(mockStores);
       setActiveStore(mockStores[0]);
-      setProducts(loadStoreScopedCache('ellix_products', defaultStoreId, mockProducts));
+      setProducts(defaultProducts);
       setWholesalers(loadStoreScopedCache('ellix_wholesalers', defaultStoreId, mockWholesalers));
+      setWholesalerProducts(mockWholesalerProducts);
       setConnections(mockConnections);
       setCustomers(loadStoreScopedCache('ellix_customers', defaultStoreId, mockCustomers));
       setInvoices(loadStoreScopedCache('ellix_invoices', defaultStoreId, mockInvoices));
-      setRestockOrders(loadStoreScopedCache('ellix_restock_orders', defaultStoreId, mockRestockOrders));
-      setCustomerOrders(loadStoreScopedCache('ellix_customer_orders', defaultStoreId, mockCustomerOrders));
+      setRestockOrders(defaultRestockOrders);
+      setCustomerOrders(defaultCustomerOrders);
       setEmployees(loadStoreScopedCache('ellix_employees', defaultStoreId, mockEmployees));
       setSuppliers(loadStoreScopedCache('ellix_suppliers', defaultStoreId, mockSuppliers));
       setRestockLogs(loadStoreScopedCache('ellix_restock_logs', defaultStoreId, mockRestockLogs));
       setNotifications(mockNotifications);
       setAuditLogs(loadStoreScopedCache('ellix_audit_logs', defaultStoreId, mockAuditLogs));
       setInvoiceTemplates(mockInvoiceTemplates);
+      void inventorySocket
+        .sendMutation('room:reset', {
+          initialState: {
+            products: defaultProducts,
+            wholesalerProducts: mockWholesalerProducts,
+            restockOrders: defaultRestockOrders,
+            customerOrders: defaultCustomerOrders
+          }
+        })
+        .catch(() => {});
       return;
     }
 
@@ -2644,6 +3122,8 @@ export const StoreProvider: React.FC<{ children: React.ReactNode; isDemoMode?: b
         setIsNotificationModalOpen,
         cloudSyncState,
         saveFeedback,
+        wsStatus,
+        wsPresence,
         forceCloudSync,
         isDataLoading,
         setIsDataLoading,
@@ -2651,6 +3131,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode; isDemoMode?: b
         updateProduct,
         deleteProduct,
         toggleProductSharing,
+        updateWholesalerProductStock,
         createInvoice,
         deleteInvoice,
         addInvoiceTemplate,

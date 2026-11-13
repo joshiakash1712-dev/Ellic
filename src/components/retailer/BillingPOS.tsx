@@ -560,6 +560,51 @@ Thank you for shopping with ${inv.storeName}!`;
     checkoutAttemptIdRef.current = null;
   }, [cart, activeStore.id, selectedCustomer?.id, paymentMethod, isGSTInvoice, totalDiscount]);
 
+  const latestCartRef = useRef(cart);
+  latestCartRef.current = cart;
+
+  // Reconcile open POS cart if live WebSocket updates reduce or deplete stock
+  useEffect(() => {
+    const currentCart = latestCartRef.current;
+    if (currentCart.length === 0) return;
+
+    let changed = false;
+    let clampedMessage: string | null = null;
+    const nextCart = currentCart
+      .map(item => {
+        const liveProd = products.find(p => p.id === item.product.id);
+        if (!liveProd) {
+          changed = true;
+          clampedMessage = `"${item.product.name}" was removed from inventory.`;
+          return null;
+        }
+        const available = Math.max(0, Number(liveProd.stock ?? 0));
+        if (available <= 0) {
+          changed = true;
+          clampedMessage = `⚠️ "${liveProd.name}" went out of stock remotely and was removed from cart.`;
+          return null;
+        }
+        if (item.quantity > available) {
+          changed = true;
+          clampedMessage = `⚠️ Stock for "${liveProd.name}" changed to ${available}; cart quantity adjusted.`;
+          return { ...item, product: liveProd, quantity: available };
+        }
+        if (item.product.stock !== liveProd.stock || item.product.sellingPrice !== liveProd.sellingPrice) {
+          changed = true;
+          return { ...item, product: liveProd };
+        }
+        return item;
+      })
+      .filter(Boolean) as { product: Product; quantity: number; discount: number }[];
+
+    if (changed) {
+      setCart(nextCart);
+    }
+    if (clampedMessage) {
+      setShortcutNotice(clampedMessage);
+    }
+  }, [products]);
+
   // F2: Start New Sale / Reset Cart
   const handleStartNewSale = () => {
     checkoutAttemptIdRef.current = null;

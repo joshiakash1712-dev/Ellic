@@ -11,8 +11,8 @@ import {
   MousePointer,
 } from 'lucide-react';
 import { motion, AnimatePresence, useReducedMotion } from 'motion/react';
-import { WorkWheelStage } from './WorkWheelStage';
-import { useCardWheelScroll } from '../../hooks/useCardWheelScroll';
+import { SpiralWorkflowStage } from './SpiralWorkflowStage';
+import { useSpiralScroll } from '../../hooks/useSpiralScroll';
 
 interface Step {
   id: string;
@@ -91,19 +91,32 @@ export const HowItWorks: React.FC = () => {
     setActiveStepIndex(idx);
   }, []);
 
-  // Work wheel scrolling with screen centering and page-lock until last card
   const {
     sectionRef,
     cardRef,
+    progress,
+    currentTickStep,
     scrollProps,
-    isLastItem,
     scrollToNextSection,
-  } = useCardWheelScroll({
+  } = useSpiralScroll({
     totalItems: steps.length,
     activeIndex: activeStepIndex,
     onActiveChange: setActiveStepIndex,
     sectionId: 'how-it-works',
   });
+
+  const stepItems = React.useMemo(
+    () =>
+      steps.map((s) => ({
+        id: s.id,
+        number: s.step,
+        title: s.title,
+        tagline: s.time,
+        description: s.description,
+        icon: s.icon,
+      })),
+    []
+  );
 
   return (
     <section
@@ -121,8 +134,8 @@ export const HowItWorks: React.FC = () => {
           </h2>
         </div>
 
-        {/* Mobile / Tablet Horizontal Step Pills */}
-        <div className="flex xl:hidden overflow-x-auto gap-2 pb-2 mb-3 scrollbar-none">
+        {/* Mobile / Tablet Horizontal Step Pills & Compact Spiral Stage */}
+        <div className="flex lg:hidden overflow-x-auto gap-2 pb-2 mb-3 scrollbar-none">
           {steps.map((s, idx) => (
             <button
               key={s.id}
@@ -140,33 +153,43 @@ export const HowItWorks: React.FC = () => {
           ))}
         </div>
 
-        {/* Side-by-Side: Interactive Work Wheel on Left, Live Scrolling Implementation Monitor on Right */}
-        <div className="grid grid-cols-1 xl:grid-cols-12 gap-5 xl:gap-7 items-stretch">
+        <div className="lg:hidden mb-4">
+          <SpiralWorkflowStage
+            items={stepItems}
+            activeIndex={activeStepIndex}
+            progress={progress}
+            currentTickStep={currentTickStep}
+            onActiveChange={handleStepSelect}
+            label="Steps '26"
+            sublabel="Fast Setup"
+            compact={true}
+            className="min-h-[250px]"
+          />
+        </div>
+
+        {/* Side-by-Side: Interactive 3D Spiral Stage on Left, Live Scrolling Implementation Monitor on Right */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 lg:gap-6 xl:gap-7 items-stretch">
           
-          {/* Left: Vector Work Wheel Dial Component (Hidden on mobile/tablet for clean preview, visible on desktop) */}
-          <div className="hidden xl:flex xl:col-span-6 flex-col">
-            <WorkWheelStage
-              items={steps.map((s) => ({
-                id: s.id,
-                number: s.step,
-                title: s.title,
-                tagline: s.time,
-                icon: s.icon,
-              }))}
+          {/* Left: 3D Spiral Orbit Stage */}
+          <div className="hidden lg:flex lg:col-span-6 flex-col">
+            <SpiralWorkflowStage
+              items={stepItems}
               activeIndex={activeStepIndex}
+              progress={progress}
+              currentTickStep={currentTickStep}
               onActiveChange={handleStepSelect}
               label="Steps '26"
               sublabel="Fast Setup"
-              className="h-full min-h-[340px] sm:min-h-[380px] lg:min-h-[420px]"
+              className="h-full min-h-[clamp(360px,52vh,440px)]"
             />
           </div>
 
-          {/* Right: Live Implementation Monitor (Target Card with Work Wheel scrolling applied) */}
-          <div className="col-span-1 xl:col-span-6 flex flex-col">
+          {/* Right: Live Implementation Monitor */}
+          <div className="col-span-1 lg:col-span-6 flex flex-col">
             <div
               ref={cardRef}
               {...scrollProps}
-              className="p-5 sm:p-6 rounded-2xl bg-white dark:bg-slate-900 border-2 border-slate-300 dark:border-slate-700 shadow-md flex flex-col justify-between h-full outline-none focus:ring-2 focus:ring-blue-500/30 transition-all cursor-grab active:cursor-grabbing"
+              className="p-5 sm:p-6 rounded-2xl bg-white dark:bg-slate-900 border-2 border-slate-300 dark:border-slate-700 shadow-md flex flex-col justify-between h-full outline-none focus:ring-2 focus:ring-blue-500/30 transition-all"
             >
               {/* Header Badge */}
               <div className="flex items-center justify-between pb-3 mb-3 border-b-2 border-slate-200 dark:border-slate-800 gap-2 shrink-0">
@@ -183,7 +206,7 @@ export const HowItWorks: React.FC = () => {
                 </div>
 
                 {/* Animated Step Details with internal scroll safeguard */}
-                <div className="flex-1 overflow-y-auto max-h-[min(480px,calc(100dvh-15.5rem))] pr-0.5 scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-slate-800">
+                <div className="flex-1 overflow-y-auto max-h-[min(420px,calc(100dvh-14.5rem))] pr-0.5 scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-slate-800">
                   <AnimatePresence mode="wait">
                     <motion.div
                       key={currentStep.step}

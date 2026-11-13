@@ -1,11 +1,41 @@
+import fs from 'fs';
 import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { defineConfig } from 'vite';
+import { defineConfig, type Plugin } from 'vite';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+function optionalNeuformSourcesPlugin(): Plugin {
+  const virtualPrefix = '\0virtual-neuform-empty:';
+  return {
+    name: 'optional-neuform-sources',
+    enforce: 'pre',
+    resolveId(id, importer) {
+      if (
+        importer &&
+        importer.includes('neuform-isolated') &&
+        id.startsWith('./sources/') &&
+        id.endsWith('.html?raw')
+      ) {
+        const relHtml = id.replace(/\?raw$/, '');
+        const resolved = path.resolve(path.dirname(importer), relHtml);
+        if (!fs.existsSync(resolved)) {
+          return `${virtualPrefix}${relHtml}.js`;
+        }
+      }
+      return null;
+    },
+    load(id) {
+      if (id.startsWith(virtualPrefix)) {
+        return 'export default "";';
+      }
+      return null;
+    },
+  };
+}
 
 export default defineConfig(({ command }) => {
   const isBuild = command === 'build';
@@ -16,7 +46,7 @@ export default defineConfig(({ command }) => {
   return {
     base: '/',
     publicDir: 'public',
-    plugins: [react(), tailwindcss()],
+    plugins: [optionalNeuformSourcesPlugin(), react(), tailwindcss()],
     assetsInclude: ['**/*.svg', '**/*.png', '**/*.jpg', '**/*.jpeg', '**/*.webp'],
     define: {
       ...(isBuild ? { 'process.env.NODE_ENV': JSON.stringify('production') } : {}),

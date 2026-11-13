@@ -1,4 +1,4 @@
-export type ActiveModule = 'retailer' | 'wholesaler' | 'admin';
+export type ActiveModule = 'retailer' | 'wholesaler' | 'customer' | 'admin';
 
 // 4-Level Authority Hierarchy as defined by Ellix Connect specifications:
 // Level 1: super_admin (Owner / Creator of Ellix Connect)
@@ -509,6 +509,7 @@ export interface RestockOrder {
   deliveryDate?: string;
   trackingNumber?: string;
   notes?: string;
+  stockAppliedOnDelivery?: boolean;
 }
 
 export type CustomerOrderStatus = 'placed' | 'confirmed' | 'ready_for_pickup' | 'out_for_delivery' | 'completed' | 'cancelled';
@@ -536,6 +537,7 @@ export interface CustomerOrder {
   orderStatus: CustomerOrderStatus;
   createdAt: string;
   pickupQrCode: string;
+  stockReserved?: boolean;
 }
 
 export interface Employee {
@@ -653,3 +655,14 @@ export interface PlatformTelemetryStats {
   averageRating: number;
 }
 
+export type WebSocketSyncStatus = 'connecting' | 'connected' | 'reconnecting' | 'disconnected';
+
+export type WebSocketParty = 'retailer' | 'wholesaler' | 'customer' | 'admin';
+
+export interface WebSocketRoomPresence {
+  retailer: number;
+  wholesaler: number;
+  customer: number;
+  admin: number;
+  total: number;
+}

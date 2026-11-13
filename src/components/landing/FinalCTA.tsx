@@ -284,7 +284,7 @@ export const FinalCTA: React.FC<FinalCTAProps> = ({ onOpenGetStarted, onLaunchDe
             
             {/* Tagline Kicker */}
             <div className="flex items-center justify-center gap-2 text-[11px] sm:text-xs font-bold tracking-widest text-sky-400 uppercase select-none">
-              <span className="w-1.5 h-1.5 rounded-full bg-sky-400 shadow-[0_0_8px_rgba(56,189,248,0.7)] animate-pulse" />
+              <span className="w-1.5 h-1.5 rounded-full bg-sky-400 shadow-[0_0_8px_rgba(56,189,248,0.7)]" />
               <span>Ellic Platform</span>
               <span className="text-slate-600">·</span>
               <span className="text-slate-300 font-semibold normal-case tracking-normal">Cloud &amp; Offline Ready</span>

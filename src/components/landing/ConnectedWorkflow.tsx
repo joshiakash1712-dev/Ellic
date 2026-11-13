@@ -13,8 +13,8 @@ import {
   MousePointer,
 } from 'lucide-react';
 import { motion, AnimatePresence, useReducedMotion } from 'motion/react';
-import { WorkWheelStage } from './WorkWheelStage';
-import { useCardWheelScroll } from '../../hooks/useCardWheelScroll';
+import { SpiralWorkflowStage } from './SpiralWorkflowStage';
+import { useSpiralScroll } from '../../hooks/useSpiralScroll';
 
 interface WorkflowStage {
   id: string;
@@ -147,23 +147,36 @@ export const ConnectedWorkflow: React.FC = () => {
   const prefersReducedMotion = useReducedMotion();
   const currentStage = stages[activeStageIndex] || stages[0];
 
-  const handleStageSelect = (idx: number) => {
+  const handleStageSelect = React.useCallback((idx: number) => {
     setActiveStageIndex(idx);
-  };
+  }, []);
 
-  // Connected interactive card wheel hook with zero-jump natural entry & clean boundary release
   const {
     sectionRef,
     cardRef,
+    progress,
+    currentTickStep,
     scrollProps,
-    isLastItem,
     scrollToNextSection,
-  } = useCardWheelScroll({
+  } = useSpiralScroll({
     totalItems: stages.length,
     activeIndex: activeStageIndex,
     onActiveChange: setActiveStageIndex,
     sectionId: 'workflow',
   });
+
+  const stageItems = React.useMemo(
+    () =>
+      stages.map((s) => ({
+        id: s.id,
+        number: s.number,
+        title: s.name,
+        tagline: s.tagline,
+        description: s.summary,
+        icon: s.icon,
+      })),
+    []
+  );
 
   return (
     <section
@@ -181,8 +194,8 @@ export const ConnectedWorkflow: React.FC = () => {
           </h2>
         </div>
 
-        {/* Mobile / Tablet Horizontal Workflow Stage Pills */}
-        <div className="flex xl:hidden overflow-x-auto gap-2 pb-2 mb-3 scrollbar-none">
+        {/* Mobile / Tablet Horizontal Workflow Stage Pills & Compact Spiral Stage */}
+        <div className="flex lg:hidden overflow-x-auto gap-2 pb-2 mb-3 scrollbar-none">
           {stages.map((s, idx) => (
             <button
               key={s.id}
@@ -200,33 +213,43 @@ export const ConnectedWorkflow: React.FC = () => {
           ))}
         </div>
 
-        {/* Side-by-Side: Interactive Work Wheel on Left, Live Scrolling Monitor Card on Right */}
-        <div className="grid grid-cols-1 xl:grid-cols-12 gap-5 xl:gap-7 items-stretch">
+        <div className="lg:hidden mb-4">
+          <SpiralWorkflowStage
+            items={stageItems}
+            activeIndex={activeStageIndex}
+            progress={progress}
+            currentTickStep={currentTickStep}
+            onActiveChange={handleStageSelect}
+            label="Workflow '26"
+            sublabel="Live Sync"
+            compact={true}
+            className="min-h-[250px]"
+          />
+        </div>
+
+        {/* Side-by-Side: Interactive 3D Spiral Stage on Left, Live Scrolling Monitor Card on Right */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 lg:gap-6 xl:gap-7 items-stretch">
           
-          {/* Left: Vector Work Wheel Dial Component */}
-          <div className="hidden xl:flex xl:col-span-6 flex-col">
-            <WorkWheelStage
-              items={stages.map((s) => ({
-                id: s.id,
-                number: s.number,
-                title: s.name,
-                tagline: s.tagline,
-                icon: s.icon,
-              }))}
+          {/* Left: 3D Spiral Orbit Stage */}
+          <div className="hidden lg:flex lg:col-span-6 flex-col">
+            <SpiralWorkflowStage
+              items={stageItems}
               activeIndex={activeStageIndex}
+              progress={progress}
+              currentTickStep={currentTickStep}
               onActiveChange={handleStageSelect}
               label="Workflow '26"
               sublabel="Live Sync"
-              className="h-full min-h-[340px] sm:min-h-[380px] lg:min-h-[420px]"
+              className="h-full min-h-[clamp(360px,52vh,440px)]"
             />
           </div>
 
           {/* Right: Live Interactive Workflow Monitor Card */}
-          <div className="col-span-1 xl:col-span-6 flex flex-col">
+          <div className="col-span-1 lg:col-span-6 flex flex-col">
             <div
               ref={cardRef}
               {...scrollProps}
-              className="p-4 sm:p-5 rounded-2xl bg-white dark:bg-slate-900 border-2 border-slate-300 dark:border-slate-700 shadow-xl flex flex-col justify-between h-full outline-none focus:ring-2 focus:ring-blue-500/30 transition-all cursor-grab active:cursor-grabbing"
+              className="p-4 sm:p-5 rounded-2xl bg-white dark:bg-slate-900 border-2 border-slate-300 dark:border-slate-700 shadow-xl flex flex-col justify-between h-full outline-none focus:ring-2 focus:ring-blue-500/30 transition-all"
             >
               {/* Header Badge */}
               <div className="flex items-center justify-between pb-2 mb-2 border-b-2 border-slate-200 dark:border-slate-800 gap-2 shrink-0">
@@ -246,7 +269,7 @@ export const ConnectedWorkflow: React.FC = () => {
               </div>
 
               {/* Animated Stage Details with internal scroll safeguard */}
-              <div className="flex-1 overflow-y-auto max-h-[min(480px,calc(100dvh-15.5rem))] pr-0.5 space-y-3.5 scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-slate-800">
+              <div className="flex-1 overflow-y-auto max-h-[min(420px,calc(100dvh-14.5rem))] pr-0.5 space-y-3.5 scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-slate-800">
                 <AnimatePresence mode="wait">
                   <motion.div
                     key={currentStage.id}

@@ -40,7 +40,8 @@ import {
   KeyRound,
   Globe,
   Bot,
-  LifeBuoy
+  LifeBuoy,
+  ShoppingBag
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -166,21 +167,32 @@ export const Sidebar: React.FC<SidebarProps> = ({
     { id: 'journey_map', label: 'Customer Journey Map', shortLabel: 'Journey', icon: <Compass className="w-5 h-5" />, badge: 'UX' }
   ];
 
+  const customerItems: NavItem[] = [
+    { id: 'customer_catalog', label: 'Product Catalog', shortLabel: 'Catalog', icon: <ShoppingBag className="w-5 h-5" />, count: products.length },
+    { id: 'customer_stores', label: 'Nearby Stores', shortLabel: 'Stores', icon: <StoreIcon className="w-5 h-5" />, count: stores.length },
+    { id: 'customer_orders', label: 'My Orders & QR', shortLabel: 'Orders', icon: <Receipt className="w-5 h-5" /> },
+    { id: 'journey_map', label: 'Customer Journey Map', shortLabel: 'Journey', icon: <Compass className="w-5 h-5" />, badge: 'UX' }
+  ];
+
   const items =
     activeModule === 'retailer'
       ? retailerItems
       : activeModule === 'wholesaler'
       ? wholesalerItems
+      : activeModule === 'customer'
+      ? customerItems
       : adminItems;
 
   // Primary mobile bottom navigation items
   const primaryBottomNavItems = items.slice(0, 4);
 
   const isEllixAdmin = canonicalRole === 'ellix_admin';
+  const isCustomer = canonicalRole === 'customer';
 
   const modulesList: { id: ActiveModule; label: string; icon: React.ReactNode }[] = [
-    ...(!isWholesaler && !isEllixAdmin ? [{ id: 'retailer' as ActiveModule, label: 'Store', icon: <StoreIcon className="w-3.5 h-3.5" /> }] : []),
-    ...(!isCrew && !isEllixAdmin ? [{ id: 'wholesaler' as ActiveModule, label: 'Wholesale', icon: <Truck className="w-3.5 h-3.5" /> }] : []),
+    ...(!isWholesaler && !isEllixAdmin && !isCustomer ? [{ id: 'retailer' as ActiveModule, label: 'Store', icon: <StoreIcon className="w-3.5 h-3.5" /> }] : []),
+    ...(!isCrew && !isEllixAdmin && !isCustomer ? [{ id: 'wholesaler' as ActiveModule, label: 'Wholesale', icon: <Truck className="w-3.5 h-3.5" /> }] : []),
+    ...((isDemoMode || isPlatformAdmin || isCustomer) ? [{ id: 'customer' as ActiveModule, label: 'Customer', icon: <ShoppingBag className="w-3.5 h-3.5" /> }] : []),
     ...((isDemoMode || isPlatformAdmin) ? [{ id: 'admin' as ActiveModule, label: 'Admin', icon: <ShieldAlert className="w-3.5 h-3.5" /> }] : [])
   ];
 
@@ -310,21 +322,24 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
           {/* Primary Workspace Switcher (Desktop Sidebar) */}
           {modulesList.length > 1 && (
-            <div className="grid grid-cols-3 gap-1 p-0.5 rounded-lg bg-[#0A0E1A] border border-slate-800 shrink-0">
+            <div
+              className="grid gap-1 p-0.5 rounded-lg bg-[#0A0E1A] border border-slate-800 shrink-0"
+              style={{ gridTemplateColumns: `repeat(${Math.min(modulesList.length, 4)}, minmax(0, 1fr))` }}
+            >
               {modulesList.map(mod => {
                 const isActive = activeModule === mod.id;
                 return (
                   <button
                     key={mod.id}
                     onClick={() => setActiveModule(mod.id)}
-                    className={`min-h-[30px] flex items-center justify-center gap-1 py-1 px-1 rounded-md text-[11px] font-bold transition-all ${
+                    className={`min-h-[30px] flex items-center justify-center gap-1 py-1 px-1 rounded-md text-[10px] font-bold transition-all truncate ${
                       isActive
                         ? 'bg-blue-600 text-white shadow-sm'
                         : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
                     }`}
                   >
                     {mod.icon}
-                    <span>{mod.label}</span>
+                    <span className="truncate">{mod.label}</span>
                   </button>
                 );
               })}

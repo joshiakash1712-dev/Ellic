@@ -10,6 +10,7 @@ import { getFirestore } from 'firebase-admin/firestore';
 import type { Firestore, CollectionReference } from 'firebase-admin/firestore';
 import { getAuth } from 'firebase-admin/auth';
 import type { Auth } from 'firebase-admin/auth';
+import { createInventoryWebSocketManager } from './src/server/inventoryWs.ts';
 
 dotenv.config();
 
@@ -1417,21 +1418,29 @@ async function startServer() {
     console.log(`Ellic Enterprise Server running on http://0.0.0.0:${PORT} [mode: ${isProduction ? 'production' : 'development'}]`);
   });
 
+  const inventoryWsManager = createInventoryWebSocketManager({
+    server,
+    adminDb,
+    adminAuth,
+    path: '/ws/inventory'
+  });
+
   server.on('error', (err: any) => {
     console.error('Server listen error:', err);
     process.exit(1);
   });
 
-  const handleShutdown = (signal: string) => {
-    console.log(`Received ${signal}, gracefully shutting down HTTP server...`);
+  const handleShutdown = async (signal: string) => {
+    console.log(`Received ${signal}, gracefully shutting down HTTP & WebSocket servers...`);
+    await inventoryWsManager.close().catch(() => {});
     server.close(() => {
       console.log('HTTP server closed cleanly.');
       process.exit(0);
     });
   };
 
-  process.on('SIGTERM', () => handleShutdown('SIGTERM'));
-  process.on('SIGINT', () => handleShutdown('SIGINT'));
+  process.on('SIGTERM', () => { void handleShutdown('SIGTERM'); });
+  process.on('SIGINT', () => { void handleShutdown('SIGINT'); });
 }
 
 export { app };

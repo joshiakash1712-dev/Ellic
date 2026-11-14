@@ -97,7 +97,7 @@ export const SpiralDialPanel: React.FC<SpiralDialPanelProps> = ({
 
   return (
     <div
-      className="relative flex flex-col justify-between rounded-2xl border select-none overflow-hidden h-full"
+      className="relative flex flex-col justify-between rounded-2xl border select-none overflow-hidden h-full antialiased"
       style={{
         backgroundColor: isCurrentActive ? '#0E1726' : '#09111E',
         borderColor: isCurrentActive ? 'rgba(56, 189, 248, 0.34)' : 'rgba(148, 163, 184, 0.2)',
@@ -274,11 +274,11 @@ export const SpiralDialPanel: React.FC<SpiralDialPanelProps> = ({
                     }
                     className="relative flex items-center justify-center"
                   >
-                    {/* Active Luminous Halo (calm radial glow, zero pulse strobing) */}
+                    {/* Active Luminous Halo (isolated cleanly at z-0 behind foreground button) */}
                     {isNodeSelected && (
                       <span
                         aria-hidden="true"
-                        className="absolute -inset-1.5 rounded-2xl pointer-events-none"
+                        className="absolute -inset-1.5 z-0 rounded-2xl pointer-events-none"
                         style={{
                           background:
                             'radial-gradient(circle, rgba(56, 189, 248, 0.45) 0%, rgba(37, 99, 235, 0.25) 60%, transparent 100%)',
@@ -299,7 +299,7 @@ export const SpiralDialPanel: React.FC<SpiralDialPanelProps> = ({
                       onMouseLeave={() => setHoveredNodeIdx(null)}
                       aria-label={`Select stage ${item.number}: ${item.title}`}
                       aria-pressed={isNodeSelected}
-                      className={`relative flex items-center justify-center rounded-xl transition-transform duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#38BDF8] ${
+                      className={`relative z-10 flex items-center justify-center rounded-xl transition-transform duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#38BDF8] ${
                         isInteractive ? 'cursor-pointer hover:scale-110 active:scale-95' : 'cursor-default'
                       } ${
                         isNodeSelected

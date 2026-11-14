@@ -6,7 +6,7 @@ import {
   CheckCircle2,
   ArrowRight,
   ArrowLeft,
-  Sparkles,
+  Layers,
   MapPin,
   User,
   Mail,
@@ -405,7 +405,7 @@ export const GetStartedModal: React.FC<GetStartedModalProps> = ({
             <button
               type="button"
               onClick={handleReset}
-              className="w-full sm:w-auto px-8 h-11 sm:h-12 rounded-xl bg-slate-900 hover:bg-slate-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white text-xs sm:text-sm font-bold transition-all shadow-md inline-flex items-center justify-center"
+              className="w-full sm:w-auto px-8 h-11 sm:h-12 rounded-xl bg-slate-900 hover:bg-slate-800 dark:bg-blue-600 dark:hover:bg-blue-500 text-white text-xs sm:text-sm font-bold transition-all shadow-md inline-flex items-center justify-center"
             >
               Back to Website
             </button>
@@ -416,8 +416,8 @@ export const GetStartedModal: React.FC<GetStartedModalProps> = ({
           {/* Brand Logo & Context Banner */}
           <div className="flex items-center justify-between gap-2 pb-0.5">
             <EllixConnectLogo size="sm" />
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] sm:text-[11px] font-bold tracking-wide bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 whitespace-nowrap">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg text-[10px] sm:text-[11px] font-bold tracking-wide bg-blue-500/10 text-blue-700 dark:text-sky-300 border border-blue-500/25 whitespace-nowrap">
+              <ShieldCheck className="w-3 h-3 text-blue-600 dark:text-sky-400" />
               India Edition (GST Ready)
             </span>
           </div>
@@ -426,7 +426,7 @@ export const GetStartedModal: React.FC<GetStartedModalProps> = ({
           {initialPlanId && PLAN_NAMES[initialPlanId] && (
             <div className="flex items-center justify-between px-3 py-1.5 rounded-xl bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800 text-xs text-blue-900 dark:text-sky-300">
               <span className="font-semibold">Plan Selected: <span className="font-bold">{PLAN_NAMES[initialPlanId]}</span></span>
-              <span className="text-[10px] bg-blue-600 text-white font-bold px-2 py-0.5 rounded-full">14-Day Free Trial</span>
+              <span className="text-[10px] bg-blue-600 text-white font-bold px-2 py-0.5 rounded-md">14-Day Free Trial</span>
             </div>
           )}
 
@@ -439,9 +439,9 @@ export const GetStartedModal: React.FC<GetStartedModalProps> = ({
                 <div
                   className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
                     stage === 1
-                      ? 'bg-emerald-600 text-white shadow-sm ring-2 ring-emerald-500/30'
+                      ? 'bg-blue-600 text-white shadow-sm ring-2 ring-sky-400/30'
                       : stage > 1
-                      ? 'bg-emerald-600 text-white'
+                      ? 'bg-blue-600 text-white'
                       : 'bg-slate-200 dark:bg-slate-700 text-slate-500 dark:text-slate-400'
                   }`}
                 >
@@ -460,7 +460,7 @@ export const GetStartedModal: React.FC<GetStartedModalProps> = ({
 
               <div
                 className={`flex-1 h-0.5 mx-3 transition-colors ${
-                  stage > 1 ? 'bg-emerald-500' : 'bg-slate-200 dark:bg-slate-700'
+                  stage > 1 ? 'bg-blue-500' : 'bg-slate-200 dark:bg-slate-700'
                 }`}
               />
 
@@ -469,9 +469,9 @@ export const GetStartedModal: React.FC<GetStartedModalProps> = ({
                 <div
                   className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
                     stage === 2
-                      ? 'bg-emerald-600 text-white shadow-sm ring-2 ring-emerald-500/30'
+                      ? 'bg-blue-600 text-white shadow-sm ring-2 ring-sky-400/30'
                       : stage > 2
-                      ? 'bg-emerald-600 text-white'
+                      ? 'bg-blue-600 text-white'
                       : 'bg-slate-200 dark:bg-slate-700 text-slate-500 dark:text-slate-400'
                   }`}
                 >
@@ -490,7 +490,7 @@ export const GetStartedModal: React.FC<GetStartedModalProps> = ({
 
               <div
                 className={`flex-1 h-0.5 mx-3 transition-colors ${
-                  stage > 2 ? 'bg-emerald-500' : 'bg-slate-200 dark:bg-slate-700'
+                  stage > 2 ? 'bg-blue-500' : 'bg-slate-200 dark:bg-slate-700'
                 }`}
               />
 
@@ -499,7 +499,7 @@ export const GetStartedModal: React.FC<GetStartedModalProps> = ({
                 <div
                   className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
                     stage === 3
-                      ? 'bg-emerald-600 text-white shadow-sm ring-2 ring-emerald-500/30'
+                      ? 'bg-blue-600 text-white shadow-sm ring-2 ring-sky-400/30'
                       : 'bg-slate-200 dark:bg-slate-700 text-slate-500 dark:text-slate-400'
                   }`}
                 >
@@ -523,16 +523,16 @@ export const GetStartedModal: React.FC<GetStartedModalProps> = ({
               <div
                 className={`flex items-center gap-1.5 px-2 py-1 rounded-lg transition-all ${
                   stage === 1
-                    ? 'bg-emerald-500/15 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 ring-1 ring-emerald-500/30'
+                    ? 'bg-blue-500/15 dark:bg-blue-500/20 text-blue-700 dark:text-sky-300 ring-1 ring-blue-500/30'
                     : 'text-slate-500 dark:text-slate-400'
                 }`}
               >
                 <div
                   className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ${
                     stage === 1
-                      ? 'bg-emerald-600 text-white shadow-xs'
+                      ? 'bg-blue-600 text-white shadow-xs'
                       : stage > 1
-                      ? 'bg-emerald-600 text-white'
+                      ? 'bg-blue-600 text-white'
                       : 'bg-slate-200 dark:bg-slate-700 text-slate-500'
                   }`}
                 >
@@ -545,7 +545,7 @@ export const GetStartedModal: React.FC<GetStartedModalProps> = ({
 
               <div
                 className={`flex-1 h-0.5 transition-colors ${
-                  stage > 1 ? 'bg-emerald-500' : 'bg-slate-200 dark:bg-slate-700'
+                  stage > 1 ? 'bg-blue-500' : 'bg-slate-200 dark:bg-slate-700'
                 }`}
               />
 
@@ -553,16 +553,16 @@ export const GetStartedModal: React.FC<GetStartedModalProps> = ({
               <div
                 className={`flex items-center gap-1.5 px-2 py-1 rounded-lg transition-all ${
                   stage === 2
-                    ? 'bg-emerald-500/15 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 ring-1 ring-emerald-500/30'
+                    ? 'bg-blue-500/15 dark:bg-blue-500/20 text-blue-700 dark:text-sky-300 ring-1 ring-blue-500/30'
                     : 'text-slate-500 dark:text-slate-400'
                 }`}
               >
                 <div
                   className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ${
                     stage === 2
-                      ? 'bg-emerald-600 text-white shadow-xs'
+                      ? 'bg-blue-600 text-white shadow-xs'
                       : stage > 2
-                      ? 'bg-emerald-600 text-white'
+                      ? 'bg-blue-600 text-white'
                       : 'bg-slate-200 dark:bg-slate-700 text-slate-500'
                   }`}
                 >
@@ -575,7 +575,7 @@ export const GetStartedModal: React.FC<GetStartedModalProps> = ({
 
               <div
                 className={`flex-1 h-0.5 transition-colors ${
-                  stage > 2 ? 'bg-emerald-500' : 'bg-slate-200 dark:bg-slate-700'
+                  stage > 2 ? 'bg-blue-500' : 'bg-slate-200 dark:bg-slate-700'
                 }`}
               />
 
@@ -583,14 +583,14 @@ export const GetStartedModal: React.FC<GetStartedModalProps> = ({
               <div
                 className={`flex items-center gap-1.5 px-2 py-1 rounded-lg transition-all ${
                   stage === 3
-                    ? 'bg-emerald-500/15 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 ring-1 ring-emerald-500/30'
+                    ? 'bg-blue-500/15 dark:bg-blue-500/20 text-blue-700 dark:text-sky-300 ring-1 ring-blue-500/30'
                     : 'text-slate-500 dark:text-slate-400'
                 }`}
               >
                 <div
                   className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ${
                     stage === 3
-                      ? 'bg-emerald-600 text-white shadow-xs'
+                      ? 'bg-blue-600 text-white shadow-xs'
                       : 'bg-slate-200 dark:bg-slate-700 text-slate-500'
                   }`}
                 >
@@ -626,7 +626,7 @@ export const GetStartedModal: React.FC<GetStartedModalProps> = ({
                 >
                   {isGoogleSigningIn ? (
                     <>
-                      <Loader2 className="w-4 h-4 animate-spin text-emerald-600 shrink-0" />
+                      <Loader2 className="w-4 h-4 animate-spin text-blue-600 shrink-0" />
                       <span>Connecting with Google...</span>
                     </>
                   ) : (
@@ -673,12 +673,13 @@ export const GetStartedModal: React.FC<GetStartedModalProps> = ({
               {/* Identity Form */}
               <form onSubmit={handleProceedToStage2} className="space-y-3 sm:space-y-3.5">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                    Full Name <span className="text-emerald-600 dark:text-emerald-400">*</span>
+                  <label htmlFor="get-started-full-name" className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                    Full Name <span className="text-blue-600 dark:text-sky-400">*</span>
                   </label>
                   <div className="relative">
                     <User className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
                     <input
+                      id="get-started-full-name"
                       type="text"
                       required
                       autoComplete="name"
@@ -686,18 +687,19 @@ export const GetStartedModal: React.FC<GetStartedModalProps> = ({
                       value={fullName}
                       onChange={(e) => setFullName(e.target.value)}
                       placeholder="e.g. Rahul Sharma"
-                      className="w-full h-11 pl-10 pr-3.5 rounded-xl border border-slate-200 dark:border-slate-700/80 bg-white dark:bg-slate-800/90 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 text-slate-900 dark:text-white placeholder-slate-400 transition-all shadow-2xs"
+                      className="w-full h-11 pl-10 pr-3.5 rounded-xl border border-slate-200 dark:border-slate-700/80 bg-white dark:bg-slate-800/90 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-slate-900 dark:text-white placeholder-slate-400 transition-all shadow-2xs"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                    Email Address <span className="text-emerald-600 dark:text-emerald-400">*</span>
+                  <label htmlFor="get-started-email" className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                    Email Address <span className="text-blue-600 dark:text-sky-400">*</span>
                   </label>
                   <div className="relative">
                     <Mail className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
                     <input
+                      id="get-started-email"
                       type="email"
                       required
                       inputMode="email"
@@ -706,21 +708,22 @@ export const GetStartedModal: React.FC<GetStartedModalProps> = ({
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       placeholder="e.g. rahul@example.com"
-                      className="w-full h-11 pl-10 pr-3.5 rounded-xl border border-slate-200 dark:border-slate-700/80 bg-white dark:bg-slate-800/90 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 text-slate-900 dark:text-white placeholder-slate-400 transition-all shadow-2xs"
+                      className="w-full h-11 pl-10 pr-3.5 rounded-xl border border-slate-200 dark:border-slate-700/80 bg-white dark:bg-slate-800/90 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-slate-900 dark:text-white placeholder-slate-400 transition-all shadow-2xs"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                    WhatsApp / Phone Number <span className="text-emerald-600 dark:text-emerald-400">*</span>
+                  <label htmlFor="get-started-phone" className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                    WhatsApp / Phone Number <span className="text-blue-600 dark:text-sky-400">*</span>
                   </label>
-                  <div className="flex h-11 rounded-xl border border-slate-200 dark:border-slate-700/80 bg-white dark:bg-slate-800/90 overflow-hidden focus-within:ring-2 focus-within:ring-emerald-500/20 focus-within:border-emerald-500 transition-all shadow-2xs">
+                  <div className="flex h-11 rounded-xl border border-slate-200 dark:border-slate-700/80 bg-white dark:bg-slate-800/90 overflow-hidden focus-within:ring-2 focus-within:ring-blue-500/20 focus-within:border-blue-500 transition-all shadow-2xs">
                     <span className="inline-flex items-center gap-1.5 px-3 bg-slate-100 dark:bg-slate-750 text-slate-700 dark:text-slate-200 font-bold text-xs sm:text-sm border-r border-slate-200 dark:border-slate-700/80 select-none shrink-0">
                       <span className="text-sm leading-none">🇮🇳</span>
                       <span>+91</span>
                     </span>
                     <input
+                      id="get-started-phone"
                       type="tel"
                       inputMode="numeric"
                       pattern="[0-9]*"
@@ -742,7 +745,7 @@ export const GetStartedModal: React.FC<GetStartedModalProps> = ({
 
                 <button
                   type="submit"
-                  className="w-full mt-2 h-11 sm:h-12 rounded-xl bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 active:scale-[0.99] text-white font-bold text-xs sm:text-sm shadow-md shadow-emerald-950/20 hover:shadow-emerald-900/30 transition-all flex items-center justify-center gap-2 group"
+                  className="w-full mt-2 h-11 sm:h-12 rounded-xl bg-blue-600 hover:bg-blue-500 active:bg-blue-700 active:scale-[0.99] text-white font-bold text-xs sm:text-sm shadow-md shadow-blue-950/20 hover:shadow-blue-900/30 transition-all flex items-center justify-center gap-2 group"
                 >
                   <span>Continue to Business Need</span>
                   <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
@@ -771,81 +774,85 @@ export const GetStartedModal: React.FC<GetStartedModalProps> = ({
               )}
 
               <div>
-                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5 sm:mb-2">
-                  What best describes your business need? <span className="text-emerald-600 dark:text-emerald-400">*</span>
-                </label>
+                <div className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5 sm:mb-2">
+                  What best describes your business need? <span className="text-blue-600 dark:text-sky-400">*</span>
+                </div>
                 <div className="grid grid-cols-1 xs:grid-cols-2 gap-2 sm:gap-2.5">
                   {/* Retail */}
-                  <label
+                  <button
+                    type="button"
                     onClick={() => {
                       setBusinessNeed('retail');
                       setStepError(null);
                     }}
                     className={`min-h-[74px] sm:min-h-[82px] p-2.5 sm:p-3 rounded-xl border text-left cursor-pointer transition-all flex flex-col justify-between ${
                       businessNeed === 'retail'
-                        ? 'border-emerald-500 bg-emerald-50/70 dark:bg-emerald-950/40 ring-1 ring-emerald-500 shadow-2xs'
+                        ? 'border-blue-500 bg-blue-50/70 dark:bg-blue-950/40 ring-1 ring-blue-500 shadow-2xs'
                         : 'border-slate-200 dark:border-slate-700/80 bg-white dark:bg-slate-800/80 hover:border-slate-300 dark:hover:border-slate-600'
                     }`}
                   >
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-center justify-between w-full">
                       <span className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white">
                         Retail
                       </span>
-                      <Store className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                      <Store className="w-4 h-4 text-blue-600 dark:text-sky-400" />
                     </div>
                     <p className="text-[10px] sm:text-[11px] text-slate-500 dark:text-slate-400 mt-1 leading-snug">
                       Counter POS, barcode billing, and fast customer checkout.
                     </p>
-                  </label>
+                  </button>
 
                   {/* Wholesaler */}
-                  <label
+                  <button
+                    type="button"
                     onClick={() => {
                       setBusinessNeed('wholesaler');
                       setStepError(null);
                     }}
                     className={`min-h-[74px] sm:min-h-[82px] p-2.5 sm:p-3 rounded-xl border text-left cursor-pointer transition-all flex flex-col justify-between ${
                       businessNeed === 'wholesaler'
-                        ? 'border-emerald-500 bg-emerald-50/70 dark:bg-emerald-950/40 ring-1 ring-emerald-500 shadow-2xs'
+                        ? 'border-blue-500 bg-blue-50/70 dark:bg-blue-950/40 ring-1 ring-blue-500 shadow-2xs'
                         : 'border-slate-200 dark:border-slate-700/80 bg-white dark:bg-slate-800/80 hover:border-slate-300 dark:hover:border-slate-600'
                     }`}
                   >
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-center justify-between w-full">
                       <span className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white">
                         Wholesaler
                       </span>
-                      <Building2 className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                      <Building2 className="w-4 h-4 text-blue-600 dark:text-sky-400" />
                     </div>
                     <p className="text-[10px] sm:text-[11px] text-slate-500 dark:text-slate-400 mt-1 leading-snug">
                       Bulk orders, customer khata credit, and multi-tier pricing.
                     </p>
-                  </label>
+                  </button>
 
                   {/* Wholesaler & Retailer */}
-                  <label
+                  <button
+                    type="button"
                     onClick={() => {
                       setBusinessNeed('wholesaler_retailer');
                       setStepError(null);
                     }}
                     className={`min-h-[74px] sm:min-h-[82px] p-2.5 sm:p-3 rounded-xl border text-left cursor-pointer transition-all flex flex-col justify-between ${
                       businessNeed === 'wholesaler_retailer'
-                        ? 'border-emerald-500 bg-emerald-50/70 dark:bg-emerald-950/40 ring-1 ring-emerald-500 shadow-2xs'
+                        ? 'border-blue-500 bg-blue-50/70 dark:bg-blue-950/40 ring-1 ring-blue-500 shadow-2xs'
                         : 'border-slate-200 dark:border-slate-700/80 bg-white dark:bg-slate-800/80 hover:border-slate-300 dark:hover:border-slate-600'
                     }`}
                   >
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-center justify-between w-full">
                       <span className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white">
                         Wholesaler &amp; Retailer
                       </span>
-                      <Sparkles className="w-4 h-4 text-amber-500" />
+                      <Layers className="w-4 h-4 text-amber-500" />
                     </div>
                     <p className="text-[10px] sm:text-[11px] text-slate-500 dark:text-slate-400 mt-1 leading-snug">
                       Hybrid model: retail walk-ins + B2B distributor deliveries.
                     </p>
-                  </label>
+                  </button>
 
                   {/* Just Exploring */}
-                  <label
+                  <button
+                    type="button"
                     onClick={() => {
                       setBusinessNeed('exploring');
                       setShopType('');
@@ -853,20 +860,20 @@ export const GetStartedModal: React.FC<GetStartedModalProps> = ({
                     }}
                     className={`min-h-[74px] sm:min-h-[82px] p-2.5 sm:p-3 rounded-xl border text-left cursor-pointer transition-all flex flex-col justify-between ${
                       businessNeed === 'exploring'
-                        ? 'border-emerald-500 bg-emerald-50/70 dark:bg-emerald-950/40 ring-1 ring-emerald-500 shadow-2xs'
+                        ? 'border-blue-500 bg-blue-50/70 dark:bg-blue-950/40 ring-1 ring-blue-500 shadow-2xs'
                         : 'border-slate-200 dark:border-slate-700/80 bg-white dark:bg-slate-800/80 hover:border-slate-300 dark:hover:border-slate-600'
                     }`}
                   >
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-center justify-between w-full">
                       <span className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white">
                         Just Exploring
                       </span>
-                      <Compass className="w-4 h-4 text-purple-500" />
+                      <Compass className="w-4 h-4 text-sky-500" />
                     </div>
                     <p className="text-[10px] sm:text-[11px] text-slate-500 dark:text-slate-400 mt-1 leading-snug">
                       Testing features, learning POS tech, or evaluating for clients.
                     </p>
-                  </label>
+                  </button>
                 </div>
               </div>
 
@@ -874,14 +881,15 @@ export const GetStartedModal: React.FC<GetStartedModalProps> = ({
               <div className="min-h-[84px] flex flex-col justify-center transition-all duration-200">
                 {businessNeed && businessNeed !== 'exploring' && (
                   <div className="space-y-1 animate-in fade-in">
-                    <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                      Select Your Shop Type / Category <span className="text-emerald-600 dark:text-emerald-400">*</span>
+                    <label htmlFor="get-started-shop-type" className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                      Select Your Shop Type / Category <span className="text-blue-600 dark:text-sky-400">*</span>
                     </label>
                     <select
+                      id="get-started-shop-type"
                       required
                       value={shopType}
                       onChange={(e) => setShopType(e.target.value)}
-                      className="w-full h-11 px-3.5 rounded-xl border border-slate-200 dark:border-slate-700/80 bg-white dark:bg-slate-800/90 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 text-slate-900 dark:text-white font-medium"
+                      className="w-full h-11 px-3.5 rounded-xl border border-slate-200 dark:border-slate-700/80 bg-white dark:bg-slate-800/90 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-slate-900 dark:text-white font-medium"
                     >
                       <option value="" disabled>
                         Select your shop type / category...
@@ -900,15 +908,16 @@ export const GetStartedModal: React.FC<GetStartedModalProps> = ({
 
                 {businessNeed === 'exploring' && (
                   <div className="space-y-1.5 animate-in fade-in">
-                    <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
-                      Who are you exploring Ellic for? <span className="text-emerald-600 dark:text-emerald-400">*</span>
-                    </label>
+                    <div className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+                      Who are you exploring Ellic for? <span className="text-blue-600 dark:text-sky-400">*</span>
+                    </div>
                     <div className="grid grid-cols-1 xs:grid-cols-2 gap-2">
-                      <label
+                      <button
+                        type="button"
                         onClick={() => setExploringTarget('self')}
                         className={`p-2.5 rounded-xl border text-left cursor-pointer transition-all ${
                           exploringTarget === 'self'
-                            ? 'border-emerald-500 bg-emerald-50/70 dark:bg-emerald-950/40 ring-1 ring-emerald-500'
+                            ? 'border-blue-500 bg-blue-50/70 dark:bg-blue-950/40 ring-1 ring-blue-500'
                             : 'border-slate-200 dark:border-slate-700/80 bg-white dark:bg-slate-800/80 hover:border-slate-300'
                         }`}
                       >
@@ -918,13 +927,14 @@ export const GetStartedModal: React.FC<GetStartedModalProps> = ({
                         <div className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">
                           Learning features or planning a future store.
                         </div>
-                      </label>
+                      </button>
 
-                      <label
+                      <button
+                        type="button"
                         onClick={() => setExploringTarget('clients')}
                         className={`p-2.5 rounded-xl border text-left cursor-pointer transition-all ${
                           exploringTarget === 'clients'
-                            ? 'border-emerald-500 bg-emerald-50/70 dark:bg-emerald-950/40 ring-1 ring-emerald-500'
+                            ? 'border-blue-500 bg-blue-50/70 dark:bg-blue-950/40 ring-1 ring-blue-500'
                             : 'border-slate-200 dark:border-slate-700/80 bg-white dark:bg-slate-800/80 hover:border-slate-300'
                         }`}
                       >
@@ -934,14 +944,14 @@ export const GetStartedModal: React.FC<GetStartedModalProps> = ({
                         <div className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">
                           Consultant, CA / accountant, or retail partner.
                         </div>
-                      </label>
+                      </button>
                     </div>
                   </div>
                 )}
 
                 {!businessNeed && (
                   <div className="p-3 rounded-xl border border-dashed border-slate-200 dark:border-slate-800 text-center text-xs text-slate-400 dark:text-slate-500 flex items-center justify-center gap-2">
-                    <Sparkles className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                    <Layers className="w-3.5 h-3.5 text-slate-400 shrink-0" />
                     <span>Select a business need above to configure category or exploring options</span>
                   </div>
                 )}
@@ -961,7 +971,7 @@ export const GetStartedModal: React.FC<GetStartedModalProps> = ({
                 )}
                 <button
                   type="submit"
-                  className="flex-1 h-11 sm:h-12 rounded-xl bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 active:scale-[0.99] text-white font-bold text-xs sm:text-sm shadow-md shadow-emerald-950/20 transition-all flex items-center justify-center gap-2 group"
+                  className="flex-1 h-11 sm:h-12 rounded-xl bg-blue-600 hover:bg-blue-500 active:bg-blue-700 active:scale-[0.99] text-white font-bold text-xs sm:text-sm shadow-md shadow-blue-950/20 transition-all flex items-center justify-center gap-2 group"
                 >
                   <span className="truncate">Continue to Store &amp; Team Setup</span>
                   <ArrowRight className="w-4 h-4 shrink-0 transition-transform group-hover:translate-x-0.5" />
@@ -978,18 +988,19 @@ export const GetStartedModal: React.FC<GetStartedModalProps> = ({
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3">
                 {/* Store Name */}
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                    Store / Business Name <span className="text-emerald-600 dark:text-emerald-400">*</span>
+                  <label htmlFor="get-started-store-name" className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                    Store / Business Name <span className="text-blue-600 dark:text-sky-400">*</span>
                   </label>
                   <div className="relative">
                     <Store className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
                     <input
+                      id="get-started-store-name"
                       type="text"
                       required
                       value={storeName}
                       onChange={(e) => setStoreName(e.target.value)}
                       placeholder="e.g. Metro Mart"
-                      className="w-full h-11 pl-10 pr-3.5 rounded-xl border border-slate-200 dark:border-slate-700/80 bg-white dark:bg-slate-800/90 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 text-slate-900 dark:text-white placeholder-slate-400 transition-all shadow-2xs"
+                      className="w-full h-11 pl-10 pr-3.5 rounded-xl border border-slate-200 dark:border-slate-700/80 bg-white dark:bg-slate-800/90 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-slate-900 dark:text-white placeholder-slate-400 transition-all shadow-2xs"
                     />
                   </div>
                 </div>
@@ -997,14 +1008,14 @@ export const GetStartedModal: React.FC<GetStartedModalProps> = ({
                 {/* City / Location with Auto-detect button */}
                 <div>
                   <div className="flex items-center justify-between mb-1">
-                    <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
-                      City / Location <span className="text-emerald-600 dark:text-emerald-400">*</span>
+                    <label htmlFor="get-started-city" className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+                      City / Location <span className="text-blue-600 dark:text-sky-400">*</span>
                     </label>
                     <button
                       type="button"
                       onClick={handleAutoDetectLocation}
                       disabled={isLocating}
-                      className="text-[10px] sm:text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 hover:underline flex items-center gap-1 disabled:opacity-50"
+                      className="text-[10px] sm:text-[11px] font-semibold text-blue-600 dark:text-sky-400 hover:underline flex items-center gap-1 disabled:opacity-50"
                     >
                       {isLocating ? (
                         <>
@@ -1022,12 +1033,13 @@ export const GetStartedModal: React.FC<GetStartedModalProps> = ({
                   <div className="relative">
                     <MapPin className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
                     <input
+                      id="get-started-city"
                       type="text"
                       required
                       value={city}
                       onChange={(e) => setCity(e.target.value)}
                       placeholder="e.g. Pune, Maharashtra"
-                      className="w-full h-11 pl-10 pr-3.5 rounded-xl border border-slate-200 dark:border-slate-700/80 bg-white dark:bg-slate-800/90 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 text-slate-900 dark:text-white placeholder-slate-400 transition-all shadow-2xs"
+                      className="w-full h-11 pl-10 pr-3.5 rounded-xl border border-slate-200 dark:border-slate-700/80 bg-white dark:bg-slate-800/90 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-slate-900 dark:text-white placeholder-slate-400 transition-all shadow-2xs"
                     />
                   </div>
                   {locationError && (
@@ -1055,7 +1067,7 @@ export const GetStartedModal: React.FC<GetStartedModalProps> = ({
                   <button
                     type="button"
                     onClick={handleAddCrew}
-                    className="px-2.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-[11px] font-semibold flex items-center gap-1 shadow-xs transition-colors shrink-0"
+                    className="px-2.5 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-[11px] font-semibold flex items-center gap-1 shadow-xs transition-colors shrink-0"
                   >
                     <Plus className="w-3 h-3" />
                     <span>Add Member</span>
@@ -1071,6 +1083,7 @@ export const GetStartedModal: React.FC<GetStartedModalProps> = ({
                       >
                         <input
                           type="text"
+                          aria-label={`Staff #${index + 1} Name`}
                           placeholder={`Staff #${index + 1} Name`}
                           value={member.name}
                           onChange={(e) => handleUpdateCrew(member.id, 'name', e.target.value)}
@@ -1078,12 +1091,14 @@ export const GetStartedModal: React.FC<GetStartedModalProps> = ({
                         />
                         <input
                           type="text"
+                          aria-label={`Staff #${index + 1} Phone or WhatsApp`}
                           placeholder="Phone / WhatsApp"
                           value={member.contact}
                           onChange={(e) => handleUpdateCrew(member.id, 'contact', e.target.value)}
                           className="w-full sm:w-1/3 h-9 px-2.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-xs text-slate-900 dark:text-white"
                         />
                         <select
+                          aria-label={`Staff #${index + 1} Role`}
                           value={member.role}
                           onChange={(e) =>
                             handleUpdateCrew(
@@ -1114,9 +1129,9 @@ export const GetStartedModal: React.FC<GetStartedModalProps> = ({
 
               {/* Multi-Shop Toggle & Join */}
               <div className="p-3 sm:p-3.5 rounded-xl border border-slate-200 dark:border-slate-700/80 bg-white dark:bg-slate-800/80 space-y-2">
-                <label className="flex items-center justify-between cursor-pointer">
+                <label htmlFor="get-started-multistore" className="flex items-center justify-between cursor-pointer">
                   <div className="flex items-center gap-2 min-w-0 pr-2">
-                    <Building2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                    <Building2 className="w-4 h-4 text-blue-600 dark:text-sky-400 shrink-0" />
                     <div className="min-w-0">
                       <span className="text-xs font-bold text-slate-900 dark:text-white block truncate">
                         Multiple Shops &amp; Branch Linking
@@ -1127,10 +1142,11 @@ export const GetStartedModal: React.FC<GetStartedModalProps> = ({
                     </div>
                   </div>
                   <input
+                    id="get-started-multistore"
                     type="checkbox"
                     checked={isMultiStore}
                     onChange={(e) => setIsMultiStore(e.target.checked)}
-                    className="h-4 w-4 rounded accent-emerald-600 shrink-0"
+                    className="h-4 w-4 rounded accent-blue-600 shrink-0"
                   />
                 </label>
 
@@ -1138,6 +1154,7 @@ export const GetStartedModal: React.FC<GetStartedModalProps> = ({
                   <div className="pt-1.5 animate-in fade-in">
                     <input
                       type="text"
+                      aria-label="Branch names"
                       value={multiStoreBranches}
                       onChange={(e) => setMultiStoreBranches(e.target.value)}
                       placeholder="e.g. Main Branch, Warehouse, Kothrud Branch"
@@ -1151,13 +1168,14 @@ export const GetStartedModal: React.FC<GetStartedModalProps> = ({
               </div>
 
               {/* DPDPA 2023 Affirmative Consent Checkbox */}
-              <label className="flex items-start gap-2.5 pt-0.5 text-[10px] sm:text-[11px] text-slate-600 dark:text-slate-400 cursor-pointer select-none">
+              <label htmlFor="get-started-consent" className="flex items-start gap-2.5 pt-0.5 text-[10px] sm:text-[11px] text-slate-600 dark:text-slate-400 cursor-pointer select-none">
                 <input
+                  id="get-started-consent"
                   type="checkbox"
                   required
                   checked={consentAccepted}
                   onChange={(e) => setConsentAccepted(e.target.checked)}
-                  className="mt-0.5 h-4 w-4 rounded accent-emerald-600 shrink-0"
+                  className="mt-0.5 h-4 w-4 rounded accent-blue-600 shrink-0"
                 />
                 <span className="leading-relaxed">
                   I agree to the{' '}
@@ -1169,7 +1187,7 @@ export const GetStartedModal: React.FC<GetStartedModalProps> = ({
                         onOpenLegalPage('terms-of-service');
                       }
                     }}
-                    className="text-emerald-600 dark:text-emerald-400 font-semibold hover:underline"
+                    className="text-blue-600 dark:text-sky-400 font-semibold hover:underline"
                   >
                     Terms of Service
                   </button>{' '}
@@ -1182,7 +1200,7 @@ export const GetStartedModal: React.FC<GetStartedModalProps> = ({
                         onOpenLegalPage('privacy-policy');
                       }
                     }}
-                    className="text-emerald-600 dark:text-emerald-400 font-semibold hover:underline"
+                    className="text-blue-600 dark:text-sky-400 font-semibold hover:underline"
                   >
                     Privacy Policy
                   </button>{' '}
@@ -1203,7 +1221,7 @@ export const GetStartedModal: React.FC<GetStartedModalProps> = ({
                 <button
                   type="submit"
                   disabled={!consentAccepted || isSubmitting}
-                  className="flex-1 h-11 sm:h-12 rounded-xl bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 active:scale-[0.99] disabled:opacity-50 text-white font-bold text-xs sm:text-sm shadow-md shadow-emerald-950/20 transition-all flex items-center justify-center gap-2 group"
+                  className="flex-1 h-11 sm:h-12 rounded-xl bg-blue-600 hover:bg-blue-500 active:bg-blue-700 active:scale-[0.99] disabled:opacity-50 text-white font-bold text-xs sm:text-sm shadow-md shadow-blue-950/20 transition-all flex items-center justify-center gap-2 group"
                 >
                   {isSubmitting ? (
                     <>
@@ -1233,7 +1251,7 @@ export const GetStartedModal: React.FC<GetStartedModalProps> = ({
                     onClose();
                     onSwitchToSignIn();
                   }}
-                  className="text-emerald-600 dark:text-emerald-400 font-semibold hover:underline"
+                  className="text-blue-600 dark:text-sky-400 font-semibold hover:underline"
                 >
                   Sign In here
                 </button>

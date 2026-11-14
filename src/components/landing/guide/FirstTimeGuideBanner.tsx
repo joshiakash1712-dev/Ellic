@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence, useReducedMotion } from 'motion/react';
-import { ArrowRight, BookOpen, Sparkles, X } from 'lucide-react';
+import { ArrowRight, BookOpen, X } from 'lucide-react';
 import {
   loadGuideProgress,
   markGuideDismissed,
@@ -73,11 +73,11 @@ export const FirstTimeGuideBanner: React.FC<FirstTimeGuideBannerProps> = ({
           animate={prefersReducedMotion ? { opacity: 1 } : { opacity: 1, y: 0, scale: 1 }}
           exit={prefersReducedMotion ? { opacity: 0 } : { opacity: 0, y: 12, scale: 0.97 }}
           transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
-          className="fixed bottom-18 sm:bottom-5 left-3 right-3 sm:left-6 sm:right-auto z-40 sm:w-96 rounded-2xl bg-[#121826]/95 backdrop-blur-xl border border-emerald-500/35 shadow-[0_18px_42px_rgba(0,0,0,0.5),0_0_24px_rgba(16,185,129,0.14)] p-3.5 sm:p-4 text-white"
+          className="fixed bottom-4 left-3 right-16 sm:bottom-5 sm:left-6 sm:right-auto z-40 sm:w-96 rounded-2xl bg-[#121826]/95 backdrop-blur-xl border border-sky-500/35 shadow-[0_18px_42px_rgba(0,0,0,0.5),0_0_24px_rgba(56,189,248,0.14)] p-3 sm:p-4 text-white"
         >
-          <div className="flex items-start justify-between gap-2 mb-2">
-            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-[10px] font-mono font-bold uppercase tracking-wider">
-              <Sparkles className="w-3 h-3 text-emerald-400" />
+          <div className="flex items-start justify-between gap-2 mb-1.5 sm:mb-2">
+            <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-blue-500/15 border border-sky-400/30 text-sky-300 text-[10px] font-mono font-bold uppercase tracking-wider">
+              <BookOpen className="w-3 h-3 text-sky-400" />
               <span>{isResuming ? 'CONTINUE YOUR GUIDE' : 'NEW TO ELLIC?'}</span>
             </div>
             <button
@@ -91,7 +91,7 @@ export const FirstTimeGuideBanner: React.FC<FirstTimeGuideBannerProps> = ({
           </div>
 
           {isResuming ? (
-            <div className="space-y-1 mb-3">
+            <div className="space-y-1 mb-2.5 sm:mb-3">
               <div className="text-sm font-bold text-white">
                 You&apos;re on Step {guideProgressStep} of 12.
               </div>
@@ -100,7 +100,7 @@ export const FirstTimeGuideBanner: React.FC<FirstTimeGuideBannerProps> = ({
               </p>
             </div>
           ) : (
-            <p className="text-xs text-slate-200 leading-relaxed mb-3">
+            <p className="text-xs text-slate-200 leading-relaxed mb-2.5 sm:mb-3">
               See how the entire platform connects your everyday business operations.
             </p>
           )}
@@ -109,7 +109,7 @@ export const FirstTimeGuideBanner: React.FC<FirstTimeGuideBannerProps> = ({
             <button
               type="button"
               onClick={handleStartOrResume}
-              className="flex-1 py-2 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-extrabold shadow-md shadow-emerald-600/25 flex items-center justify-center gap-1.5 cursor-pointer transition-all"
+              className="flex-1 py-2 px-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-extrabold shadow-md shadow-blue-600/25 flex items-center justify-center gap-1.5 cursor-pointer transition-all"
             >
               <BookOpen className="w-3.5 h-3.5" />
               <span>{isResuming ? 'Continue Guide →' : 'Start Guided Tour'}</span>
@@ -121,7 +121,7 @@ export const FirstTimeGuideBanner: React.FC<FirstTimeGuideBannerProps> = ({
               onClick={handleDismiss}
               className="py-2 px-3 rounded-xl bg-[#161D2C] hover:bg-slate-800 border border-slate-700 text-slate-300 hover:text-white text-xs font-semibold cursor-pointer transition-colors"
             >
-              Explore on My Own
+              Explore Alone
             </button>
           </div>
         </motion.aside>

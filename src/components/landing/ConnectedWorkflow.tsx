@@ -9,7 +9,7 @@ import {
   ArrowRight,
   ArrowLeft,
   CheckCircle2,
-  Sparkles,
+  Zap,
 } from 'lucide-react';
 import { UnifiedSpiralShowcase } from './UnifiedSpiralShowcase';
 import type { SpiralDialItemDef } from './SpiralDialPanel';
@@ -269,7 +269,7 @@ export const ConnectedWorkflow: React.FC = () => {
               }}
             >
               <div className="flex items-center gap-1.5 text-[#7DD3FC] font-bold">
-                <Sparkles className="w-3.5 h-3.5 text-[#38BDF8] shrink-0" />
+                <Zap className="w-3.5 h-3.5 text-[#38BDF8] shrink-0" />
                 <span className="text-[11px]">Next Automated Action:</span>
               </div>
               <div className="text-[#CBD5E1] text-xs leading-relaxed">

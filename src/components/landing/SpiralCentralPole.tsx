@@ -19,102 +19,120 @@ export const SpiralCentralPole: React.FC<SpiralCentralPoleProps> = ({
   compact = false,
 }) => {
   const pulseOffset = ((progress % 1) + 1) % 1;
-  const collarY = 22 + pulseOffset * 56;
+  const collarY = 20 + pulseOffset * 60;
 
   return (
     <div
       aria-hidden="true"
       className="pointer-events-none select-none absolute inset-y-0 left-1/2 flex flex-col items-center justify-between"
       style={{
-        width: compact ? '38px' : '56px',
+        width: compact ? '42px' : '64px',
         transform: 'translate3d(-50%, 0, 0px)',
         zIndex: 24,
       }}
     >
-      {/* Top Architectural Collar Plinth */}
+      {/* Top Architectural Flange Assembly */}
+      <div className="flex flex-col items-center shrink-0">
+        <div
+          className={compact ? 'w-10 h-2.5 rounded-full' : 'w-14 h-3 rounded-full'}
+          style={{
+            background:
+              'linear-gradient(90deg, #050912 0%, #162742 28%, rgba(56, 189, 248, 0.62) 50%, #162742 72%, #050912 100%)',
+            border: '1px solid rgba(56, 189, 248, 0.38)',
+            boxShadow: '0 4px 18px rgba(37, 99, 235, 0.34)',
+          }}
+        />
+        <div
+          className={compact ? 'w-7 h-1.5 rounded-b-md' : 'w-9 h-2 rounded-b-md'}
+          style={{
+            background: 'linear-gradient(90deg, #060B16, #1E3A8A, #060B16)',
+            borderBottom: '1px solid rgba(56, 189, 248, 0.25)',
+          }}
+        />
+      </div>
+
+      {/* Controlled Cyan/Cobalt Edge Atmosphere Behind Cylinder */}
       <div
-        className="w-10 h-3 rounded-full shrink-0"
+        className="absolute inset-y-4 left-1/2 -translate-x-1/2 rounded-full pointer-events-none"
         style={{
+          width: compact ? '30px' : '48px',
           background:
-            'linear-gradient(90deg, #060A14 0%, #16253E 30%, rgba(56, 189, 248, 0.55) 50%, #16253E 70%, #060A14 100%)',
-          border: '1px solid rgba(56, 189, 248, 0.35)',
-          boxShadow: '0 0 18px rgba(37, 99, 235, 0.32)',
+            'radial-gradient(ellipse at center, rgba(56, 189, 248, 0.22) 0%, rgba(37, 99, 235, 0.14) 48%, transparent 80%)',
+          filter: 'blur(9px)',
         }}
       />
 
-      {/* Ambient Cyan/Blue Edge Aura Behind Cylinder */}
+      {/* Main Brushed Steel Cylindrical Shaft */}
       <div
-        className="absolute inset-y-3 left-1/2 -translate-x-1/2 rounded-full pointer-events-none"
+        className="relative flex-1 my-0.5 rounded-sm overflow-hidden"
         style={{
-          width: compact ? '26px' : '42px',
+          width: compact ? '14px' : '22px',
           background:
-            'radial-gradient(ellipse at center, rgba(56, 189, 248, 0.24) 0%, rgba(37, 99, 235, 0.14) 48%, transparent 80%)',
-          filter: 'blur(8px)',
-        }}
-      />
-
-      {/* Main Brushed Dark-Navy Cylindrical Shaft */}
-      <div
-        className="relative flex-1 my-0.5 rounded-full overflow-hidden"
-        style={{
-          width: compact ? '12px' : '18px',
-          background:
-            'linear-gradient(90deg, #040812 0%, #0D192D 22%, #1D3557 42%, rgba(56, 189, 248, 0.42) 52%, #12233E 68%, #040812 100%)',
+            'linear-gradient(90deg, #030710 0%, #0C182C 20%, #1B3459 38%, rgba(56, 189, 248, 0.45) 50%, #142744 65%, #07101F 86%, #030710 100%)',
           boxShadow:
-            '0 0 22px rgba(37, 99, 235, 0.28), inset 1px 0 2px rgba(56, 189, 248, 0.4), inset -1px 0 2px rgba(37, 99, 235, 0.3)',
+            '0 0 24px rgba(37, 99, 235, 0.26), inset 1.5px 0 3px rgba(56, 189, 248, 0.45), inset -1.5px 0 3px rgba(37, 99, 235, 0.32)',
         }}
       >
-        {/* Crisp Left & Right Metallic Rim-Light Hairlines */}
+        {/* Crisp Dual Metallic Rim-Light Hairlines */}
         <div
           className="absolute inset-y-0 left-[2px] w-[1px]"
           style={{
             background:
-              'linear-gradient(180deg, transparent 0%, rgba(56, 189, 248, 0.55) 18%, rgba(186, 230, 253, 0.78) 50%, rgba(56, 189, 248, 0.55) 82%, transparent 100%)',
+              'linear-gradient(180deg, transparent 0%, rgba(56, 189, 248, 0.6) 16%, rgba(186, 230, 253, 0.85) 50%, rgba(56, 189, 248, 0.6) 84%, transparent 100%)',
           }}
         />
         <div
           className="absolute inset-y-0 right-[2px] w-[1px]"
           style={{
             background:
-              'linear-gradient(180deg, transparent 0%, rgba(37, 99, 235, 0.45) 20%, rgba(56, 189, 248, 0.52) 50%, rgba(37, 99, 235, 0.45) 80%, transparent 100%)',
+              'linear-gradient(180deg, transparent 0%, rgba(37, 99, 235, 0.45) 18%, rgba(56, 189, 248, 0.56) 50%, rgba(37, 99, 235, 0.45) 82%, transparent 100%)',
           }}
         />
 
-        {/* Machined Cylindrical Structural Bands */}
-        {[18, 38, 62, 82].map((pct) => (
+        {/* Precision Cylindrical Structural Rings */}
+        {[16, 36, 64, 84].map((pct) => (
           <div
             key={pct}
             className="absolute inset-x-0 h-[2px]"
             style={{
               top: `${pct}%`,
               background:
-                'linear-gradient(90deg, rgba(4, 8, 18, 0.9), rgba(56, 189, 248, 0.45), rgba(4, 8, 18, 0.9))',
+                'linear-gradient(90deg, rgba(4, 8, 18, 0.92), rgba(56, 189, 248, 0.48), rgba(4, 8, 18, 0.92))',
             }}
           />
         ))}
 
         {/* Orbit Phase Bearing Collar Ring */}
         <div
-          className="absolute inset-x-0 h-[5px] transition-all duration-150 ease-out"
+          className="absolute inset-x-0 h-[6px] transition-all duration-150 ease-out"
           style={{
             top: `${collarY}%`,
             background:
-              'linear-gradient(90deg, rgba(37, 99, 235, 0.45), rgba(186, 230, 253, 0.92), rgba(56, 189, 248, 0.5))',
-            boxShadow: '0 0 10px rgba(56, 189, 248, 0.7)',
+              'linear-gradient(90deg, rgba(37, 99, 235, 0.55), rgba(186, 230, 253, 0.96), rgba(56, 189, 248, 0.58))',
+            boxShadow: '0 0 12px rgba(56, 189, 248, 0.72)',
           }}
         />
       </div>
 
-      {/* Bottom Architectural Plinth */}
-      <div
-        className="w-12 h-3.5 rounded-full shrink-0"
-        style={{
-          background:
-            'linear-gradient(90deg, #060A14 0%, #16253E 28%, rgba(56, 189, 248, 0.52) 50%, #16253E 72%, #060A14 100%)',
-          border: '1px solid rgba(56, 189, 248, 0.35)',
-          boxShadow: '0 0 22px rgba(37, 99, 235, 0.35)',
-        }}
-      />
+      {/* Bottom Architectural Plinth Base */}
+      <div className="flex flex-col items-center shrink-0">
+        <div
+          className={compact ? 'w-7 h-1.5 rounded-t-md' : 'w-9 h-2 rounded-t-md'}
+          style={{
+            background: 'linear-gradient(90deg, #060B16, #1E3A8A, #060B16)',
+            borderTop: '1px solid rgba(56, 189, 248, 0.25)',
+          }}
+        />
+        <div
+          className={compact ? 'w-12 h-3 rounded-full' : 'w-16 h-3.5 rounded-full'}
+          style={{
+            background:
+              'linear-gradient(90deg, #050912 0%, #162742 26%, rgba(56, 189, 248, 0.58) 50%, #162742 74%, #050912 100%)',
+            border: '1px solid rgba(56, 189, 248, 0.38)',
+            boxShadow: '0 0 24px rgba(37, 99, 235, 0.38)',
+          }}
+        />
+      </div>
     </div>
   );
 };

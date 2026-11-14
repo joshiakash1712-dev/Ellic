@@ -67,7 +67,7 @@ export const MarketingModal: React.FC<MarketingModalProps> = ({
               className={`relative w-full ${maxWidth} glass-panel rounded-2xl sm:rounded-3xl shadow-2xl p-4 sm:p-6 md:p-8 z-10 text-slate-900 dark:text-slate-100 pointer-events-auto border border-slate-200/80 dark:border-slate-800/80`}
             >
               {/* Subtle brand gradient backdrop BEHIND the glass modal */}
-              <div className="absolute inset-0 -z-10 bg-gradient-to-br from-emerald-600/10 via-slate-900/60 to-teal-600/10 pointer-events-none rounded-2xl sm:rounded-3xl" />
+              <div className="absolute inset-0 -z-10 bg-gradient-to-br from-blue-600/10 via-slate-900/60 to-sky-500/10 pointer-events-none rounded-2xl sm:rounded-3xl" />
 
               {/* Header */}
               <div className="flex items-start justify-between gap-3 pb-3.5 sm:pb-4 border-b border-slate-100 dark:border-slate-800/80">

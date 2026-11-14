@@ -1,6 +1,12 @@
 import React, { useRef, useCallback, useEffect, useState } from 'react';
 import { useReducedMotion } from 'motion/react';
 
+export type SpiralTransitionState =
+  | 'SETTLED'
+  | 'TICK_1_PREVIEW'
+  | 'TICK_2_ORBIT'
+  | 'TICK_3_SETTLE';
+
 export interface UseSpiralScrollOptions {
   totalItems: number;
   activeIndex: number;
@@ -13,26 +19,37 @@ function clamp(val: number, min: number, max: number): number {
 }
 
 const DESKTOP_SPIRAL_MIN_WIDTH = 900;
-const TICKS_PER_STAGE = 5;
-const TICK_STEP = 1 / TICKS_PER_STAGE; // 0.2 per scroll tick
-const TICK_DELTA_THRESHOLD = 34;
-const TICK_COOLDOWN_MS = 115;
-const STAGE_DETENT_MS = 220;
-const BOUNDARY_HOLD_MS = 260;
+export const TICKS_PER_STAGE = 3;
+const TICK_STEP = 1 / TICKS_PER_STAGE; // 1/3 per scroll tick
+const TICK_DELTA_THRESHOLD = 36;
+const TICK_COOLDOWN_MS = 120;
+const STAGE_DETENT_MS = 200;
+const BOUNDARY_HOLD_MS = 240;
+
+export function getTransitionStateFromTick(tick: number, isSettled: boolean): SpiralTransitionState {
+  if (isSettled || tick === 0) return 'SETTLED';
+  switch (tick) {
+    case 1:
+      return 'TICK_1_PREVIEW';
+    case 2:
+      return 'TICK_2_ORBIT';
+    default:
+      return 'TICK_3_SETTLE';
+  }
+}
 
 /**
- * Synchronized 5-Tick Scroll-Driven Spiral Controller
+ * Synchronized 3-Tick Scroll-Driven Spiral Controller
  *
  * Calibrates mouse wheel and trackpad gestures so each stage transition
- * progresses through 5 deliberate ticks (1/5 = 0.20 increments):
- * - Tick 1 (0.2): Objects behind peek in along the spiral edge.
- * - Tick 2 (0.4): Peeking assembly rotates forward and displays clearly.
- * - Tick 3 (0.6): Focused assembly locks 100% solid (zero transparency); all
- *                 rear assemblies hide strictly behind it with zero bleed.
- * - Tick 4 (0.8): Rear/upcoming assemblies emerge cleanly behind the front card.
- * - Tick 5 (1.0): Active card changes (`activeIndex` switches cleanly) and settles.
+ * revolves through 3 deliberate helical ticks (1/3 = 0.333 increments):
+ * - Tick 1 (1/3): Incoming stage previews smoothly along the rear orbital arc.
+ * - Tick 2 (2/3): Mutual helical orbit around the stationary central pole.
+ * - Tick 3 (3/3): Incoming stage locks solid dead-center (`activeIndex` switches)
+ *                 while the outgoing stage settles cleanly behind with zero ghosting.
  *
- * Supports symmetric forward & reverse 5-tick choreography and clean boundary release.
+ * Supports symmetric forward & reverse 3-tick choreography, viewport-gated wheel
+ * listeners for zero offscreen overhead, and clean boundary release.
  */
 export function useSpiralScroll({
   totalItems,
@@ -43,6 +60,8 @@ export function useSpiralScroll({
   const sectionRef = useRef<HTMLElement>(null);
   const cardRef = useRef<HTMLDivElement>(null);
   const [progress, setProgress] = useState<number>(activeIndex);
+  const [targetProgressState, setTargetProgressState] = useState<number>(activeIndex);
+  const [transitionDirection, setTransitionDirection] = useState<1 | -1 | 0>(0);
   const [isAnchored, setIsAnchored] = useState(false);
   const prefersReducedMotion = useReducedMotion();
 
@@ -70,12 +89,12 @@ export function useSpiralScroll({
     return headerEl ? Math.round(headerEl.getBoundingClientRect().height) : 68;
   }, []);
 
-  const syncActiveIndexAtTick5 = useCallback((val: number) => {
+  const syncActiveIndexAtTick3 = useCallback((val: number) => {
     const maxIdx = Math.max(0, totalItemsRef.current - 1);
     const currentActive = activeIndexRef.current;
 
-    // Only switch active card once progress completes Tick 5 (>= 0.96 away from current active)
-    if (Math.abs(val - currentActive) >= 0.96) {
+    // Execute full card state change cleanly on Tick 3 completion (>= 0.94 progress)
+    if (Math.abs(val - currentActive) >= 0.94) {
       const nextActive = clamp(Math.round(val), 0, maxIdx);
       if (nextActive !== currentActive) {
         activeIndexRef.current = nextActive;
@@ -93,24 +112,29 @@ export function useSpiralScroll({
       const current = progressRef.current;
       const diff = target - current;
 
-      if (Math.abs(diff) < 0.0018 || prefersReducedMotion) {
-        progressRef.current = target;
-        setProgress(target);
-        syncActiveIndexAtTick5(target);
+      if (Math.abs(diff) < 0.003 || prefersReducedMotion) {
+        const snappedTarget =
+          Math.abs(target - Math.round(target)) < 0.004 ? Math.round(target) : target;
+        progressRef.current = snappedTarget;
+        setProgress(snappedTarget);
+        syncActiveIndexAtTick3(snappedTarget);
+        if (Math.abs(snappedTarget - activeIndexRef.current) < 0.02) {
+          setTransitionDirection(0);
+        }
         rafRef.current = 0;
         return;
       }
 
-      const next = current + diff * 0.25;
+      const next = current + diff * 0.26;
       progressRef.current = next;
       setProgress(next);
-      syncActiveIndexAtTick5(next);
+      syncActiveIndexAtTick3(next);
 
       rafRef.current = window.requestAnimationFrame(step);
     };
 
     rafRef.current = window.requestAnimationFrame(step);
-  }, [prefersReducedMotion, syncActiveIndexAtTick5]);
+  }, [prefersReducedMotion, syncActiveIndexAtTick3]);
 
   const goToStage = useCallback(
     (index: number) => {
@@ -118,6 +142,10 @@ export function useSpiralScroll({
       const clamped = clamp(index, 0, maxIdx);
       wheelAccumRef.current = 0;
       targetProgressRef.current = clamped;
+      setTargetProgressState(clamped);
+      setTransitionDirection(
+        clamped > activeIndexRef.current ? 1 : clamped < activeIndexRef.current ? -1 : 0
+      );
 
       if (clamped === 0) {
         wasAtBoundaryRef.current = 'start';
@@ -135,6 +163,7 @@ export function useSpiralScroll({
       if (prefersReducedMotion) {
         progressRef.current = clamped;
         setProgress(clamped);
+        setTransitionDirection(0);
       } else {
         ensureAnimationLoop();
       }
@@ -142,12 +171,80 @@ export function useSpiralScroll({
     [ensureAnimationLoop, prefersReducedMotion]
   );
 
-  // Sync external activeIndex overrides cleanly without disturbing in-flight 5-tick glides
+  const stepTick = useCallback(
+    (direction: 1 | -1) => {
+      const maxIdx = Math.max(0, totalItemsRef.current - 1);
+      const currentTarget = targetProgressRef.current;
+      const quantizedNext =
+        Math.round((currentTarget + direction * TICK_STEP) * TICKS_PER_STAGE) / TICKS_PER_STAGE;
+      const nextTarget = clamp(quantizedNext, 0, maxIdx);
+      if (Math.abs(nextTarget - currentTarget) < 0.001) return;
+
+      targetProgressRef.current = nextTarget;
+      setTargetProgressState(nextTarget);
+      setTransitionDirection(direction);
+
+      if (nextTarget >= maxIdx - 0.004) {
+        wasAtBoundaryRef.current = 'end';
+      } else if (nextTarget <= 0.004) {
+        wasAtBoundaryRef.current = 'start';
+      } else {
+        wasAtBoundaryRef.current = null;
+      }
+
+      if (prefersReducedMotion) {
+        progressRef.current = nextTarget;
+        setProgress(nextTarget);
+        syncActiveIndexAtTick3(nextTarget);
+      } else {
+        ensureAnimationLoop();
+      }
+    },
+    [ensureAnimationLoop, prefersReducedMotion, syncActiveIndexAtTick3]
+  );
+
+  const jumpToTick = useCallback(
+    (tickNumber: 0 | 1 | 2 | 3, directionHint?: 1 | -1) => {
+      const maxIdx = Math.max(0, totalItemsRef.current - 1);
+      const curActive = activeIndexRef.current;
+      const inFlightOffset = targetProgressRef.current - curActive;
+      const inferredDir: 1 | -1 =
+        Math.abs(inFlightOffset) > 0.05
+          ? (inFlightOffset > 0 ? 1 : -1)
+          : curActive < maxIdx
+          ? 1
+          : -1;
+      const dir: 1 | -1 = directionHint ?? inferredDir;
+
+      if (tickNumber === 3) {
+        const nextIdx = clamp(curActive + dir, 0, maxIdx);
+        goToStage(nextIdx);
+        return;
+      }
+
+      const rawTarget = curActive + dir * (tickNumber * TICK_STEP);
+      const nextTarget = clamp(Math.round(rawTarget * TICKS_PER_STAGE) / TICKS_PER_STAGE, 0, maxIdx);
+      targetProgressRef.current = nextTarget;
+      setTargetProgressState(nextTarget);
+      setTransitionDirection(tickNumber === 0 ? 0 : dir);
+
+      if (prefersReducedMotion) {
+        progressRef.current = nextTarget;
+        setProgress(nextTarget);
+      } else {
+        ensureAnimationLoop();
+      }
+    },
+    [ensureAnimationLoop, goToStage, prefersReducedMotion]
+  );
+
+  // Sync external activeIndex overrides cleanly without disturbing in-flight 3-tick glides
   useEffect(() => {
     const prev = activeIndexRef.current;
     activeIndexRef.current = activeIndex;
-    if (prev !== activeIndex && Math.abs(targetProgressRef.current - activeIndex) > 0.12) {
+    if (prev !== activeIndex && Math.abs(targetProgressRef.current - activeIndex) > 0.14) {
       targetProgressRef.current = activeIndex;
+      setTargetProgressState(activeIndex);
       wheelAccumRef.current = 0;
       if (prefersReducedMotion) {
         progressRef.current = activeIndex;
@@ -223,6 +320,7 @@ export function useSpiralScroll({
       const clamped = clamp(snappedTick, 0, maxIdx);
       if (Math.abs(clamped - targetProgressRef.current) > 0.002) {
         targetProgressRef.current = clamped;
+        setTargetProgressState(clamped);
         ensureAnimationLoop();
       }
     }, 240);
@@ -314,12 +412,12 @@ export function useSpiralScroll({
 
       lastTickTimeRef.current = now;
 
-      // Advance strictly by 1 calibrated tick (1/5 = 0.20) so 5 ticks = 1 complete stage change
+      // Advance strictly by 1 calibrated tick (1/3 = 0.333) so 3 ticks = 1 complete stage change
       const quantizedNext =
         Math.round((currentTarget + direction * TICK_STEP) * TICKS_PER_STAGE) / TICKS_PER_STAGE;
       const nextTarget = clamp(quantizedNext, 0, maxIdx);
 
-      // Engage magnetic stage detent right on Tick 5 card settlement
+      // Engage magnetic stage detent right on Tick 3 card settlement
       if (Math.abs(nextTarget - Math.round(nextTarget)) < 0.015) {
         stageDetentUntilRef.current = now + STAGE_DETENT_MS;
       }
@@ -333,6 +431,8 @@ export function useSpiralScroll({
       }
 
       targetProgressRef.current = nextTarget;
+      setTargetProgressState(nextTarget);
+      setTransitionDirection(direction);
       ensureAnimationLoop();
       scheduleGentleSettle();
     },
@@ -344,10 +444,42 @@ export function useSpiralScroll({
     if (!sectionEl) return;
 
     const onWheel = (e: WheelEvent) => handleWheelNative(e);
-    window.addEventListener('wheel', onWheel, { passive: false });
+    let attached = false;
+
+    const attach = () => {
+      if (!attached) {
+        window.addEventListener('wheel', onWheel, { passive: false });
+        attached = true;
+      }
+    };
+    const detach = () => {
+      if (attached) {
+        window.removeEventListener('wheel', onWheel);
+        attached = false;
+      }
+    };
+
+    if (typeof IntersectionObserver === 'undefined') {
+      attach();
+      return () => detach();
+    }
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry?.isIntersecting) {
+          attach();
+        } else {
+          detach();
+          setIsAnchored(false);
+        }
+      },
+      { rootMargin: '80px 0px', threshold: 0.01 }
+    );
+    observer.observe(sectionEl);
 
     return () => {
-      window.removeEventListener('wheel', onWheel);
+      observer.disconnect();
+      detach();
     };
   }, [handleWheelNative]);
 
@@ -409,23 +541,31 @@ export function useSpiralScroll({
     [goToStage]
   );
 
-  // Derive visible 5-tick step phase relative to activeIndex (0 = settled/locked, 1..5 = orbit ticks)
+  // Derive visible 3-tick step phase relative to activeIndex (0 = settled, 1..3 = orbit ticks)
   const deltaFromActive = Math.abs(progress - activeIndex);
-  const isSettled = deltaFromActive < 0.03;
+  const isSettled = deltaFromActive < 0.015;
   const currentTickStep = isSettled
     ? TICKS_PER_STAGE
     : Math.max(1, Math.min(TICKS_PER_STAGE, Math.round(deltaFromActive * TICKS_PER_STAGE)));
+  const activeTickPhase = isSettled ? 0 : currentTickStep;
+  const transitionState = getTransitionStateFromTick(activeTickPhase, isSettled);
 
   return {
     sectionRef,
     cardRef,
     progress,
+    targetProgress: targetProgressState,
     currentTickStep,
+    activeTickPhase,
+    transitionDirection,
+    transitionState,
     isSettled,
     isAnchored,
     isLastItem: activeIndex === totalItems - 1,
     isFirstItem: activeIndex === 0,
     goToStage,
+    stepTick,
+    jumpToTick,
     scrollToNextSection,
     scrollToPrevSection,
     scrollProps: {

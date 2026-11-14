@@ -1,5 +1,5 @@
-import React, { useState, useId } from 'react';
-import { ChevronDown, HelpCircle, Search, Sparkles, MessageCircle, ArrowRight } from 'lucide-react';
+import React, { useState } from 'react';
+import { ChevronDown, HelpCircle, Search, MessageCircle, ArrowRight } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 
 interface FAQItem {
@@ -116,12 +116,15 @@ export const FAQSection: React.FC<FAQSectionProps> = ({ onOpenContact }) => {
         {/* Section Header */}
         <div className="text-center max-w-2xl mx-auto mb-12">
           <div className="flex items-center justify-center gap-2 text-xs font-bold tracking-widest text-blue-600 dark:text-sky-400 uppercase select-none mb-3">
-            <span className="w-1.5 h-1.5 rounded-full bg-blue-600 dark:bg-sky-400 shadow-[0_0_8px_rgba(37,99,235,0.7)]" />
+            <span className="w-3.5 h-[1.5px] bg-blue-600 dark:bg-sky-400" />
             <span>Frequently Asked Questions</span>
             <span className="text-slate-300 dark:text-slate-700">·</span>
             <span className="text-slate-500 dark:text-slate-400 font-semibold normal-case tracking-normal">Common Questions Answered</span>
           </div>
-          <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-950 dark:text-white tracking-tight">
+          <h2
+            style={{ textWrap: 'balance' }}
+            className="text-3xl sm:text-4xl font-extrabold text-slate-950 dark:text-white tracking-tight"
+          >
             Clear answers to common questions.
           </h2>
           <p className="mt-4 text-base sm:text-lg text-slate-600 dark:text-slate-400 leading-relaxed">
@@ -134,9 +137,14 @@ export const FAQSection: React.FC<FAQSectionProps> = ({ onOpenContact }) => {
           <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
             {/* Search Input */}
             <div className="relative w-full sm:max-w-md">
-              <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+              <label htmlFor="faq-search-input" className="sr-only">
+                Search frequently asked questions
+              </label>
+              <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
               <input
+                id="faq-search-input"
                 type="text"
+                aria-label="Search frequently asked questions"
                 data-cursor="hover"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}

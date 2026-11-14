@@ -61,6 +61,7 @@ export const SpiralAtmosphereBackdrop: React.FC<SpiralAtmosphereBackdropProps> =
   const [inViewport, setInViewport] = useState(false);
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
   const [canUseWebGL, setCanUseWebGL] = useState(false);
+  const [contextLost, setContextLost] = useState(false);
 
   useEffect(() => {
     setCanUseWebGL(detectWebGLSupport());
@@ -76,10 +77,19 @@ export const SpiralAtmosphereBackdrop: React.FC<SpiralAtmosphereBackdropProps> =
 
   useEffect(() => {
     const el = hostRef.current;
-    if (!el || typeof IntersectionObserver === 'undefined') {
+    if (!el) return undefined;
+
+    const handleContextLost = (e: Event) => {
+      e.preventDefault();
+      setContextLost(true);
+    };
+    el.addEventListener('webglcontextlost', handleContextLost, true);
+
+    if (typeof IntersectionObserver === 'undefined') {
       setInViewport(true);
-      return undefined;
+      return () => el.removeEventListener('webglcontextlost', handleContextLost, true);
     }
+
     const observer = new IntersectionObserver(
       ([entry]) => {
         const visibleInLayout = Boolean(
@@ -89,13 +99,16 @@ export const SpiralAtmosphereBackdrop: React.FC<SpiralAtmosphereBackdropProps> =
         );
         setInViewport(visibleInLayout);
       },
-      { rootMargin: '120px 0px' }
+      { rootMargin: '40px 0px', threshold: 0.01 }
     );
     observer.observe(el);
-    return () => observer.disconnect();
+    return () => {
+      observer.disconnect();
+      el.removeEventListener('webglcontextlost', handleContextLost, true);
+    };
   }, []);
 
-  const renderWebGL = inViewport && canUseWebGL && !prefersReducedMotion;
+  const renderWebGL = inViewport && canUseWebGL && !prefersReducedMotion && !contextLost;
 
   const fallbackAtmosphere = (
     <div

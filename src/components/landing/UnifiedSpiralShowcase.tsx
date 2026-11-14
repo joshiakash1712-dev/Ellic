@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { ChevronLeft, ChevronRight, ArrowRight, Disc } from 'lucide-react';
+import { Disc } from 'lucide-react';
 import { useReducedMotion } from 'motion/react';
 import { useSpiralScroll } from '../../hooks/useSpiralScroll';
 import { SpiralAtmosphereBackdrop } from './SpiralAtmosphereBackdrop';
@@ -29,10 +29,11 @@ export interface UnifiedSpiralShowcaseProps<T extends SpiralDialItemDef> {
   dialSublabel: string;
   prevLabel?: string;
   nextLabel?: string;
+  hideBottomDock?: boolean;
   renderSimulator: (item: T, ctx: SpiralSimulatorRenderContext) => React.ReactNode;
 }
 
-export interface FiveTickPose {
+export interface ThreeTickPose {
   tx: number;
   ty: number;
   tz: number;
@@ -65,10 +66,13 @@ interface KeyframePose {
   opacity: number;
 }
 
-function sampleKeyframes(t: number, frames: readonly [KeyframePose, KeyframePose, KeyframePose, KeyframePose, KeyframePose, KeyframePose]): KeyframePose {
+function sampleThreeTickKeyframes(
+  t: number,
+  frames: readonly [KeyframePose, KeyframePose, KeyframePose, KeyframePose]
+): KeyframePose {
   const clampedT = clamp(t, 0, 1);
-  const scaled = clampedT * 5;
-  const idx = Math.min(4, Math.floor(scaled));
+  const scaled = clampedT * 3;
+  const idx = Math.min(2, Math.floor(scaled));
   const localT = scaled - idx;
   const from = frames[idx];
   const to = frames[idx + 1];
@@ -85,39 +89,40 @@ function sampleKeyframes(t: number, frames: readonly [KeyframePose, KeyframePose
 }
 
 /**
- * Computes exact 5-tick spiral pose for a unified two-panel stage assembly:
- * - t = 0.0 (Idle): Active assembly settled dead-center, zero rear clutter.
- * - t = 0.2 (Tick 1): Incoming neighbor objects peek in around the front card edge.
- * - t = 0.4 (Tick 2): Incoming neighbor rotates out prominently & displays clearly.
- * - t = 0.6 (Tick 3): Active card locks completely center-front, 100% opaque (no transparency);
- *                     ALL rear assemblies collapse strictly behind (tx=0, opacity=0) and hide.
- * - t = 0.8 (Tick 4): Rear/incoming assemblies re-emerge visibly behind the front card.
- * - t = 1.0 (Tick 5): Incoming card sweeps cleanly into center foreground and takes active focus.
+ * Computes continuous 3-tick helical spiral pose for a connected two-panel stage assembly:
+ * - t = 0.00 (Settled): Active assembly locked solid dead-center (`tz > 0`); adjacent cards hidden behind.
+ * - t = 0.33 (Tick 1):  Incoming assembly glides out along the rear orbital arc behind the pole (`tz < 0`),
+ *                       while active eases smoothly to make room.
+ * - t = 0.67 (Tick 2):  Active swings around receding rear wing (`tz < 0`); incoming rotates smoothly around
+ *                       the opposite wing into foreground focus (`tz > 0`) with solid chassis backing.
+ * - t = 1.00 (Tick 3):  Incoming locks dead-center solid (`tz > 0`, `opacity: 1`); outgoing tucks cleanly
+ *                       behind (`opacity: 0`, hidden) with zero double text bleed or ghosting.
  */
-export function computeFiveTickPose(
+export function computeThreeTickPose(
   idx: number,
   activeIndex: number,
   progress: number,
   horizontalSwing: number,
   prefersReducedMotion = false
-): FiveTickPose | null {
+): ThreeTickPose | null {
   const offset = clamp(progress - activeIndex, -1, 1);
   const absT = Math.abs(offset);
   const dir = offset === 0 ? 1 : Math.sign(offset);
 
-  const isFrontCard = idx === activeIndex;
+  const isOutgoingCard = idx === activeIndex;
   const isIncomingCard = absT > 0.005 && idx === activeIndex + dir;
 
-  if (!isFrontCard && !isIncomingCard) {
+  if (!isOutgoingCard && !isIncomingCard) {
     return null;
   }
 
   if (prefersReducedMotion) {
-    if (isFrontCard) {
+    const showInCenter = (absT < 0.5 && isOutgoingCard) || (absT >= 0.5 && isIncomingCard);
+    if (showInCenter) {
       return {
         tx: 0,
         ty: 0,
-        tz: 56,
+        tz: 0,
         rotY: 0,
         rotZ: 0,
         scale: 1,
@@ -131,10 +136,10 @@ export function computeFiveTickPose(
     return {
       tx: 0,
       ty: 0,
-      tz: -160,
+      tz: -176,
       rotY: 0,
       rotZ: 0,
-      scale: 0.84,
+      scale: 0.8,
       opacity: 0,
       zIndex: 10,
       hidden: true,
@@ -143,52 +148,44 @@ export function computeFiveTickPose(
     };
   }
 
-  // Front active assembly keyframes across ticks [0.0, 0.2, 0.4, 0.6, 0.8, 1.0]
-  const frontFrames: readonly [KeyframePose, KeyframePose, KeyframePose, KeyframePose, KeyframePose, KeyframePose] = [
-    // 0.0: Settled solid center
-    { tx: 0, ty: 0, tz: 56, rotY: 0, rotZ: 0, scale: 1, opacity: 1 },
-    // 0.2 (Tick 1): Eases slightly aside so next objects peek in
-    { tx: -dir * 26, ty: -4, tz: 48, rotY: dir * 4.5, rotZ: -dir * 0.4, scale: 0.98, opacity: 1 },
-    // 0.4 (Tick 2): Swings out along helical wing while incoming displays clearly
-    { tx: -dir * horizontalSwing * 0.9, ty: -dir * 16, tz: 12, rotY: dir * 16, rotZ: -dir * 1.4, scale: 0.91, opacity: 0.96 },
-    // 0.6 (Tick 3): Completely front & centered, 100% solid opaque (zero transparency)
-    { tx: 0, ty: 0, tz: 62, rotY: 0, rotZ: 0, scale: 1, opacity: 1 },
-    // 0.8 (Tick 4): Angles gently forward while rear things emerge visibly behind it
-    { tx: -dir * 28, ty: -dir * 8, tz: 46, rotY: dir * 8, rotZ: -dir * 0.7, scale: 0.96, opacity: 1 },
-    // 1.0 (Tick 5): Tucks cleanly behind as incoming card changes to active focus
-    { tx: 0, ty: 0, tz: -168, rotY: 0, rotZ: 0, scale: 0.82, opacity: 0 },
+  // Outgoing (`activeIndex`) helical orbit across [0, 1/3, 2/3, 1.0]
+  // Settled active frame sits strictly at tz: 0 on the native 2D screen focal plane (zero 3D upscaling blur)
+  const outgoingFrames: readonly [KeyframePose, KeyframePose, KeyframePose, KeyframePose] = [
+    // 0.00: Settled dead center at native Z=0 screen plane (in front of zIndex-24 pole)
+    { tx: 0, ty: 0, tz: 0, rotY: 0, rotZ: 0, scale: 1, opacity: 1 },
+    // 0.33 (Tick 1): Yields gently along front-left/right arc while incoming previews behind pole
+    { tx: -dir * horizontalSwing * 0.24, ty: -dir * 5, tz: 24, rotY: dir * 5, rotZ: -dir * 0.4, scale: 0.97, opacity: 1 },
+    // 0.67 (Tick 2): Swings behind central pole wing cleanly out of incoming foreground path
+    { tx: -dir * horizontalSwing * 1.22, ty: -dir * 16, tz: -78, rotY: dir * 23, rotZ: -dir * 1.9, scale: 0.84, opacity: 0.42 },
+    // 1.00 (Tick 3): Completely tucked behind solid center chassis (zero ghosting)
+    { tx: 0, ty: 0, tz: -176, rotY: 0, rotZ: 0, scale: 0.8, opacity: 0 },
   ];
 
-  // Incoming neighbor assembly keyframes across ticks [0.0, 0.2, 0.4, 0.6, 0.8, 1.0]
-  const incomingFrames: readonly [KeyframePose, KeyframePose, KeyframePose, KeyframePose, KeyframePose, KeyframePose] = [
-    // 0.0: Hidden cleanly behind settled card
-    { tx: 0, ty: 0, tz: -168, rotY: 0, rotZ: 0, scale: 0.82, opacity: 0 },
-    // 0.2 (Tick 1): Peeks in out behind the right/left edge around central pole
-    { tx: dir * horizontalSwing * 1.12, ty: dir * 14, tz: -74, rotY: -dir * 18, rotZ: dir * 1.6, scale: 0.88, opacity: 0.84 },
-    // 0.4 (Tick 2): Sweeps out & displays clearly beside/in front of pole
-    { tx: dir * horizontalSwing * 0.94, ty: dir * 12, tz: 22, rotY: -dir * 13, rotZ: dir * 1.1, scale: 0.94, opacity: 0.98 },
-    // 0.6 (Tick 3): Completely hidden strictly behind focused card (zero peek, zero leak)
-    { tx: 0, ty: 0, tz: -180, rotY: 0, rotZ: 0, scale: 0.80, opacity: 0 },
-    // 0.8 (Tick 4): Re-emerges behind focused card along rear spiral lane
-    { tx: dir * horizontalSwing * 1.06, ty: dir * 16, tz: -66, rotY: -dir * 18, rotZ: dir * 1.5, scale: 0.89, opacity: 0.88 },
-    // 1.0 (Tick 5): Completes revolution into dead-center foreground focus
-    { tx: 0, ty: 0, tz: 56, rotY: 0, rotZ: 0, scale: 1, opacity: 1 },
+  // Incoming (`activeIndex + dir`) helical orbit across [0, 1/3, 2/3, 1.0]
+  const incomingFrames: readonly [KeyframePose, KeyframePose, KeyframePose, KeyframePose] = [
+    // 0.00: Hidden behind pole
+    { tx: 0, ty: 0, tz: -176, rotY: 0, rotZ: 0, scale: 0.8, opacity: 0 },
+    // 0.33 (Tick 1): Enters visible rear orbital wing cleanly around pole
+    { tx: dir * horizontalSwing * 1.18, ty: dir * 16, tz: -82, rotY: -dir * 21, rotZ: dir * 1.7, scale: 0.85, opacity: 0.72 },
+    // 0.67 (Tick 2): Rotates forward in front of pole into foreground prominence
+    { tx: dir * horizontalSwing * 0.26, ty: dir * 5, tz: 28, rotY: -dir * 6, rotZ: dir * 0.5, scale: 0.97, opacity: 1 },
+    // 1.00 (Tick 3): Locks dead-center 100% solid at native Z=0 screen plane (zero perspective blur)
+    { tx: 0, ty: 0, tz: 0, rotY: 0, rotZ: 0, scale: 1, opacity: 1 },
   ];
 
-  const pose = sampleKeyframes(absT, isFrontCard ? frontFrames : incomingFrames);
+  const targetFrames = isOutgoingCard ? outgoingFrames : incomingFrames;
+  const pose = sampleThreeTickKeyframes(absT, targetFrames);
   const inFrontOfPole = pose.tz >= 0;
   const hidden = pose.opacity < 0.02;
 
   const isCenterFocus =
-    (isFrontCard && absT < 0.9 && !(absT > 0.3 && absT < 0.5)) ||
-    (isIncomingCard && absT >= 0.9);
+    (isOutgoingCard && absT < 0.38) ||
+    (isIncomingCard && absT >= 0.58);
 
-  const zIndex = isFrontCard
-    ? inFrontOfPole
-      ? 50
-      : 14
+  const zIndex = isCenterFocus
+    ? 50
     : inFrontOfPole
-    ? 44
+    ? 42
     : 16;
 
   return {
@@ -200,20 +197,12 @@ export function computeFiveTickPose(
   };
 }
 
-const TICK_PHASE_LABELS: Record<number, string> = {
-  1: 'TICK 1/5 · PEEK IN',
-  2: 'TICK 2/5 · DISPLAY',
-  3: 'TICK 3/5 · SOLO FOCUS',
-  4: 'TICK 4/5 · BEHIND VIEW',
-  5: 'TICK 5/5 · CHANGE',
-};
-
 /**
- * Full-Width Synchronized 5-Tick 3D Spiral Showcase Architecture
+ * Full-Width Synchronized 3-Tick 3D Spiral Showcase Architecture
  *
- * Unifies the Left Circular Workflow Dial and Right Live Workflow Simulator inside a
- * single connected two-panel helical assembly that revolves together around a stationary
- * central vertical cylindrical pole inside a continuous deep-navy `#070B14` theater.
+ * Unifies the Left Circular Workflow Dial, central Helical Coupler Rail, and Right Live Simulator
+ * inside one connected assembly that revolves together around a stationary central cylindrical pole
+ * backed by ThreeUI Gallery + subdued LaserCollection within `#070B14`.
  */
 export function UnifiedSpiralShowcase<T extends SpiralDialItemDef>({
   sectionId,
@@ -226,8 +215,9 @@ export function UnifiedSpiralShowcase<T extends SpiralDialItemDef>({
   onActiveChange,
   dialLabel,
   dialSublabel,
-  prevLabel = 'Prev',
-  nextLabel = 'Next',
+  prevLabel: _prevLabel = 'Prev',
+  nextLabel: _nextLabel = 'Next',
+  hideBottomDock: _hideBottomDock = false,
   renderSimulator,
 }: UnifiedSpiralShowcaseProps<T>) {
   const prefersReducedMotion = useReducedMotion();
@@ -243,13 +233,12 @@ export function UnifiedSpiralShowcase<T extends SpiralDialItemDef>({
   }, []);
 
   const isWideViewport = viewportWidth >= 900;
-  const horizontalSwing = viewportWidth >= 1280 ? 114 : viewportWidth >= 1040 ? 86 : 62;
+  const horizontalSwing = viewportWidth >= 1280 ? 112 : viewportWidth >= 1040 ? 84 : 60;
 
   const {
     sectionRef,
     cardRef,
     progress,
-    currentTickStep,
     isSettled,
     goToStage,
     scrollToNextSection,
@@ -297,11 +286,11 @@ export function UnifiedSpiralShowcase<T extends SpiralDialItemDef>({
 
       {/* Primary Content Wrapper — first direct div for GSAP reveal choreography */}
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Stationary Section Heading & Brief Subtitle (never orbits in 3D) */}
-        <div className="max-w-3xl mx-auto text-center mb-5 sm:mb-7">
+        {/* Stationary Section Heading & Brief Subtitle (outside the orbiting 3D stage) */}
+        <div className="max-w-3xl mx-auto text-center mb-4 sm:mb-6">
           {eyebrow && (
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-md border border-[#38BDF8]/30 bg-[#0E1726] text-[#7DD3FC] text-[11px] font-mono font-bold uppercase tracking-widest mb-2.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#38BDF8]" />
+              <span className="w-3 h-[1.5px] bg-[#38BDF8]" />
               <span>{eyebrow}</span>
             </div>
           )}
@@ -318,27 +307,27 @@ export function UnifiedSpiralShowcase<T extends SpiralDialItemDef>({
           )}
         </div>
 
-        {/* Full Interactive 5-Tick 3D Helical Showcase Body */}
+        {/* Full Interactive 3-Tick 3D Helical Showcase Body */}
         <div
           ref={cardRef}
           {...scrollProps}
           className="outline-none focus-visible:ring-2 focus-visible:ring-[#38BDF8] rounded-3xl"
         >
-          {/* DESKTOP & WIDE TABLET (>= 900px, covers 80%-150% zoom): Unified Two-Panel Synchronized 5-Tick Helix */}
+          {/* DESKTOP & WIDE TABLET (>= 900px, covers 80%-150% zoom): Unified Two-Panel Synchronized 3-Tick Helix */}
           {isWideViewport ? (
             <div
               className="relative w-full h-[465px] xl:h-[490px] flex items-center justify-center"
               style={{
-                perspective: '1850px',
-                transformStyle: 'preserve-3d',
+                perspective: isSettled || prefersReducedMotion ? 'none' : '1850px',
+                transformStyle: isSettled || prefersReducedMotion ? 'flat' : 'preserve-3d',
               }}
             >
-              {/* Stationary Central Architectural Cylindrical Pole (sits at Z = 0px) */}
+              {/* Stationary Central Architectural Cylindrical Pole (fixed behind zIndex-50 active assembly) */}
               <SpiralCentralPole progress={progress} />
 
-              {/* Synchronized Paired Two-Panel Assemblies Revolving in 5 Ticks */}
+              {/* Synchronized Paired Two-Panel Assemblies Revolving Around Central Pole */}
               {items.map((item, idx) => {
-                const pose = computeFiveTickPose(
+                const pose = computeThreeTickPose(
                   idx,
                   activeIndex,
                   progress,
@@ -349,6 +338,23 @@ export function UnifiedSpiralShowcase<T extends SpiralDialItemDef>({
                 if (!pose) return null;
 
                 const isInteractive = pose.isCenterFocus && !pose.hidden;
+                const isSettledActive =
+                  isSettled &&
+                  idx === activeIndex &&
+                  pose.isCenterFocus &&
+                  !pose.hidden &&
+                  Math.abs(pose.tx) < 0.5 &&
+                  Math.abs(pose.ty) < 0.5 &&
+                  Math.abs(pose.rotY) < 0.1;
+
+                const outgoingRecedingBlur =
+                  !prefersReducedMotion &&
+                  !pose.isCenterFocus &&
+                  idx === activeIndex &&
+                  pose.tz < -20 &&
+                  !pose.hidden
+                    ? `blur(${Math.min(2.2, Math.abs(pose.tz + 20) * 0.025).toFixed(2)}px)`
+                    : 'none';
 
                 return (
                   <div
@@ -356,30 +362,47 @@ export function UnifiedSpiralShowcase<T extends SpiralDialItemDef>({
                     data-spiral-assembly={idx}
                     data-in-front={pose.inFrontOfPole ? 'true' : 'false'}
                     data-active={idx === activeIndex ? 'true' : 'false'}
+                    data-settled={isSettledActive ? 'true' : 'false'}
                     data-hidden={pose.hidden ? 'true' : 'false'}
                     onClick={() => {
                       if (!pose.isCenterFocus && !pose.hidden) {
                         goToStage(idx);
                       }
                     }}
-                    style={{
-                      position: 'absolute',
-                      width: 'min(96%, 1060px)',
-                      transform: `translate3d(${pose.tx.toFixed(1)}px, ${pose.ty.toFixed(1)}px, ${pose.tz.toFixed(1)}px) rotateY(${pose.rotY.toFixed(2)}deg) rotateZ(${pose.rotZ.toFixed(2)}deg) scale(${pose.scale.toFixed(3)})`,
-                      opacity: Number(pose.opacity.toFixed(3)),
-                      visibility: pose.hidden ? 'hidden' : 'visible',
-                      zIndex: pose.zIndex,
-                      transformStyle: 'preserve-3d',
-                      backfaceVisibility: 'hidden',
-                      willChange: 'transform, opacity',
-                      pointerEvents: pose.hidden ? 'none' : 'auto',
-                    }}
-                    className={`h-[435px] xl:h-[455px] grid grid-cols-12 items-stretch gap-3 lg:gap-4 rounded-2xl ${
+                    style={
+                      isSettledActive
+                        ? {
+                            position: 'absolute',
+                            width: 'min(96%, 1060px)',
+                            transform: 'none',
+                            opacity: 1,
+                            visibility: 'visible',
+                            zIndex: pose.zIndex,
+                            transformStyle: 'flat',
+                            filter: 'none',
+                            willChange: 'auto',
+                            pointerEvents: 'auto',
+                          }
+                        : {
+                            position: 'absolute',
+                            width: 'min(96%, 1060px)',
+                            transform: `translate3d(${pose.tx.toFixed(1)}px, ${pose.ty.toFixed(1)}px, ${pose.tz.toFixed(1)}px) rotateY(${pose.rotY.toFixed(2)}deg) rotateZ(${pose.rotZ.toFixed(2)}deg) scale(${pose.scale.toFixed(3)})`,
+                            opacity: Number(pose.opacity.toFixed(3)),
+                            visibility: pose.hidden ? 'hidden' : 'visible',
+                            zIndex: pose.zIndex,
+                            transformStyle: 'flat',
+                            backfaceVisibility: 'hidden',
+                            filter: outgoingRecedingBlur,
+                            willChange: 'transform, opacity',
+                            pointerEvents: pose.hidden ? 'none' : 'auto',
+                          }
+                    }
+                    className={`h-[435px] xl:h-[455px] grid grid-cols-12 items-stretch gap-2.5 lg:gap-3.5 rounded-2xl antialiased ${
                       !pose.isCenterFocus && !pose.hidden ? 'cursor-pointer' : ''
                     }`}
                   >
-                    {/* Solid Non-Transparent Backing Chassis behind bridge gaps on Tick 3 / Solo Focus */}
-                    {pose.opacity > 0.99 && (
+                    {/* Solid Opaque Backing Chassis when dominant in foreground so rear wings never bleed text */}
+                    {pose.opacity > 0.92 && (
                       <div
                         aria-hidden="true"
                         className="absolute inset-0 rounded-2xl pointer-events-none"
@@ -407,22 +430,33 @@ export function UnifiedSpiralShowcase<T extends SpiralDialItemDef>({
                       />
                     </div>
 
-                    {/* CENTRAL HELICAL COUPLER BRIDGE (solid opaque chassis connecting both panels across Z=0 pole) */}
+                    {/* CENTRAL HELICAL COUPLER BRIDGE connecting Dial & Simulator around Z=0 Pole */}
                     <div
                       aria-hidden="true"
                       className="relative z-10 col-span-1 flex flex-col items-center justify-center pointer-events-none"
                     >
                       <div
-                        className="w-full h-[3px] relative rounded-full"
+                        className="w-full h-[14px] relative rounded-full flex items-center justify-center border"
                         style={{
                           background: pose.isCenterFocus
-                            ? 'linear-gradient(90deg, #2563EB, #7DD3FC, #2563EB)'
-                            : 'linear-gradient(90deg, #1E3A8A, #38BDF8, #1E3A8A)',
-                          boxShadow: pose.isCenterFocus ? '0 0 14px rgba(56, 189, 248, 0.55)' : 'none',
+                            ? 'linear-gradient(90deg, #0E1726 0%, #1D4ED8 50%, #0E1726 100%)'
+                            : 'linear-gradient(90deg, #09111E 0%, #1E293B 50%, #09111E 100%)',
+                          borderColor: pose.isCenterFocus
+                            ? 'rgba(56, 189, 248, 0.55)'
+                            : 'rgba(148, 163, 184, 0.25)',
+                          boxShadow: pose.isCenterFocus ? '0 0 18px rgba(37, 99, 235, 0.4)' : 'none',
                         }}
                       >
+                        <div
+                          className="w-full h-[2px] mx-1 rounded-full"
+                          style={{
+                            background: pose.isCenterFocus
+                              ? 'linear-gradient(90deg, #2563EB, #7DD3FC, #2563EB)'
+                              : 'rgba(148, 163, 184, 0.3)',
+                          }}
+                        />
                         <span
-                          className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-6 h-6 rounded-full flex items-center justify-center font-mono text-[9px] font-extrabold"
+                          className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-7 h-7 rounded-full flex items-center justify-center font-mono text-[10px] font-extrabold"
                           style={{
                             backgroundColor: '#070B14',
                             color: pose.isCenterFocus ? '#7DD3FC' : '#94A3B8',
@@ -437,7 +471,7 @@ export function UnifiedSpiralShowcase<T extends SpiralDialItemDef>({
                       </div>
                     </div>
 
-                    {/* RIGHT WING: Live Workflow Simulator Panel (moves synchronously with Left Dial) */}
+                    {/* RIGHT WING: Live Workflow Simulator Panel (revolves synchronously with Left Dial) */}
                     <div
                       className={`relative z-10 col-span-6 h-full ${
                         !isInteractive ? 'pointer-events-none' : ''
@@ -446,7 +480,7 @@ export function UnifiedSpiralShowcase<T extends SpiralDialItemDef>({
                       {renderSimulator(item, {
                         index: idx,
                         total,
-                        isActive: idx === activeIndex,
+                        isActive: idx === activeIndex || pose.isCenterFocus,
                         isInteractive,
                         onPrev: handlePrev,
                         onNext: handleNext,
@@ -495,17 +529,27 @@ export function UnifiedSpiralShowcase<T extends SpiralDialItemDef>({
               {/* Compact Spatial Helix Container around Stationary Central Pole */}
               <div
                 className="relative py-2 flex items-center justify-center"
-                style={{ perspective: '1200px', transformStyle: 'preserve-3d' }}
+                style={{
+                  perspective: isSettled || prefersReducedMotion ? 'none' : '1200px',
+                  transformStyle: isSettled || prefersReducedMotion ? 'flat' : 'preserve-3d',
+                }}
               >
                 <SpiralCentralPole progress={progress} compact />
 
                 <div
-                  className="relative z-30 w-full space-y-3 transition-transform duration-300 ease-out"
-                  style={{
-                    transform: prefersReducedMotion
-                      ? 'none'
-                      : `translate3d(0, 0, 20px) rotateY(${((activeIndex - progress) * -10).toFixed(2)}deg)`,
-                  }}
+                  className="relative z-30 w-full space-y-3 antialiased"
+                  style={
+                    isSettled || prefersReducedMotion
+                      ? {
+                          transform: 'none',
+                          willChange: 'auto',
+                          filter: 'none',
+                        }
+                      : {
+                          transform: `rotateY(${((activeIndex - progress) * -10).toFixed(2)}deg)`,
+                          willChange: 'transform',
+                        }
+                  }
                 >
                   {/* Compact Synchronized Dial Strip */}
                   <div
@@ -548,7 +592,7 @@ export function UnifiedSpiralShowcase<T extends SpiralDialItemDef>({
                           type="button"
                           onClick={() => goToStage(idx)}
                           aria-label={`Select stage ${it.number}: ${it.title}`}
-                          className="w-6 h-6 rounded-lg font-mono text-[10px] font-bold cursor-pointer transition-colors"
+                          className="w-7 h-7 rounded-lg font-mono text-[10px] font-bold cursor-pointer transition-colors"
                           style={
                             idx === activeIndex
                               ? {
@@ -584,123 +628,6 @@ export function UnifiedSpiralShowcase<T extends SpiralDialItemDef>({
               </div>
             </div>
           )}
-
-          {/* Stationary Unified Bottom Navigation & 5-Tick Telemetry Dock */}
-          <div
-            className="mt-5 sm:mt-6 px-3.5 sm:px-5 py-2.5 rounded-2xl border flex flex-wrap items-center justify-between gap-3"
-            style={{
-              backgroundColor: '#0E1726',
-              borderColor: 'rgba(56, 189, 248, 0.28)',
-              boxShadow: '0 10px 30px -10px rgba(0, 0, 0, 0.6)',
-            }}
-          >
-            {/* Left: Prev Stage Button */}
-            <button
-              type="button"
-              onClick={handlePrev}
-              disabled={activeIndex === 0}
-              aria-label={prevLabel}
-              className="px-3 py-1.5 rounded-xl border text-xs font-semibold flex items-center gap-1.5 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-              style={{
-                backgroundColor: '#09111E',
-                borderColor: 'rgba(148, 163, 184, 0.3)',
-                color: '#E2E8F0',
-              }}
-            >
-              <ChevronLeft className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">{prevLabel}</span>
-            </button>
-
-            {/* Center: Direct Stage Pills + 5-Tick Orbit Meter */}
-            <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-4 min-w-0 flex-1 justify-center">
-              <div className="flex items-center gap-1.5 overflow-x-auto max-w-full py-0.5 scrollbar-none">
-                {items.map((it, idx) => {
-                  const isCurrent = idx === activeIndex;
-                  return (
-                    <button
-                      key={it.id}
-                      type="button"
-                      onClick={() => goToStage(idx)}
-                      aria-label={`Jump to stage ${it.number}: ${it.title}`}
-                      aria-pressed={isCurrent}
-                      className="px-2.5 py-1 rounded-lg font-mono text-[11px] font-bold transition-all cursor-pointer shrink-0 flex items-center gap-1.5"
-                      style={
-                        isCurrent
-                          ? {
-                              background: 'linear-gradient(90deg, #2563EB, #0EA5E9)',
-                              color: '#FFFFFF',
-                              boxShadow: '0 0 14px rgba(56, 189, 248, 0.42)',
-                            }
-                          : idx < activeIndex
-                          ? {
-                              backgroundColor: '#13274A',
-                              color: '#7DD3FC',
-                              border: '1px solid rgba(56, 189, 248, 0.3)',
-                            }
-                          : {
-                              backgroundColor: '#070B14',
-                              color: '#94A3B8',
-                              border: '1px solid rgba(148, 163, 184, 0.22)',
-                            }
-                      }
-                      title={`${it.number}. ${it.title}`}
-                    >
-                      <span>{it.number}</span>
-                      {isCurrent && (
-                        <span className="hidden lg:inline font-sans font-semibold truncate max-w-[140px]">
-                          · {it.title}
-                        </span>
-                      )}
-                    </button>
-                  );
-                })}
-              </div>
-
-              {/* 5-Tick Scroll Phase Readout (Desktop) */}
-              {isWideViewport && (
-                <div className="hidden md:flex items-center gap-2 text-[10px] font-mono text-[#94A3B8] shrink-0">
-                  <span className="text-[#7DD3FC] font-bold">
-                    {isSettled ? 'LOCKED · 5/5' : TICK_PHASE_LABELS[currentTickStep] || `TICK ${currentTickStep}/5`}
-                  </span>
-                  <div className="flex items-center gap-1">
-                    {[1, 2, 3, 4, 5].map((t) => {
-                      const activeTick = isSettled ? true : currentTickStep >= t;
-                      return (
-                        <span
-                          key={t}
-                          className="w-2 h-1.5 rounded-full transition-colors"
-                          style={{
-                            backgroundColor: activeTick ? '#38BDF8' : '#1E293B',
-                          }}
-                        />
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Right: Next Stage / Next Section Button */}
-            <button
-              type="button"
-              onClick={handleNext}
-              aria-label={activeIndex === total - 1 ? 'Next Section' : nextLabel}
-              className="px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 cursor-pointer transition-colors border"
-              style={{
-                backgroundColor: '#2563EB',
-                borderColor: 'rgba(56, 189, 248, 0.55)',
-                color: '#FFFFFF',
-                boxShadow: '0 4px 14px rgba(37, 99, 235, 0.35)',
-              }}
-            >
-              <span>{activeIndex === total - 1 ? 'Next Section' : nextLabel}</span>
-              {activeIndex === total - 1 ? (
-                <ArrowRight className="w-3.5 h-3.5" />
-              ) : (
-                <ChevronRight className="w-3.5 h-3.5" />
-              )}
-            </button>
-          </div>
         </div>
       </div>
 

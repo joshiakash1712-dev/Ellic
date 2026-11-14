@@ -236,8 +236,8 @@ export const CoreCapabilities: React.FC = () => {
                     {cap.telemetry.value}
                   </span>
                 </div>
-                <div className="text-[11px] text-[#34D399] flex items-center gap-1.5 font-medium">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0" />
+                <div className="text-[11px] text-[#7DD3FC] flex items-center gap-1.5 font-medium">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-[#38BDF8] shrink-0" />
                   <span>{cap.telemetry.status}</span>
                 </div>
               </div>

@@ -499,46 +499,46 @@ html.theme-light .glass-panel-interactive:hover {
 }
 
 :where(html.light, html.theme-light) .website-root #hero .rounded-2xl.shadow-2xl > div:first-child {
-  background-color: #E2E8F0 !important;
-  border-bottom: 2px solid #94A3B8 !important;
+  background-color: #F1F5F9 !important;
+  border-bottom: 1px solid #CBD5E1 !important;
 }
 
 /* Hero Mockup Stat Cards in Light Mode */
 :where(html.light, html.theme-light) .website-root #hero .grid.grid-cols-1.sm\:grid-cols-3 > div {
   background-color: #FFFFFF !important;
-  border: 2px solid #94A3B8 !important;
+  border: 1px solid #CBD5E1 !important;
   box-shadow: 0 2px 6px rgba(15, 23, 42, 0.06) !important;
 }
 
 /* Hero Mockup Live Counter Terminal */
 :where(html.light, html.theme-light) .website-root #hero .lg\:col-span-12.bg-white {
   background-color: #FFFFFF !important;
-  border: 2px solid #94A3B8 !important;
+  border: 1px solid #CBD5E1 !important;
   box-shadow: 0 3px 10px rgba(15, 23, 42, 0.06) !important;
 }
 
 /* Problem Section: 4 Cards High-Contrast Definition in Light Mode */
 :where(html.light, html.theme-light) .website-root #problem .grid > div {
   background-color: #FFFFFF !important;
-  border: 2px solid #94A3B8 !important;
-  box-shadow: 0 4px 16px -2px rgba(15, 23, 42, 0.10), 0 2px 6px -1px rgba(15, 23, 42, 0.06) !important;
+  border: 1px solid #CBD5E1 !important;
+  box-shadow: 0 4px 16px -2px rgba(15, 23, 42, 0.08), 0 2px 6px -1px rgba(15, 23, 42, 0.05) !important;
 }
 
 :where(html.light, html.theme-light) .website-root #problem .grid > div:hover {
   border-color: #2563EB !important;
-  box-shadow: 0 8px 24px -4px rgba(37, 99, 235, 0.18) !important;
+  box-shadow: 0 8px 24px -4px rgba(37, 99, 235, 0.16) !important;
 }
 
 /* Problem Section: Solution Box inside each card */
 :where(html.light, html.theme-light) .website-root #problem .bg-sky-50 {
   background-color: #EFF6FF !important;
-  border: 2px solid #0284C7 !important;
-  box-shadow: 0 1px 4px rgba(2, 132, 199, 0.12) !important;
+  border: 1px solid #38BDF8 !important;
+  box-shadow: 0 1px 4px rgba(2, 132, 199, 0.1) !important;
 }
 
 /* Problem Section: Connector divider line */
-:where(html.light, html.theme-light) .website-root #problem .h-0\.5 {
-  background-color: #94A3B8 !important;
+:where(html.light, html.theme-light) .website-root #problem .h-px {
+  background-color: #CBD5E1 !important;
 }
 
 /* Clean Daylight Elevation Shadows */
@@ -1535,21 +1535,20 @@ html.light {
   background-color: #070B14 !important;
   color: #F8FAFC;
   isolation: isolate;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
 }
 
 .ellic-spiral-stage {
   background-color: #070B14 !important;
   color: #F8FAFC;
   border-color: rgba(56, 189, 248, 0.24);
-  perspective: 1200px;
-  transform-style: preserve-3d;
 }
 
 .ellic-spiral-card {
   background-color: #0E1726;
-  transform-style: preserve-3d;
-  backface-visibility: hidden;
-  will-change: transform, opacity;
+  backface-visibility: visible;
 }
 
 

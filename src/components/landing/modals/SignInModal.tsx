@@ -7,8 +7,6 @@ import {
   ArrowRight,
   ShieldCheck,
   Mail,
-  KeyRound,
-  Sparkles,
   AlertCircle,
   CheckCircle2,
   RefreshCw,
@@ -16,7 +14,6 @@ import {
   EyeOff,
   Phone,
   LogOut,
-  ExternalLink
 } from 'lucide-react';
 
 interface SignInModalProps {
@@ -135,13 +132,13 @@ export const SignInModal: React.FC<SignInModalProps> = ({
         
         {/* Already Authenticated Banner */}
         {currentUser ? (
-          <div className="p-4 rounded-xl bg-slate-100 dark:bg-slate-800/80 border border-emerald-500/40 space-y-3">
+          <div className="p-4 rounded-xl bg-slate-100 dark:bg-slate-800/80 border border-blue-500/40 space-y-3">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-bold uppercase tracking-wide text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5">
+              <span className="text-xs font-bold uppercase tracking-wide text-blue-600 dark:text-sky-400 flex items-center gap-1.5">
                 <ShieldCheck className="w-4 h-4" />
                 Currently Signed In
               </span>
-              <span className="text-[11px] px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 font-semibold border border-emerald-300 dark:border-emerald-800">
+              <span className="text-[11px] px-2 py-0.5 rounded-md bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-sky-300 font-semibold border border-blue-300 dark:border-blue-800">
                 Cloud Synced
               </span>
             </div>
@@ -151,10 +148,10 @@ export const SignInModal: React.FC<SignInModalProps> = ({
                 <img
                   src={currentUser.photoURL}
                   alt={currentUser.displayName || 'User'}
-                  className="w-10 h-10 rounded-xl object-cover border border-emerald-500/40"
+                  className="w-10 h-10 rounded-xl object-cover border border-blue-500/40"
                 />
               ) : (
-                <div className="w-10 h-10 rounded-xl bg-emerald-600/20 text-emerald-400 font-bold flex items-center justify-center border border-emerald-500/40">
+                <div className="w-10 h-10 rounded-xl bg-blue-600/20 text-blue-600 dark:text-sky-300 font-bold flex items-center justify-center border border-blue-500/40">
                   {(currentUser.displayName || currentUser.email || 'U').slice(0, 2).toUpperCase()}
                 </div>
               )}
@@ -176,7 +173,7 @@ export const SignInModal: React.FC<SignInModalProps> = ({
                     onClose();
                     onLaunchApp();
                   }}
-                  className="flex-1 py-2.5 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition-all shadow-md flex items-center justify-center gap-1.5"
+                  className="flex-1 py-2.5 px-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition-all shadow-md flex items-center justify-center gap-1.5"
                 >
                   <span>
                     {userProfile?.role === 'ellix_admin' || userProfile?.role === 'super_admin'
@@ -257,12 +254,13 @@ export const SignInModal: React.FC<SignInModalProps> = ({
             {/* Email & Password Form */}
             <form onSubmit={handleEmailSubmit} className="space-y-3 sm:space-y-3.5">
               <div>
-                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                <label htmlFor="signin-email-input" className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
                   Store or Corporate Email
                 </label>
                 <div className="relative">
                   <Mail className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
                   <input
+                    id="signin-email-input"
                     type="email"
                     required
                     inputMode="email"
@@ -271,14 +269,14 @@ export const SignInModal: React.FC<SignInModalProps> = ({
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="merchant@retail.com"
-                    className="w-full h-11 pl-10 pr-3.5 rounded-xl border border-slate-200 dark:border-slate-700/80 bg-white dark:bg-slate-800/90 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 text-slate-900 dark:text-white transition-all shadow-2xs"
+                    className="w-full h-11 pl-10 pr-3.5 rounded-xl border border-slate-200 dark:border-slate-700/80 bg-white dark:bg-slate-800/90 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-slate-900 dark:text-white transition-all shadow-2xs"
                   />
                 </div>
               </div>
 
               <div>
                 <div className="flex items-center justify-between mb-1">
-                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                  <label htmlFor="signin-password-input" className="text-xs font-semibold text-slate-700 dark:text-slate-300">
                     Account Password
                   </label>
                   <button
@@ -287,7 +285,7 @@ export const SignInModal: React.FC<SignInModalProps> = ({
                       onClose();
                       openAuthModal('forgot_password');
                     }}
-                    className="text-[11px] text-emerald-600 dark:text-emerald-400 hover:underline font-medium"
+                    className="text-[11px] text-blue-600 dark:text-sky-400 hover:underline font-medium"
                   >
                     Forgot password?
                   </button>
@@ -295,13 +293,14 @@ export const SignInModal: React.FC<SignInModalProps> = ({
                 <div className="relative">
                   <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
                   <input
+                    id="signin-password-input"
                     type={showPassword ? 'text' : 'password'}
                     required
                     autoComplete="current-password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="Enter your synchronized password"
-                    className="w-full h-11 pl-10 pr-10 rounded-xl border border-slate-200 dark:border-slate-700/80 bg-white dark:bg-slate-800/90 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 text-slate-900 dark:text-white transition-all shadow-2xs"
+                    className="w-full h-11 pl-10 pr-10 rounded-xl border border-slate-200 dark:border-slate-700/80 bg-white dark:bg-slate-800/90 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-slate-900 dark:text-white transition-all shadow-2xs"
                   />
                   <button
                     type="button"
@@ -316,7 +315,7 @@ export const SignInModal: React.FC<SignInModalProps> = ({
 
               {/* RBAC Enterprise Security Notice */}
               <div className="p-2.5 sm:p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-200 dark:border-slate-800/80 text-[11px] text-slate-600 dark:text-slate-400 flex items-start gap-2.5">
-                <ShieldCheck className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
+                <ShieldCheck className="w-4 h-4 text-blue-600 dark:text-sky-400 shrink-0 mt-0.5" />
                 <div className="leading-relaxed">
                   <strong className="text-slate-800 dark:text-slate-200 font-semibold">Enterprise RBAC Enforced:</strong> User roles (Retailer, Wholesaler, Manager, Cashier) and permissions are configured centrally by your organization Administrator.
                 </div>
@@ -325,7 +324,7 @@ export const SignInModal: React.FC<SignInModalProps> = ({
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full h-11 sm:h-12 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white font-bold text-xs sm:text-sm shadow-md shadow-emerald-950/20 transition-all flex items-center justify-center gap-2 active:scale-[0.99] disabled:opacity-50"
+                className="w-full h-11 sm:h-12 px-4 rounded-xl bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-white font-bold text-xs sm:text-sm shadow-md shadow-blue-950/20 transition-all flex items-center justify-center gap-2 active:scale-[0.99] disabled:opacity-50"
               >
                 {loading ? (
                   <RefreshCw className="w-4 h-4 animate-spin" />
@@ -346,7 +345,7 @@ export const SignInModal: React.FC<SignInModalProps> = ({
                   onClose();
                   openAuthModal('phone');
                 }}
-                className="text-slate-600 dark:text-slate-300 hover:text-emerald-600 dark:hover:text-emerald-400 flex items-center gap-1 font-semibold"
+                className="text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-sky-400 flex items-center gap-1 font-semibold"
               >
                 <Phone className="w-3.5 h-3.5" />
                 <span>Phone SMS OTP</span>
@@ -358,7 +357,7 @@ export const SignInModal: React.FC<SignInModalProps> = ({
                   onClose();
                   openAuthModal('register');
                 }}
-                className="text-emerald-600 dark:text-emerald-400 font-semibold hover:underline"
+                className="text-blue-600 dark:text-sky-400 font-semibold hover:underline"
               >
                 Create new account
               </button>
@@ -369,7 +368,7 @@ export const SignInModal: React.FC<SignInModalProps> = ({
         {/* Footer info */}
         <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-slate-500 dark:text-slate-400">
           <span className="flex items-center gap-1.5">
-            <ShieldCheck className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+            <ShieldCheck className="w-4 h-4 text-blue-600 dark:text-sky-400" />
             End-to-end encrypted Firestore sync
           </span>
           {onSwitchToGetStarted && (
@@ -379,7 +378,7 @@ export const SignInModal: React.FC<SignInModalProps> = ({
                 onClose();
                 onSwitchToGetStarted();
               }}
-              className="font-semibold text-emerald-600 dark:text-emerald-400 hover:underline"
+              className="font-semibold text-blue-600 dark:text-sky-400 hover:underline"
             >
               Request onboarding trial →
             </button>

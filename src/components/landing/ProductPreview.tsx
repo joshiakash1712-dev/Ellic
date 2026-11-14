@@ -329,7 +329,7 @@ export const ProductPreview: React.FC = () => {
                       <div className="font-bold text-[#FB7185]">₹420.00 Due</div>
                       <div className="text-[10px] text-[#94A3B8] font-medium">Limit: ₹5,000</div>
                     </div>
-                    <div className="px-2.5 py-1.5 rounded-lg bg-emerald-600 text-white font-bold text-[11px]">
+                    <div className="px-2.5 py-1.5 rounded-lg bg-[#2563EB] text-white font-bold text-[11px] border border-[#38BDF8]/40">
                       WhatsApp Link
                     </div>
                   </div>
